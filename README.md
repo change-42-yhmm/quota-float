@@ -44,10 +44,17 @@ Browser preview uses mock data. Real quota reading requires the Tauri desktop ap
 
 For normal users, download the latest unsigned build from GitHub Releases:
 
+- Latest release: https://github.com/change-42-yhmm/quota-float/releases/latest
 - Windows: `quota-float-windows-unsigned.zip`
 - macOS Universal: `quota-float-macos-universal-unsigned.zip`
 
 Unzip it and run the app. Unsigned builds may trigger Windows SmartScreen or macOS Gatekeeper warnings. Public distribution to non-technical users should use signed Windows builds and notarized macOS builds.
+
+## Feedback
+
+Please use GitHub Issues for bugs, compatibility reports, and feature requests:
+
+https://github.com/change-42-yhmm/quota-float/issues
 
 ## Privacy Boundary
 
@@ -99,7 +106,7 @@ src-tauri/target/release/quota-float.exe
 GitHub Actions are configured for:
 
 - CI on push/PR: frontend tests, Rust tests, web build, Tauri build.
-- `v*` tags: unsigned Windows and macOS Universal bundle artifacts and a draft GitHub Release.
+- `v*` tags: unsigned Windows and macOS Universal bundle artifacts and a public GitHub Release.
 
 See [docs/GITHUB-RELEASE-CHECKLIST.md](docs/GITHUB-RELEASE-CHECKLIST.md) before publishing a version for others.
 

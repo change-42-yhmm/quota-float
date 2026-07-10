@@ -35,6 +35,10 @@ async function loadBridge() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  windowApi.currentMonitor.mockReset();
+  windowApi.windowMock.outerPosition.mockReset();
+  windowApi.windowMock.outerSize.mockReset();
+  windowApi.windowMock.scaleFactor.mockReset();
   windowApi.calls.length = 0;
   vi.stubGlobal("window", { __TAURI_INTERNALS__: {} });
   windowApi.windowMock.outerPosition.mockResolvedValue({ x: 1700, y: 900 });
@@ -57,6 +61,15 @@ describe("setWidgetExpanded", () => {
     );
   });
 
+  it("uses the scale factor to calculate the physical expanded size", async () => {
+    windowApi.windowMock.scaleFactor.mockResolvedValue(1.5);
+    const { setWidgetExpanded } = await loadBridge();
+    await setWidgetExpanded(true);
+    expect(windowApi.windowMock.setPosition).toHaveBeenCalledWith(
+      expect.objectContaining({ x: 1320, y: 520 }),
+    );
+  });
+
   it("restores the exact pre-expansion position on collapse", async () => {
     const { setWidgetExpanded } = await loadBridge();
     await setWidgetExpanded(true);
@@ -75,6 +88,30 @@ describe("setWidgetExpanded", () => {
       "size:100x100",
       "position:1700,900",
     ]);
+  });
+
+  it("captures the orb position only once across repeated rapid expansion", async () => {
+    let resolveFirstPosition!: (position: { x: number; y: number }) => void;
+    const firstPosition = new Promise<{ x: number; y: number }>((resolve) => {
+      resolveFirstPosition = resolve;
+    });
+    windowApi.windowMock.outerPosition
+      .mockReturnValueOnce(firstPosition)
+      .mockResolvedValueOnce({ x: 300, y: 200 });
+
+    const { setWidgetExpanded } = await loadBridge();
+    const transitions = [
+      setWidgetExpanded(true),
+      setWidgetExpanded(true),
+      setWidgetExpanded(false),
+    ];
+    resolveFirstPosition({ x: 1700, y: 900 });
+    await Promise.all(transitions);
+
+    expect(windowApi.windowMock.outerPosition).toHaveBeenCalledTimes(1);
+    expect(windowApi.windowMock.setPosition).toHaveBeenLastCalledWith(
+      expect.objectContaining({ x: 1700, y: 900 }),
+    );
   });
 
   it("falls back to resize when monitor geometry is unavailable", async () => {
@@ -104,6 +141,12 @@ describe("setWidgetExpanded", () => {
     vi.stubGlobal("window", {});
     const { setWidgetExpanded } = await loadBridge();
     await setWidgetExpanded(true);
+    expect(windowApi.currentMonitor).not.toHaveBeenCalled();
+    expect(windowApi.windowMock.outerPosition).not.toHaveBeenCalled();
+    expect(windowApi.windowMock.outerSize).not.toHaveBeenCalled();
+    expect(windowApi.windowMock.scaleFactor).not.toHaveBeenCalled();
     expect(windowApi.windowMock.setSize).not.toHaveBeenCalled();
+    expect(windowApi.windowMock.setPosition).not.toHaveBeenCalled();
+    expect(windowApi.windowMock.startDragging).not.toHaveBeenCalled();
   });
 });

@@ -18,6 +18,26 @@ use tauri::{
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_window_state::Builder as WindowStateBuilder;
 
+#[cfg(target_os = "windows")]
+async fn wait_for_primary_mouse_release() {
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON};
+
+    let deadline = Instant::now() + Duration::from_secs(30);
+    while Instant::now() < deadline && unsafe { GetAsyncKeyState(VK_LBUTTON as i32) } < 0 {
+        tokio::time::sleep(Duration::from_millis(16)).await;
+    }
+}
+
+#[tauri::command]
+async fn start_widget_dragging(window: tauri::WebviewWindow) -> Result<(), String> {
+    window
+        .start_dragging()
+        .map_err(|error| format!("failed to start dragging: {error}"))?;
+    #[cfg(target_os = "windows")]
+    wait_for_primary_mouse_release().await;
+    Ok(())
+}
+
 struct AppState {
     client: reqwest::Client,
     preferences: Mutex<WidgetPreferences>,
@@ -354,7 +374,8 @@ pub fn run() {
             get_preferences,
             set_preferences,
             set_widget_locked,
-            set_widget_always_on_top
+            set_widget_always_on_top,
+            start_widget_dragging
         ])
         .on_tray_icon_event(|app, event| {
             if let TrayIconEvent::Click {

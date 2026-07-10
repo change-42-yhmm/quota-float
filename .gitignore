@@ -6,6 +6,7 @@
 /.chrome-qa
 /.chrome-qa2
 /.codex
+/.worktrees
 /.idea
 /.vscode
 *.log

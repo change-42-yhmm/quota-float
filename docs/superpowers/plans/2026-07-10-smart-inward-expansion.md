@@ -95,11 +95,13 @@ describe("calculateExpandedPosition", () => {
     expect(calculateExpandedPosition(orb, card, leftMonitor)).toEqual({ x: -1800, y: 700 });
   });
 
-  it("uses physical sizes produced by a 150 percent scale factor", () => {
-    const scaledOrb = { x: 2500, y: 1200, width: 150, height: 150 };
-    const scaledCard = { width: 480, height: 480 };
+  it.each([
+    ["125%", { x: 3500, y: 900, width: 125, height: 125 }, { width: 400, height: 400 }, { x: 3225, y: 625 }],
+    ["150%", { x: 2500, y: 1200, width: 150, height: 150 }, { width: 480, height: 480 }, { x: 2500, y: 870 }],
+    ["200%", { x: 3000, y: 1200, width: 200, height: 200 }, { width: 640, height: 640 }, { x: 3000, y: 760 }],
+  ])("uses physical sizes produced at %s display scaling", (_scale, scaledOrb, scaledCard, expected) => {
     const scaledWorkArea = { x: 1920, y: 0, width: 2560, height: 1400 };
-    expect(calculateExpandedPosition(scaledOrb, scaledCard, scaledWorkArea)).toEqual({ x: 2500, y: 870 });
+    expect(calculateExpandedPosition(scaledOrb, scaledCard, scaledWorkArea)).toEqual(expected);
   });
 
   it("aligns to the work-area origin when the card cannot fit", () => {
@@ -175,7 +177,7 @@ npx vitest run src/lib/windowPlacement.test.ts
 npm test
 ```
 
-Expected: the focused file passes all 9 cases; the full suite passes with no failures.
+Expected: the focused file passes all 11 cases; the full suite passes with no failures.
 
 - [ ] **Step 5: Commit the calculator**
 

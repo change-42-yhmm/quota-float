@@ -13,12 +13,14 @@ export default function App() {
   const [preferences, setPreferences] = useState(DEFAULT_PREFS);
   const [activeIndex, setActiveIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
-  const [compact, setCompact] = useState(() => window.innerWidth <= 120 || window.innerHeight <= 120);
+  const [compact, setCompact] = useState(true);
   const [consumingProviders, setConsumingProviders] = useState<Set<string>>(() => new Set());
   const [operationError, setOperationError] = useState<string | null>(null);
   const failures = useRef(0);
   const previousPrimary = useRef(new Map<string, number>());
   const consumptionTimers = useRef(new Map<string, number>());
+  const collapseTimer = useRef<number | null>(null);
+  const hoverSequence = useRef(0);
   const language = normalizeLanguage(preferences.language);
   const t = copy[language];
 
@@ -55,15 +57,12 @@ export default function App() {
   useEffect(() => {
     void refresh(true);
     void getPreferences().then((value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) })).catch(() => setOperationError("Unable to read settings. Defaults are in use."));
-    return () => { for (const timer of consumptionTimers.current.values()) window.clearTimeout(timer); consumptionTimers.current.clear(); };
+    return () => {
+      for (const timer of consumptionTimers.current.values()) window.clearTimeout(timer);
+      consumptionTimers.current.clear();
+      if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current);
+    };
   }, [refresh]);
-
-  useEffect(() => {
-    const updateCompact = () => setCompact(window.innerWidth <= 120 || window.innerHeight <= 120);
-    updateCompact();
-    window.addEventListener("resize", updateCompact);
-    return () => window.removeEventListener("resize", updateCompact);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,10 +112,28 @@ export default function App() {
   }, [preferences]);
 
   const handleHover = useCallback((value: boolean) => {
+    if (collapseTimer.current !== null) {
+      window.clearTimeout(collapseTimer.current);
+      collapseTimer.current = null;
+    }
     setHovered(value);
-    setCompact(!value);
     if (value) void refresh(true);
-    void setWidgetExpanded(value).catch(() => setOperationError(value ? "Widget expand failed." : "Widget collapse failed."));
+    if (value) {
+      const sequence = ++hoverSequence.current;
+      void setWidgetExpanded(true)
+        .then(() => { if (hoverSequence.current === sequence) setCompact(false); })
+        .catch(() => {
+          setCompact(false);
+          setOperationError("Widget expand failed.");
+        });
+      return;
+    }
+    const sequence = ++hoverSequence.current;
+    collapseTimer.current = window.setTimeout(() => {
+      if (hoverSequence.current !== sequence) return;
+      setCompact(true);
+      void setWidgetExpanded(false).catch(() => setOperationError("Widget collapse failed."));
+    }, 180);
   }, [refresh]);
 
   if (!current) return <div className="loading-card" aria-label={t.loadingQuota}><span /><span /><span /></div>;

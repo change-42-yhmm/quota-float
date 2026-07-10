@@ -4,9 +4,10 @@
   "version": "0.1.3",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "test": "vitest run",
+    "dev": "vite --configLoader native",
+    "build": "tsc && vite build --configLoader native",
+    "check:codex": "powershell -ExecutionPolicy Bypass -File scripts/check-codex-update.ps1",
+    "test": "vitest run --configLoader native",
     "tauri": "tauri"
   },
   "dependencies": {

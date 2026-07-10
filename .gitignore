@@ -1,11 +1,13 @@
 /node_modules
 /dist
+/outputs
 /release
 /src-tauri/target
 /.agents
 /.chrome-qa
 /.chrome-qa2
 /.codex
+/.codex-update-check-state.json
 /.idea
 /.vscode
 *.log

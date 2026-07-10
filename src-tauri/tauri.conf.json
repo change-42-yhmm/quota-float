@@ -10,19 +10,21 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "widget",
         "title": "Quota Float",
-        "width": 100,
-        "height": 100,
+        "width": 80,
+        "height": 80,
         "minWidth": 80,
         "minHeight": 80,
         "maxWidth": 360,
         "maxHeight": 360,
-        "resizable": true,
+        "resizable": false,
         "decorations": false,
         "transparent": true,
+        "backgroundColor": "#00000000",
         "alwaysOnTop": true,
         "skipTaskbar": true,
         "shadow": false,

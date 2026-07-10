@@ -50,14 +50,36 @@ export async function setAlwaysOnTop(alwaysOnTop: boolean): Promise<WidgetPrefer
 export async function startDragging(): Promise<void> {
   if (!isTauri()) return;
   const { getCurrentWindow } = await import("@tauri-apps/api/window");
-  await getCurrentWindow().startDragging();
+  const { invoke } = await import("@tauri-apps/api/core");
+  const currentWindow = getCurrentWindow();
+  await invoke("begin_widget_drag");
+  await currentWindow.startDragging();
+  let previous = await currentWindow.outerPosition();
+  let stableTicks = 0;
+  let attempts = 0;
+  const finishWhenStable = window.setInterval(() => {
+    void currentWindow.outerPosition()
+      .then((next) => {
+        attempts += 1;
+        const stable = Math.abs(next.x - previous.x) <= 1 && Math.abs(next.y - previous.y) <= 1;
+        stableTicks = stable ? stableTicks + 1 : 0;
+        previous = next;
+        if (stableTicks >= 3 || attempts >= 25) {
+          window.clearInterval(finishWhenStable);
+          void invoke("finish_widget_drag").catch(() => undefined);
+        }
+      })
+      .catch(() => {
+        window.clearInterval(finishWhenStable);
+        void invoke("finish_widget_drag").catch(() => undefined);
+      });
+  }, 80);
 }
 
 export async function setWidgetExpanded(expanded: boolean): Promise<void> {
   if (!isTauri()) return;
-  const { getCurrentWindow, LogicalSize } = await import("@tauri-apps/api/window");
-  const size = expanded ? new LogicalSize(320, 320) : new LogicalSize(100, 100);
-  await getCurrentWindow().setSize(size);
+  const { invoke } = await import("@tauri-apps/api/core");
+  await invoke(expanded ? "expand_widget" : "collapse_widget");
 }
 
 export async function listenDesktopEvents(handlers: {

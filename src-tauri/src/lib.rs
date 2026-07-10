@@ -13,10 +13,60 @@ use models::{ProviderSnapshot, WidgetPreferences};
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Emitter, Manager, State, WindowEvent,
+    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State, WindowEvent,
 };
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_window_state::Builder as WindowStateBuilder;
+
+const COLLAPSED_LOGICAL_SIZE: f64 = 80.0;
+const EXPANDED_LOGICAL_SIZE: f64 = 320.0;
+const SNAP_THRESHOLD_LOGICAL: f64 = 24.0;
+const POSITION_EPSILON: u32 = 2;
+
+#[derive(Clone, Copy)]
+enum HorizontalDock {
+    Left,
+    Right,
+}
+
+#[derive(Clone, Copy)]
+enum VerticalDock {
+    Top,
+    Bottom,
+}
+
+#[derive(Clone, Copy, Default)]
+struct DockState {
+    horizontal: Option<HorizontalDock>,
+    vertical: Option<VerticalDock>,
+}
+
+impl DockState {
+    fn is_docked(self) -> bool {
+        self.horizontal.is_some() || self.vertical.is_some()
+    }
+}
+
+#[derive(Clone, Copy)]
+struct WidgetRect {
+    position: PhysicalPosition<i32>,
+    size: PhysicalSize<u32>,
+}
+
+#[derive(Clone, Copy)]
+enum WidgetMode {
+    Collapsed,
+    Expanded,
+}
+
+#[derive(Clone, Copy)]
+struct WidgetGeometryState {
+    mode: WidgetMode,
+    dock: DockState,
+    collapsed_rect: WidgetRect,
+    expanded_rect: Option<WidgetRect>,
+    user_moved_expanded: bool,
+}
 
 struct AppState {
     client: reqwest::Client,
@@ -24,6 +74,8 @@ struct AppState {
     preferences_path: PathBuf,
     fetch_lock: tokio::sync::Mutex<()>,
     snapshot_cache: Mutex<Option<(Instant, Vec<ProviderSnapshot>)>>,
+    geometry: Mutex<Option<WidgetGeometryState>>,
+    drag_mode: Mutex<Option<WidgetMode>>,
 }
 
 async fn fetch_snapshots_uncached(state: &State<'_, AppState>) -> Vec<ProviderSnapshot> {
@@ -54,10 +106,11 @@ fn load_preferences(path: &PathBuf) -> WidgetPreferences {
 
 fn persist_preferences(path: &PathBuf, value: &WidgetPreferences) -> Result<(), String> {
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|_| "failed to create settings directory".to_string())?;
+        fs::create_dir_all(parent)
+            .map_err(|_| "failed to create settings directory".to_string())?;
     }
-    let serialized = serde_json::to_vec_pretty(value)
-        .map_err(|_| "failed to serialize settings".to_string())?;
+    let serialized =
+        serde_json::to_vec_pretty(value).map_err(|_| "failed to serialize settings".to_string())?;
     let temporary = path.with_extension("json.tmp");
     let backup = path.with_extension("json.bak");
     let mut file = fs::File::create(&temporary)
@@ -117,6 +170,426 @@ async fn get_snapshots(state: State<'_, AppState>) -> Result<Vec<ProviderSnapsho
 #[tauri::command]
 async fn refresh_snapshots(state: State<'_, AppState>) -> Result<Vec<ProviderSnapshot>, String> {
     Ok(fetch_snapshots_uncached(&state).await)
+}
+
+fn clamp_position_to_monitor(
+    position: PhysicalPosition<i32>,
+    size: PhysicalSize<u32>,
+    monitor: &tauri::Monitor,
+) -> PhysicalPosition<i32> {
+    let monitor_position = monitor.position();
+    let monitor_size = monitor.size();
+    let left = monitor_position.x;
+    let top = monitor_position.y;
+    let right = left + monitor_size.width as i32;
+    let bottom = top + monitor_size.height as i32;
+    PhysicalPosition::new(
+        position.x.clamp(left, right - size.width as i32),
+        position.y.clamp(top, bottom - size.height as i32),
+    )
+}
+
+fn logical_to_physical(value: f64, scale_factor: f64) -> u32 {
+    (value * scale_factor).round().max(1.0) as u32
+}
+
+fn detect_dock(
+    position: PhysicalPosition<i32>,
+    size: PhysicalSize<u32>,
+    monitor: &tauri::Monitor,
+    threshold: i32,
+) -> DockState {
+    let monitor_position = monitor.position();
+    let monitor_size = monitor.size();
+    let left_distance = (position.x - monitor_position.x).abs();
+    let top_distance = (position.y - monitor_position.y).abs();
+    let right_distance =
+        (monitor_position.x + monitor_size.width as i32 - (position.x + size.width as i32)).abs();
+    let bottom_distance =
+        (monitor_position.y + monitor_size.height as i32 - (position.y + size.height as i32)).abs();
+    let horizontal = if left_distance <= threshold || right_distance <= threshold {
+        if left_distance <= right_distance {
+            Some(HorizontalDock::Left)
+        } else {
+            Some(HorizontalDock::Right)
+        }
+    } else {
+        None
+    };
+    let vertical = if top_distance <= threshold || bottom_distance <= threshold {
+        if top_distance <= bottom_distance {
+            Some(VerticalDock::Top)
+        } else {
+            Some(VerticalDock::Bottom)
+        }
+    } else {
+        None
+    };
+    DockState {
+        horizontal,
+        vertical,
+    }
+}
+
+fn snap_position(
+    position: PhysicalPosition<i32>,
+    size: PhysicalSize<u32>,
+    dock: DockState,
+    monitor: &tauri::Monitor,
+) -> PhysicalPosition<i32> {
+    let monitor_position = monitor.position();
+    let monitor_size = monitor.size();
+    let mut next = clamp_position_to_monitor(position, size, monitor);
+    match dock.horizontal {
+        Some(HorizontalDock::Left) => next.x = monitor_position.x,
+        Some(HorizontalDock::Right) => {
+            next.x = monitor_position.x + monitor_size.width as i32 - size.width as i32
+        }
+        None => {}
+    }
+    match dock.vertical {
+        Some(VerticalDock::Top) => next.y = monitor_position.y,
+        Some(VerticalDock::Bottom) => {
+            next.y = monitor_position.y + monitor_size.height as i32 - size.height as i32
+        }
+        None => {}
+    }
+    next
+}
+
+fn expanded_position(
+    collapsed: WidgetRect,
+    expanded_size: PhysicalSize<u32>,
+    dock: DockState,
+    monitor: &tauri::Monitor,
+) -> PhysicalPosition<i32> {
+    let monitor_position = monitor.position();
+    let monitor_size = monitor.size();
+    let monitor_right = monitor_position.x + monitor_size.width as i32;
+    let monitor_bottom = monitor_position.y + monitor_size.height as i32;
+    let collapsed_right = collapsed.position.x + collapsed.size.width as i32;
+    let collapsed_bottom = collapsed.position.y + collapsed.size.height as i32;
+    let x = match dock.horizontal {
+        Some(HorizontalDock::Left) => collapsed.position.x,
+        Some(HorizontalDock::Right) => collapsed_right - expanded_size.width as i32,
+        None if collapsed.position.x + expanded_size.width as i32 > monitor_right => {
+            collapsed_right - expanded_size.width as i32
+        }
+        None => collapsed.position.x,
+    };
+    let y = match dock.vertical {
+        Some(VerticalDock::Top) => collapsed.position.y,
+        Some(VerticalDock::Bottom) => collapsed_bottom - expanded_size.height as i32,
+        None if collapsed.position.y + expanded_size.height as i32 > monitor_bottom => {
+            collapsed_bottom - expanded_size.height as i32
+        }
+        None => collapsed.position.y,
+    };
+    clamp_position_to_monitor(PhysicalPosition::new(x, y), expanded_size, monitor)
+}
+
+fn collapsed_geometry_for_expand(
+    current_position: PhysicalPosition<i32>,
+    collapsed_size: PhysicalSize<u32>,
+    monitor: &tauri::Monitor,
+    threshold: i32,
+    previous: Option<WidgetGeometryState>,
+) -> (WidgetRect, DockState) {
+    if let Some(previous) = previous {
+        let can_reuse_anchor = matches!(previous.mode, WidgetMode::Collapsed)
+            || (matches!(previous.mode, WidgetMode::Expanded) && !previous.user_moved_expanded);
+        if can_reuse_anchor {
+            let position = if previous.dock.is_docked() {
+                snap_position(
+                    previous.collapsed_rect.position,
+                    collapsed_size,
+                    previous.dock,
+                    monitor,
+                )
+            } else {
+                clamp_position_to_monitor(previous.collapsed_rect.position, collapsed_size, monitor)
+            };
+            return (
+                WidgetRect {
+                    position,
+                    size: collapsed_size,
+                },
+                previous.dock,
+            );
+        }
+    }
+
+    let current_collapsed = WidgetRect {
+        position: clamp_position_to_monitor(current_position, collapsed_size, monitor),
+        size: collapsed_size,
+    };
+    let dock = detect_dock(
+        current_collapsed.position,
+        collapsed_size,
+        monitor,
+        threshold,
+    );
+    let position = if dock.is_docked() {
+        snap_position(current_collapsed.position, collapsed_size, dock, monitor)
+    } else {
+        current_collapsed.position
+    };
+    (
+        WidgetRect {
+            position,
+            size: collapsed_size,
+        },
+        dock,
+    )
+}
+
+fn current_widget_rect(window: &tauri::WebviewWindow) -> Result<WidgetRect, String> {
+    Ok(WidgetRect {
+        position: window
+            .outer_position()
+            .map_err(|_| "failed to read widget position".to_string())?,
+        size: window
+            .outer_size()
+            .map_err(|_| "failed to read widget size".to_string())?,
+    })
+}
+
+fn monitor_and_scale(
+    window: &tauri::WebviewWindow,
+) -> Result<(Option<tauri::Monitor>, f64), String> {
+    let monitor = window
+        .current_monitor()
+        .map_err(|_| "failed to read monitor".to_string())?;
+    let scale_factor = monitor
+        .as_ref()
+        .map(|item| item.scale_factor())
+        .unwrap_or(1.0);
+    Ok((monitor, scale_factor))
+}
+
+fn infer_mode(rect: WidgetRect, collapsed_size: PhysicalSize<u32>) -> WidgetMode {
+    if rect.size.width <= collapsed_size.width + POSITION_EPSILON
+        && rect.size.height <= collapsed_size.height + POSITION_EPSILON
+    {
+        WidgetMode::Collapsed
+    } else {
+        WidgetMode::Expanded
+    }
+}
+
+#[tauri::command]
+fn expand_widget(app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let window = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window missing".to_string())?;
+    let current = current_widget_rect(&window)?;
+    let (monitor, scale_factor) = monitor_and_scale(&window)?;
+    let collapsed_size = PhysicalSize::new(
+        logical_to_physical(COLLAPSED_LOGICAL_SIZE, scale_factor),
+        logical_to_physical(COLLAPSED_LOGICAL_SIZE, scale_factor),
+    );
+    let expanded_size = PhysicalSize::new(
+        logical_to_physical(EXPANDED_LOGICAL_SIZE, scale_factor),
+        logical_to_physical(EXPANDED_LOGICAL_SIZE, scale_factor),
+    );
+    let Some(monitor) = monitor else {
+        window
+            .set_size(expanded_size)
+            .map_err(|_| "failed to resize widget".to_string())?;
+        return Ok(());
+    };
+    let threshold = logical_to_physical(SNAP_THRESHOLD_LOGICAL, scale_factor) as i32;
+    let previous = state.geometry.lock().ok().and_then(|value| *value);
+    let (collapsed_rect, dock) = collapsed_geometry_for_expand(
+        current.position,
+        collapsed_size,
+        &monitor,
+        threshold,
+        previous,
+    );
+    let expanded_rect = WidgetRect {
+        position: expanded_position(collapsed_rect, expanded_size, dock, &monitor),
+        size: expanded_size,
+    };
+
+    if let Ok(mut geometry) = state.geometry.lock() {
+        *geometry = Some(WidgetGeometryState {
+            mode: WidgetMode::Expanded,
+            dock,
+            collapsed_rect,
+            expanded_rect: Some(expanded_rect),
+            user_moved_expanded: false,
+        });
+    }
+
+    window
+        .set_position(expanded_rect.position)
+        .map_err(|_| "failed to position widget".to_string())?;
+    window
+        .set_size(expanded_size)
+        .map_err(|_| "failed to resize widget".to_string())
+}
+
+#[tauri::command]
+fn collapse_widget(app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let window = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window missing".to_string())?;
+    let current = current_widget_rect(&window)?;
+    let (monitor, scale_factor) = monitor_and_scale(&window)?;
+    let collapsed_size = PhysicalSize::new(
+        logical_to_physical(COLLAPSED_LOGICAL_SIZE, scale_factor),
+        logical_to_physical(COLLAPSED_LOGICAL_SIZE, scale_factor),
+    );
+    let Some(monitor) = monitor else {
+        window
+            .set_size(collapsed_size)
+            .map_err(|_| "failed to resize widget".to_string())?;
+        return Ok(());
+    };
+    let threshold = logical_to_physical(SNAP_THRESHOLD_LOGICAL, scale_factor) as i32;
+    let previous = state.geometry.lock().ok().and_then(|value| *value);
+    let user_moved_expanded = previous
+        .map(|value| value.user_moved_expanded)
+        .unwrap_or(false);
+    let candidate = if user_moved_expanded {
+        current.position
+    } else {
+        previous
+            .map(|value| value.collapsed_rect.position)
+            .unwrap_or(current.position)
+    };
+    let dock = detect_dock(candidate, collapsed_size, &monitor, threshold);
+    let next_position = if dock.is_docked() {
+        snap_position(candidate, collapsed_size, dock, &monitor)
+    } else {
+        clamp_position_to_monitor(candidate, collapsed_size, &monitor)
+    };
+    let collapsed_rect = WidgetRect {
+        position: next_position,
+        size: collapsed_size,
+    };
+    if let Ok(mut geometry) = state.geometry.lock() {
+        *geometry = Some(WidgetGeometryState {
+            mode: WidgetMode::Collapsed,
+            dock,
+            collapsed_rect,
+            expanded_rect: None,
+            user_moved_expanded: false,
+        });
+    }
+    window
+        .set_size(collapsed_size)
+        .map_err(|_| "failed to resize widget".to_string())?;
+    window
+        .set_position(next_position)
+        .map_err(|_| "failed to position widget".to_string())
+}
+
+#[tauri::command]
+fn begin_widget_drag(app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let window = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window missing".to_string())?;
+    let current = current_widget_rect(&window)?;
+    let (_, scale_factor) = monitor_and_scale(&window)?;
+    let collapsed_size = PhysicalSize::new(
+        logical_to_physical(COLLAPSED_LOGICAL_SIZE, scale_factor),
+        logical_to_physical(COLLAPSED_LOGICAL_SIZE, scale_factor),
+    );
+    let mode = state
+        .geometry
+        .lock()
+        .ok()
+        .and_then(|value| *value)
+        .map(|value| value.mode)
+        .unwrap_or_else(|| infer_mode(current, collapsed_size));
+    if let Ok(mut drag_mode) = state.drag_mode.lock() {
+        *drag_mode = Some(mode);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn finish_widget_drag(app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let window = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window missing".to_string())?;
+    let current = current_widget_rect(&window)?;
+    let (monitor, scale_factor) = monitor_and_scale(&window)?;
+    let Some(monitor) = monitor else {
+        return Ok(());
+    };
+    let threshold = logical_to_physical(SNAP_THRESHOLD_LOGICAL, scale_factor) as i32;
+    let collapsed_size = PhysicalSize::new(
+        logical_to_physical(COLLAPSED_LOGICAL_SIZE, scale_factor),
+        logical_to_physical(COLLAPSED_LOGICAL_SIZE, scale_factor),
+    );
+    let expanded_size = PhysicalSize::new(
+        logical_to_physical(EXPANDED_LOGICAL_SIZE, scale_factor),
+        logical_to_physical(EXPANDED_LOGICAL_SIZE, scale_factor),
+    );
+    let mode = state
+        .drag_mode
+        .lock()
+        .ok()
+        .and_then(|mut value| value.take())
+        .or_else(|| {
+            state
+                .geometry
+                .lock()
+                .ok()
+                .and_then(|value| *value)
+                .map(|value| value.mode)
+        })
+        .unwrap_or_else(|| infer_mode(current, collapsed_size));
+
+    match mode {
+        WidgetMode::Collapsed => {
+            let dock = detect_dock(current.position, collapsed_size, &monitor, threshold);
+            let next_position = if dock.is_docked() {
+                snap_position(current.position, collapsed_size, dock, &monitor)
+            } else {
+                clamp_position_to_monitor(current.position, collapsed_size, &monitor)
+            };
+            let collapsed_rect = WidgetRect {
+                position: next_position,
+                size: collapsed_size,
+            };
+            window
+                .set_position(next_position)
+                .map_err(|_| "failed to position widget".to_string())?;
+            if let Ok(mut geometry) = state.geometry.lock() {
+                *geometry = Some(WidgetGeometryState {
+                    mode: WidgetMode::Collapsed,
+                    dock,
+                    collapsed_rect,
+                    expanded_rect: None,
+                    user_moved_expanded: false,
+                });
+            }
+        }
+        WidgetMode::Expanded => {
+            let current_position =
+                clamp_position_to_monitor(current.position, expanded_size, &monitor);
+            let updated_rect = WidgetRect {
+                position: current_position,
+                size: expanded_size,
+            };
+            window
+                .set_position(current_position)
+                .map_err(|_| "failed to position widget".to_string())?;
+            if let Ok(mut geometry) = state.geometry.lock() {
+                if let Some(mut value) = *geometry {
+                    value.mode = WidgetMode::Expanded;
+                    value.expanded_rect = Some(updated_rect);
+                    value.user_moved_expanded = true;
+                    *geometry = Some(value);
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -210,7 +683,13 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let refresh = MenuItem::with_id(app, "refresh", "Refresh now", true, None::<&str>)?;
     let unlock = MenuItem::with_id(app, "unlock", "Unlock widget", true, None::<&str>)?;
     let pin = MenuItem::with_id(app, "pin", "Pin / Unpin Codex", true, None::<&str>)?;
-    let language = MenuItem::with_id(app, "language", "Switch Language / 切换语言", true, None::<&str>)?;
+    let language = MenuItem::with_id(
+        app,
+        "language",
+        "Switch Language / 切换语言",
+        true,
+        None::<&str>,
+    )?;
     let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
     let autostart = CheckMenuItem::with_id(
         app,
@@ -221,7 +700,10 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &refresh, &unlock, &pin, &language, &autostart, &quit])?;
+    let menu = Menu::with_items(
+        app,
+        &[&show, &refresh, &unlock, &pin, &language, &autostart, &quit],
+    )?;
     let mut builder = TrayIconBuilder::with_id("main")
         .menu(&menu)
         .tooltip("Quota Float");
@@ -333,6 +815,8 @@ pub fn run() {
                 preferences_path,
                 fetch_lock: tokio::sync::Mutex::new(()),
                 snapshot_cache: Mutex::new(None),
+                geometry: Mutex::new(None),
+                drag_mode: Mutex::new(None),
             });
             if setup_tray(app).is_err() {
                 eprintln!("tray setup failed; enabling taskbar fallback");
@@ -351,6 +835,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_snapshots,
             refresh_snapshots,
+            expand_widget,
+            collapse_widget,
+            begin_widget_drag,
+            finish_widget_drag,
             get_preferences,
             set_preferences,
             set_widget_locked,

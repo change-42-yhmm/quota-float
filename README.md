@@ -89,6 +89,14 @@ npm run build
 npm run tauri dev
 ```
 
+After Codex Desktop updates, run the compatibility check:
+
+```bash
+npm run check:codex
+```
+
+See [docs/CODEX-UPDATE-CHECK.md](docs/CODEX-UPDATE-CHECK.md) for the automated update-check workflow and optional Task Scheduler setup.
+
 ## Build
 
 ```bash

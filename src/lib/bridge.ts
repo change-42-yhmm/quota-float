@@ -25,12 +25,44 @@ interface SavedPhysicalPosition {
 }
 
 let savedOrbPosition: SavedPhysicalPosition | null = null;
+let expandedDragRequested = false;
+let dragStartPosition: SavedPhysicalPosition | null = null;
+let pendingCollapsedPosition: SavedPhysicalPosition | null = null;
+let collapseResizeCompleted = false;
 let widgetTransition: Promise<void> = Promise.resolve();
 
 function enqueueWidgetTransition(operation: () => Promise<void>): Promise<void> {
   const next = widgetTransition.then(operation, operation);
   widgetTransition = next.catch(() => undefined);
   return next;
+}
+
+function clampPhysicalAxis(target: number, origin: number, areaSize: number, itemSize: number): number {
+  if (areaSize <= itemSize) return origin;
+  return Math.min(Math.max(target, origin), origin + areaSize - itemSize);
+}
+
+function calculateDraggedOrbPosition(
+  cardPosition: SavedPhysicalPosition,
+  cardSize: { width: number; height: number },
+  orbSize: { width: number; height: number },
+  workArea: { x: number; y: number; width: number; height: number },
+): SavedPhysicalPosition {
+  const leftGap = Math.abs(cardPosition.x - workArea.x);
+  const rightGap = Math.abs(workArea.x + workArea.width - (cardPosition.x + cardSize.width));
+  const topGap = Math.abs(cardPosition.y - workArea.y);
+  const bottomGap = Math.abs(workArea.y + workArea.height - (cardPosition.y + cardSize.height));
+  const targetX = rightGap < leftGap
+    ? cardPosition.x + cardSize.width - orbSize.width
+    : cardPosition.x;
+  const targetY = bottomGap < topGap
+    ? cardPosition.y + cardSize.height - orbSize.height
+    : cardPosition.y;
+
+  return {
+    x: clampPhysicalAxis(targetX, workArea.x, workArea.width, orbSize.width),
+    y: clampPhysicalAxis(targetY, workArea.y, workArea.height, orbSize.height),
+  };
 }
 
 export const isTauri = () => "__TAURI_INTERNALS__" in window;
@@ -65,10 +97,23 @@ export async function setAlwaysOnTop(alwaysOnTop: boolean): Promise<WidgetPrefer
   return invoke<WidgetPreferences>("set_widget_always_on_top", { alwaysOnTop });
 }
 
-export async function startDragging(): Promise<void> {
-  if (!isTauri()) return;
-  const { getCurrentWindow } = await import("@tauri-apps/api/window");
-  await getCurrentWindow().startDragging();
+export function startDragging(): Promise<void> {
+  if (!isTauri()) return Promise.resolve();
+  return enqueueWidgetTransition(async () => {
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    const currentWindow = getCurrentWindow();
+    if (savedOrbPosition) {
+      expandedDragRequested = true;
+      try {
+        const position = await currentWindow.outerPosition();
+        dragStartPosition = { x: position.x, y: position.y };
+      } catch {
+        dragStartPosition = null;
+      }
+    }
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("start_widget_dragging");
+  });
 }
 
 async function applyWidgetExpanded(expanded: boolean): Promise<void> {
@@ -82,13 +127,64 @@ async function applyWidgetExpanded(expanded: boolean): Promise<void> {
   const logicalSize = expanded ? EXPANDED_SIZE : COLLAPSED_SIZE;
 
   if (!expanded) {
+    let restore = pendingCollapsedPosition ?? savedOrbPosition;
+    if (!pendingCollapsedPosition && restore && expandedDragRequested) {
+      try {
+        const [position, cardSize, scaleFactor, monitor] = await Promise.all([
+          currentWindow.outerPosition(),
+          currentWindow.outerSize(),
+          currentWindow.scaleFactor(),
+          currentMonitor(),
+        ]);
+        const moved = !dragStartPosition
+          || Math.abs(position.x - dragStartPosition.x) > 1
+          || Math.abs(position.y - dragStartPosition.y) > 1;
+        if (moved && monitor) {
+          restore = calculateDraggedOrbPosition(
+            { x: position.x, y: position.y },
+            { width: cardSize.width, height: cardSize.height },
+            {
+              width: Math.round(COLLAPSED_SIZE * scaleFactor),
+              height: Math.round(COLLAPSED_SIZE * scaleFactor),
+            },
+            {
+              x: monitor.workArea.position.x,
+              y: monitor.workArea.position.y,
+              width: monitor.workArea.size.width,
+              height: monitor.workArea.size.height,
+            },
+          );
+        }
+      } catch {
+        // If live geometry is unavailable, keep the original pre-expansion position.
+      }
+    }
+    pendingCollapsedPosition = restore;
     await currentWindow.setSize(new LogicalSize(logicalSize, logicalSize));
-    if (savedOrbPosition) {
-      const restore = savedOrbPosition;
+    collapseResizeCompleted = true;
+    if (restore) {
       await currentWindow.setPosition(new PhysicalPosition(restore.x, restore.y));
       savedOrbPosition = null;
+      expandedDragRequested = false;
+      dragStartPosition = null;
+      pendingCollapsedPosition = null;
+      collapseResizeCompleted = false;
     }
     return;
+  }
+
+  if (savedOrbPosition && pendingCollapsedPosition) {
+    if (collapseResizeCompleted) {
+      const recovery = pendingCollapsedPosition;
+      await currentWindow.setPosition(new PhysicalPosition(recovery.x, recovery.y));
+      savedOrbPosition = null;
+      expandedDragRequested = false;
+      dragStartPosition = null;
+      pendingCollapsedPosition = null;
+      collapseResizeCompleted = false;
+    } else {
+      pendingCollapsedPosition = null;
+    }
   }
 
   if (savedOrbPosition) {
@@ -105,6 +201,10 @@ async function applyWidgetExpanded(expanded: boolean): Promise<void> {
     return;
   }
   savedOrbPosition = originalPosition;
+  expandedDragRequested = false;
+  dragStartPosition = null;
+  pendingCollapsedPosition = null;
+  collapseResizeCompleted = false;
 
   let geometry: {
     monitor: Awaited<ReturnType<typeof currentMonitor>>;

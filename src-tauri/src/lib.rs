@@ -1,4 +1,5 @@
 mod codex;
+mod codex_host;
 mod models;
 
 use std::{
@@ -16,7 +17,6 @@ use tauri::{
     AppHandle, Emitter, Manager, State, WindowEvent,
 };
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
-use tauri_plugin_window_state::Builder as WindowStateBuilder;
 
 struct AppState {
     client: reqwest::Client,
@@ -206,10 +206,8 @@ fn set_widget_always_on_top(
 }
 
 fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "show", "Show / Hide", true, None::<&str>)?;
     let refresh = MenuItem::with_id(app, "refresh", "Refresh now", true, None::<&str>)?;
     let unlock = MenuItem::with_id(app, "unlock", "Unlock widget", true, None::<&str>)?;
-    let pin = MenuItem::with_id(app, "pin", "Pin / Unpin Codex", true, None::<&str>)?;
     let language = MenuItem::with_id(app, "language", "Switch Language / 切换语言", true, None::<&str>)?;
     let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
     let autostart = CheckMenuItem::with_id(
@@ -221,7 +219,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &refresh, &unlock, &pin, &language, &autostart, &quit])?;
+    let menu = Menu::with_items(app, &[&refresh, &unlock, &language, &autostart, &quit])?;
     let mut builder = TrayIconBuilder::with_id("main")
         .menu(&menu)
         .tooltip("Quota Float");
@@ -231,16 +229,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let autostart_menu = autostart.clone();
     builder
         .on_menu_event(move |app, event| match event.id.as_ref() {
-            "show" => {
-                if let Some(window) = app.get_webview_window("widget") {
-                    if window.is_visible().unwrap_or(false) {
-                        let _ = window.hide();
-                    } else {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
-                }
-            }
             "refresh" => {
                 let _ = app.emit_to("widget", "refresh-requested", ());
             }
@@ -249,19 +237,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                 if let Some(state) = app.try_state::<AppState>() {
                     if let Ok(mut prefs) = state.preferences.lock() {
                         prefs.locked = false;
-                        let _ = persist_preferences(&state.preferences_path, &prefs);
-                        let _ = app.emit_to("widget", "preferences-changed", prefs.clone());
-                    }
-                }
-            }
-            "pin" => {
-                if let Some(state) = app.try_state::<AppState>() {
-                    if let Ok(mut prefs) = state.preferences.lock() {
-                        prefs.pinned_provider = if prefs.pinned_provider.is_some() {
-                            None
-                        } else {
-                            Some("codex".into())
-                        };
                         let _ = persist_preferences(&state.preferences_path, &prefs);
                         let _ = app.emit_to("widget", "preferences-changed", prefs.clone());
                     }
@@ -316,7 +291,6 @@ pub fn run() {
             MacosLauncher::LaunchAgent,
             None,
         ))
-        .plugin(WindowStateBuilder::default().build())
         .setup(|app| {
             let data_dir = app.path().app_config_dir()?;
             let preferences_path = data_dir.join("preferences.json");
@@ -344,8 +318,9 @@ pub fn run() {
                 let _ = apply_lock(app.handle(), true);
             }
             if let Some(window) = app.get_webview_window("widget") {
-                let _ = window.set_always_on_top(preferences.always_on_top);
+                let _ = window.set_always_on_top(false);
             }
+            codex_host::start(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

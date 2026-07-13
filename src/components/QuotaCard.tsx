@@ -1,4 +1,4 @@
-import { ArrowClockwise, ArrowDown, ArrowUp, ClockCounterClockwise, CloudSlash, PushPin, PushPinSlash, SignIn, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowDown, ArrowUp, ClockCounterClockwise, CloudSlash, SignIn, WarningCircle } from "@phosphor-icons/react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { clampPercent, formatDateTime, formatResetDate, formatResetTime, quotaTier } from "../lib/format";
 import { copy, normalizeLanguage } from "../lib/i18n";
@@ -12,7 +12,6 @@ interface Props {
   onPrevious: () => void;
   onNext: () => void;
   onTogglePin: () => void;
-  onLock: () => void;
   onLanguage: () => void;
   onDrag: () => void;
   onHover: (hovered: boolean) => void;
@@ -37,7 +36,7 @@ function localizedBackendMessage(message: string | null, language: Language): st
   if (normalized.includes("rate limited")) return "请求过于频繁，将稍后自动重试。";
   if (normalized.includes("network")) return "网络不可用，将自动重试。";
   if (normalized.includes("format")) return "额度响应格式已变化。";
-  if (normalized.includes("missing the 5h")) return "额度响应缺少 5 小时窗口。";
+  if (normalized.includes("missing the weekly")) return "额度响应缺少每周窗口。";
   if (normalized.includes("refresh is already running")) return "额度正在刷新，请稍候。";
   return message;
 }
@@ -49,7 +48,6 @@ export const QuotaCard = memo(function QuotaCard({
   onPrevious,
   onNext,
   onTogglePin: _onTogglePin,
-  onLock,
   onLanguage,
   onDrag,
   onHover,
@@ -61,8 +59,7 @@ export const QuotaCard = memo(function QuotaCard({
   const [showCreditTip, setShowCreditTip] = useState(initialShowCreditTip);
   const language = normalizeLanguage(preferences.language);
   const t = copy[language];
-  const primary = snapshot.shortWindow ? clampPercent(snapshot.shortWindow.remainingPercent) : null;
-  const weekly = snapshot.weeklyWindow ? clampPercent(snapshot.weeklyWindow.remainingPercent) : null;
+  const primary = snapshot.weeklyWindow ? clampPercent(snapshot.weeklyWindow.remainingPercent) : null;
   const staleAge = Date.now() - new Date(snapshot.updatedAt).getTime();
   const staleExpired = snapshot.status === "stale" && staleAge > 30 * 60_000;
   const available = snapshot.status === "ok" || (snapshot.status === "stale" && !staleExpired);
@@ -103,9 +100,6 @@ export const QuotaCard = memo(function QuotaCard({
             {providerCount > 1 ? <button onClick={onNext} aria-label={t.serviceNext}><ArrowDown /></button> : null}
             <span className={`usage-indicator usage-indicator--${indicatorState}`} role="status" aria-label={indicatorLabel} title={indicatorLabel}><i /></span>
             <button className="language-button" onClick={onLanguage} aria-label={t.switchLanguage} title={t.switchLanguage}>{language === "en" ? "中" : "EN"}</button>
-            <button onClick={onLock} aria-label={preferences.alwaysOnTop ? t.pinOff : t.pinOn} title={preferences.alwaysOnTop ? t.pinOff : t.pinOn}>
-              {preferences.alwaysOnTop ? <PushPin /> : <PushPinSlash />}
-            </button>
           </nav>
         ) : null}
       </header>
@@ -118,11 +112,10 @@ export const QuotaCard = memo(function QuotaCard({
           <div className="progress" role="progressbar" aria-label={t.availableLabel(primary)} aria-valuemin={0} aria-valuemax={100} aria-valuenow={primary}>
             <span style={{ width: `${primary}%` }} />
           </div>
-          <p className="reset-time">{formatResetTime(snapshot.shortWindow?.resetsAt ?? null, new Date(), language)}</p>
+          <p className="reset-time">{formatResetTime(snapshot.weeklyWindow?.resetsAt ?? null, new Date(), language)}</p>
           <footer className="card-footer">
             <div className="weekly-metric">
               <p>{t.weeklyUntil(formatResetDate(snapshot.weeklyWindow?.resetsAt ?? null, language))}</p>
-              <strong>{weekly ?? "--"}<small>{weekly === null ? "" : "%"}</small></strong>
               <div className="reset-credit-row" onMouseDown={(event) => event.stopPropagation()}>
                 <span>{snapshot.resetCredits === null ? t.resetCreditUnknown : t.resetCredits(snapshot.resetCredits)}</span>
                 {snapshot.resetCredits !== null && snapshot.resetCredits > 0 ? (
@@ -160,7 +153,7 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
   const idleTimer = useRef<number | null>(null);
   const activeLanguage = normalizeLanguage(language);
   const t = copy[activeLanguage];
-  const primary = snapshot.shortWindow ? clampPercent(snapshot.shortWindow.remainingPercent) : null;
+  const primary = snapshot.weeklyWindow ? clampPercent(snapshot.weeklyWindow.remainingPercent) : null;
   const tier = quotaTier(primary);
   const available = snapshot.status === "ok" && primary !== null;
 

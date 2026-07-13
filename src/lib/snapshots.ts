@@ -4,7 +4,7 @@ export function mergeSnapshots(current: ProviderSnapshot[], incoming: ProviderSn
   return incoming.map((next) => {
     if (next.status === "ok") return next;
     if (next.status === "signed_out") return next;
-    const previous = current.find((item) => item.provider === next.provider && item.shortWindow);
+    const previous = current.find((item) => item.provider === next.provider && item.weeklyWindow);
     return previous
       ? { ...previous, status: "stale", message: next.message, updatedAt: previous.updatedAt }
       : next;

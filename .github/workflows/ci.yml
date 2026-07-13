@@ -25,11 +25,13 @@ jobs:
         include:
           - os: windows-latest
             artifact-name: quota-float-windows-unsigned
-            build-command: npm run tauri -- build
+            build-command: >-
+              npm run tauri -- build --config '{"bundle":{"createUpdaterArtifacts":false}}'
             artifact-path: src-tauri/target/release/bundle/**
           - os: macos-latest
             artifact-name: quota-float-macos-universal-unsigned
-            build-command: npm run tauri -- build --target universal-apple-darwin
+            build-command: >-
+              npm run tauri -- build --target universal-apple-darwin --config '{"bundle":{"createUpdaterArtifacts":false}}'
             artifact-path: src-tauri/target/universal-apple-darwin/release/bundle/**
     runs-on: ${{ matrix.os }}
     steps:

@@ -1,6 +1,6 @@
 import type { ProviderSnapshot, WidgetPreferences } from "../types";
 
-const defaultPreferences: WidgetPreferences = { locked: false, alwaysOnTop: true, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN" };
+const defaultPreferences: WidgetPreferences = { locked: false, panelVisible: true, alwaysOnTop: true, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN" };
 
 const mockSnapshot: ProviderSnapshot = {
   provider: "codex",

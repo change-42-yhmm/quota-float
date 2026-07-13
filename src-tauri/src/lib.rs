@@ -18,9 +18,9 @@ use tauri::{
 };
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 
-struct AppState {
+pub(crate) struct AppState {
     client: reqwest::Client,
-    preferences: Mutex<WidgetPreferences>,
+    pub(crate) preferences: Mutex<WidgetPreferences>,
     preferences_path: PathBuf,
     fetch_lock: tokio::sync::Mutex<()>,
     snapshot_cache: Mutex<Option<(Instant, Vec<ProviderSnapshot>)>>,
@@ -54,10 +54,11 @@ fn load_preferences(path: &PathBuf) -> WidgetPreferences {
 
 fn persist_preferences(path: &PathBuf, value: &WidgetPreferences) -> Result<(), String> {
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|_| "failed to create settings directory".to_string())?;
+        fs::create_dir_all(parent)
+            .map_err(|_| "failed to create settings directory".to_string())?;
     }
-    let serialized = serde_json::to_vec_pretty(value)
-        .map_err(|_| "failed to serialize settings".to_string())?;
+    let serialized =
+        serde_json::to_vec_pretty(value).map_err(|_| "failed to serialize settings".to_string())?;
     let temporary = path.with_extension("json.tmp");
     let backup = path.with_extension("json.bak");
     let mut file = fs::File::create(&temporary)
@@ -142,6 +143,41 @@ fn set_preferences(
     Ok(())
 }
 
+fn apply_panel_visibility(app: &AppHandle, visible: bool) {
+    if let Some(window) = app.get_webview_window("widget") {
+        if visible {
+            #[cfg(not(windows))]
+            let _ = window.show();
+        } else {
+            let _ = window.hide();
+        }
+    }
+}
+
+fn update_panel_visibility(app: &AppHandle, visible: bool) -> Result<WidgetPreferences, String> {
+    let state = app
+        .try_state::<AppState>()
+        .ok_or_else(|| "settings unavailable".to_string())?;
+    let mut preferences = state
+        .preferences
+        .lock()
+        .map_err(|_| "settings unavailable".to_string())?;
+    let previous = preferences.clone();
+    let mut next = previous.clone();
+    next.panel_visible = visible;
+    persist_preferences(&state.preferences_path, &next)?;
+    *preferences = next.clone();
+    drop(preferences);
+    apply_panel_visibility(app, visible);
+    let _ = app.emit_to("widget", "preferences-changed", next.clone());
+    Ok(next)
+}
+
+#[tauri::command]
+fn set_panel_visible(visible: bool, app: AppHandle) -> Result<WidgetPreferences, String> {
+    update_panel_visibility(&app, visible)
+}
+
 fn apply_lock(app: &AppHandle, locked: bool) -> Result<(), String> {
     let window = app
         .get_webview_window("widget")
@@ -206,9 +242,29 @@ fn set_widget_always_on_top(
 }
 
 fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
+    let panel_visible = app
+        .state::<AppState>()
+        .preferences
+        .lock()
+        .map(|prefs| prefs.panel_visible)
+        .unwrap_or(true);
+    let show_panel = CheckMenuItem::with_id(
+        app,
+        "show_panel",
+        "Show quota panel / 显示额度面板",
+        true,
+        panel_visible,
+        None::<&str>,
+    )?;
     let refresh = MenuItem::with_id(app, "refresh", "Refresh now", true, None::<&str>)?;
     let unlock = MenuItem::with_id(app, "unlock", "Unlock widget", true, None::<&str>)?;
-    let language = MenuItem::with_id(app, "language", "Switch Language / 切换语言", true, None::<&str>)?;
+    let language = MenuItem::with_id(
+        app,
+        "language",
+        "Switch Language / 切换语言",
+        true,
+        None::<&str>,
+    )?;
     let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
     let autostart = CheckMenuItem::with_id(
         app,
@@ -219,7 +275,10 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&refresh, &unlock, &language, &autostart, &quit])?;
+    let menu = Menu::with_items(
+        app,
+        &[&show_panel, &refresh, &unlock, &language, &autostart, &quit],
+    )?;
     let mut builder = TrayIconBuilder::with_id("main")
         .menu(&menu)
         .tooltip("Quota Float");
@@ -227,8 +286,28 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         builder = builder.icon(icon.clone());
     }
     let autostart_menu = autostart.clone();
+    let show_panel_menu = show_panel.clone();
+    let show_panel_click_menu = show_panel.clone();
     builder
         .on_menu_event(move |app, event| match event.id.as_ref() {
+            "show_panel" => {
+                let visible = app
+                    .try_state::<AppState>()
+                    .and_then(|state| {
+                        state
+                            .preferences
+                            .lock()
+                            .ok()
+                            .map(|prefs| !prefs.panel_visible)
+                    })
+                    .unwrap_or(true);
+                match update_panel_visibility(app, visible) {
+                    Ok(_) => {
+                        let _ = show_panel_menu.set_checked(visible);
+                    }
+                    Err(_) => eprintln!("panel visibility update failed"),
+                }
+            }
             "refresh" => {
                 let _ = app.emit_to("widget", "refresh-requested", ());
             }
@@ -275,6 +354,18 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
             "quit" => app.exit(0),
             _ => {}
         })
+        .on_tray_icon_event(move |tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                if update_panel_visibility(tray.app_handle(), true).is_ok() {
+                    let _ = show_panel_click_menu.set_checked(true);
+                }
+            }
+        })
         .build(app)?;
     Ok(())
 }
@@ -282,10 +373,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
-            if let Some(window) = app.get_webview_window("widget") {
-                let _ = window.show();
-                let _ = window.set_focus();
-            }
+            let _ = update_panel_visibility(app, true);
         }))
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
@@ -317,6 +405,7 @@ pub fn run() {
             if preferences.locked {
                 let _ = apply_lock(app.handle(), true);
             }
+            apply_panel_visibility(app.handle(), preferences.panel_visible);
             if let Some(window) = app.get_webview_window("widget") {
                 let _ = window.set_always_on_top(false);
             }
@@ -328,22 +417,10 @@ pub fn run() {
             refresh_snapshots,
             get_preferences,
             set_preferences,
+            set_panel_visible,
             set_widget_locked,
             set_widget_always_on_top
         ])
-        .on_tray_icon_event(|app, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                ..
-            } = event
-            {
-                if let Some(window) = app.get_webview_window("widget") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-        })
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();

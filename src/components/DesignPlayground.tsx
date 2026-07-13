@@ -13,7 +13,7 @@ const preview: ProviderSnapshot = {
   status: "ok",
   message: null,
 };
-const preferences: WidgetPreferences = { locked: false, alwaysOnTop: true, pinnedProvider: "codex", autoRotateSeconds: 12, language: "en" };
+const preferences: WidgetPreferences = { locked: false, panelVisible: true, alwaysOnTop: true, pinnedProvider: "codex", autoRotateSeconds: 12, language: "en" };
 
 interface Values {
   radius: number;

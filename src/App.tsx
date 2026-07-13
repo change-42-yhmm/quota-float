@@ -6,7 +6,7 @@ import { copy, nextLanguage, normalizeLanguage } from "./lib/i18n";
 import { mergeSnapshots } from "./lib/snapshots";
 import type { ProviderSnapshot, WidgetPreferences } from "./types";
 
-const DEFAULT_PREFS: WidgetPreferences = { locked: false, alwaysOnTop: true, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN" };
+const DEFAULT_PREFS: WidgetPreferences = { locked: false, panelVisible: true, alwaysOnTop: true, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN" };
 
 export default function App() {
   const [snapshots, setSnapshots] = useState<ProviderSnapshot[]>([]);

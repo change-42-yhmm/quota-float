@@ -42,6 +42,8 @@ impl ProviderSnapshot {
 #[serde(rename_all = "camelCase")]
 pub struct WidgetPreferences {
     pub locked: bool,
+    #[serde(default = "default_panel_visible")]
+    pub panel_visible: bool,
     #[serde(default = "default_always_on_top")]
     pub always_on_top: bool,
     pub pinned_provider: Option<String>,
@@ -50,12 +52,41 @@ pub struct WidgetPreferences {
     pub language: String,
 }
 
-fn default_always_on_top() -> bool { true }
-fn default_language() -> String { "zh-CN".into() }
+fn default_always_on_top() -> bool {
+    true
+}
+fn default_panel_visible() -> bool {
+    true
+}
+fn default_language() -> String {
+    "zh-CN".into()
+}
 
 impl Default for WidgetPreferences {
     fn default() -> Self {
-        Self { locked: false, always_on_top: true, pinned_provider: None, auto_rotate_seconds: 12, language: default_language() }
+        Self {
+            locked: false,
+            panel_visible: true,
+            always_on_top: true,
+            pinned_provider: None,
+            auto_rotate_seconds: 12,
+            language: default_language(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::WidgetPreferences;
+
+    #[test]
+    fn older_preferences_keep_the_panel_visible() {
+        let preferences: WidgetPreferences = serde_json::from_str(
+            r#"{"locked":false,"alwaysOnTop":true,"pinnedProvider":null,"autoRotateSeconds":12,"language":"zh-CN"}"#,
+        )
+        .expect("older settings should remain readable");
+
+        assert!(preferences.panel_visible);
     }
 }
 

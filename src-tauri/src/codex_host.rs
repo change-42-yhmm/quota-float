@@ -10,12 +10,14 @@ mod windows_host {
 
     use tauri::{AppHandle, Manager};
     use windows_sys::Win32::{
-        Foundation::{BOOL, CloseHandle, HWND, LPARAM, RECT},
-        System::Threading::{OpenProcess, QueryFullProcessImageNameW, PROCESS_QUERY_LIMITED_INFORMATION},
+        Foundation::{CloseHandle, BOOL, HWND, LPARAM, RECT},
+        System::Threading::{
+            OpenProcess, QueryFullProcessImageNameW, PROCESS_QUERY_LIMITED_INFORMATION,
+        },
         UI::WindowsAndMessaging::{
             EnumWindows, GetWindowRect, GetWindowThreadProcessId, IsIconic, IsWindowVisible,
-            SetWindowLongPtrW, SetWindowPos, ShowWindow, GWLP_HWNDPARENT, SW_HIDE, SW_SHOWNA,
-            SWP_NOACTIVATE, SWP_NOSIZE, SWP_NOZORDER,
+            SetWindowLongPtrW, SetWindowPos, ShowWindow, GWLP_HWNDPARENT, SWP_NOACTIVATE,
+            SWP_NOSIZE, SWP_NOZORDER, SW_HIDE, SW_SHOWNA,
         },
     };
 
@@ -52,8 +54,8 @@ mod windows_host {
         let executable = String::from_utf16_lossy(&path[..length as usize]);
         let executable_lower = executable.to_ascii_lowercase();
         let name = executable.rsplit(['\\', '/']).next().unwrap_or_default();
-        let is_current_codex_shell = name.eq_ignore_ascii_case("chatgpt.exe")
-            && executable_lower.contains("openai.codex_");
+        let is_current_codex_shell =
+            name.eq_ignore_ascii_case("chatgpt.exe") && executable_lower.contains("openai.codex_");
         if name.eq_ignore_ascii_case("codex.exe") || is_current_codex_shell {
             let mut rect: RECT = std::mem::zeroed();
             if GetWindowRect(hwnd, &mut rect) != 0 {
@@ -70,9 +72,15 @@ mod windows_host {
     }
 
     fn codex_window() -> HWND {
-        let mut result = WindowSearch { hwnd: std::ptr::null_mut(), area: 0 };
+        let mut result = WindowSearch {
+            hwnd: std::ptr::null_mut(),
+            area: 0,
+        };
         unsafe {
-            EnumWindows(Some(find_codex_window), &mut result as *mut WindowSearch as LPARAM);
+            EnumWindows(
+                Some(find_codex_window),
+                &mut result as *mut WindowSearch as LPARAM,
+            );
         }
         result.hwnd
     }
@@ -91,7 +99,12 @@ mod windows_host {
             if GetWindowRect(parent, &mut parent_rect) == 0 {
                 return None;
             }
-            Some((parent_rect.left, parent_rect.top, parent_rect.right, parent_rect.bottom))
+            Some((
+                parent_rect.left,
+                parent_rect.top,
+                parent_rect.right,
+                parent_rect.bottom,
+            ))
         }
     }
 
@@ -124,7 +137,9 @@ mod windows_host {
 
     pub fn start(app: AppHandle) {
         thread::spawn(move || {
-            let Some(window) = app.get_webview_window("widget") else { return };
+            let Some(window) = app.get_webview_window("widget") else {
+                return;
+            };
             let Ok(raw) = window.hwnd() else { return };
             let widget = raw.0 as HWND;
             WIDGET_HWND.store(widget as isize, Ordering::Relaxed);
@@ -136,7 +151,9 @@ mod windows_host {
                 let parent = codex_window();
                 if parent.is_null() {
                     if shown {
-                        unsafe { ShowWindow(widget, SW_HIDE); }
+                        unsafe {
+                            ShowWindow(widget, SW_HIDE);
+                        }
                         shown = false;
                     }
                     attached_parent = std::ptr::null_mut();
@@ -153,9 +170,22 @@ mod windows_host {
                             last_parent_bounds = Some(bounds);
                         }
                     }
-                    let should_show = unsafe { IsIconic(parent) == 0 && IsWindowVisible(parent) != 0 };
+                    let panel_visible = app
+                        .try_state::<crate::AppState>()
+                        .and_then(|state| {
+                            state
+                                .preferences
+                                .lock()
+                                .ok()
+                                .map(|prefs| prefs.panel_visible)
+                        })
+                        .unwrap_or(true);
+                    let should_show = panel_visible
+                        && unsafe { IsIconic(parent) == 0 && IsWindowVisible(parent) != 0 };
                     if should_show != shown {
-                        unsafe { ShowWindow(widget, if should_show { SW_SHOWNA } else { SW_HIDE }); }
+                        unsafe {
+                            ShowWindow(widget, if should_show { SW_SHOWNA } else { SW_HIDE });
+                        }
                         shown = should_show;
                     }
                 }

@@ -11,6 +11,7 @@ Lightweight floating desktop widget for checking Codex quota from the local Code
 - Collapses into a small floating orb when idle, then expands on hover.
 - Indicates whether quota is currently being consumed.
 - Includes quick controls for language switching and always-on-top behavior.
+- Lets you hide the quota panel when it overlaps the Codex interface and restore it from the system tray; the choice persists across restarts.
 - Shows reset credit count and available reset-credit expiration times when the quota service provides them.
 - Handles stale data, signed-out sessions, unavailable quota responses, and loading states without fabricating values.
 

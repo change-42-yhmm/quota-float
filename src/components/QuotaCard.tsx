@@ -1,4 +1,4 @@
-import { ArrowClockwise, ArrowDown, ArrowUp, ClockCounterClockwise, CloudSlash, SignIn, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowDown, ArrowUp, ArrowsInSimple, ArrowsOutSimple, ClockCounterClockwise, CloudSlash, SignIn, WarningCircle } from "@phosphor-icons/react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { clampPercent, formatDateTime, formatResetDate, formatResetTime, quotaTier } from "../lib/format";
 import { copy, normalizeLanguage } from "../lib/i18n";
@@ -19,6 +19,8 @@ interface Props {
   isConsuming?: boolean;
   notice?: string | null;
   initialShowCreditTip?: boolean;
+  onToggleExpanded: () => void;
+  resizeDisabled?: boolean;
 }
 
 function StatusIcon({ status, expired = false }: { status: ProviderSnapshot["status"]; expired?: boolean }) {
@@ -55,6 +57,8 @@ export const QuotaCard = memo(function QuotaCard({
   isConsuming = false,
   notice = null,
   initialShowCreditTip = false,
+  onToggleExpanded,
+  resizeDisabled = false,
 }: Props) {
   const [showCreditTip, setShowCreditTip] = useState(initialShowCreditTip);
   const language = normalizeLanguage(preferences.language);
@@ -87,6 +91,9 @@ export const QuotaCard = memo(function QuotaCard({
       onMouseDown={(event) => { if (event.button === 0) void onDrag(); }}
     >
       <div className="aurora" aria-hidden="true" />
+      <button type="button" className="panel-resize-button" onMouseDown={(event) => event.stopPropagation()} onClick={onToggleExpanded} disabled={resizeDisabled} aria-label={t.collapsePanel} title={t.collapsePanel}>
+        <ArrowsInSimple weight="bold" />
+      </button>
       <span className="sr-only" aria-live="polite">{available && primary !== null ? t.availableLabel(primary) : message}</span>
       {notice ? <p className="operation-notice" role="status">{notice}</p> : null}
       <header className="card-header">
@@ -148,7 +155,7 @@ export const QuotaCard = memo(function QuotaCard({
   );
 });
 
-export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, language = "zh-CN" }: Pick<Props, "snapshot" | "onDrag" | "onHover"> & { language?: Language }) {
+export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, onToggleExpanded, resizeDisabled = false, language = "zh-CN" }: Pick<Props, "snapshot" | "onDrag" | "onHover" | "onToggleExpanded" | "resizeDisabled"> & { language?: Language }) {
   const [idle, setIdle] = useState(false);
   const idleTimer = useRef<number | null>(null);
   const activeLanguage = normalizeLanguage(language);
@@ -179,6 +186,9 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
       aria-label={available ? t.availableLabel(primary) : localizedBackendMessage(snapshot.message, activeLanguage) ?? t.unavailableStatus}
     >
       <div className="aurora" aria-hidden="true" />
+      <button type="button" className="panel-resize-button orb-resize-button" onMouseDown={(event) => event.stopPropagation()} onClick={onToggleExpanded} disabled={resizeDisabled} aria-label={t.expandPanel} title={t.expandPanel}>
+        <ArrowsOutSimple weight="bold" />
+      </button>
       {available ? (
         <section className="orb-metric">
           <span>{primary}</span>

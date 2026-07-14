@@ -23,7 +23,8 @@ mod windows_host {
 
     const RIGHT_MARGIN: i32 = 24;
     const BOTTOM_MARGIN: i32 = 24;
-    const LOGICAL_WIDGET_SIZE: i32 = 320;
+    const EXPANDED_WIDGET_SIZE: i32 = 320;
+    const COLLAPSED_WIDGET_SIZE: i32 = 100;
     static WIDGET_HWND: AtomicIsize = AtomicIsize::new(0);
 
     struct WindowSearch {
@@ -108,19 +109,37 @@ mod windows_host {
         }
     }
 
-    fn position_bottom_right(widget: HWND, bounds: (i32, i32, i32, i32)) {
+    fn widget_size(widget: HWND) -> Option<(i32, i32)> {
         unsafe {
             let mut widget_rect: RECT = std::mem::zeroed();
             if GetWindowRect(widget, &mut widget_rect) == 0 {
-                return;
+                return None;
             }
-            let width = (widget_rect.right - widget_rect.left).max(1);
-            let height = (widget_rect.bottom - widget_rect.top).max(1);
+            Some((
+                (widget_rect.right - widget_rect.left).max(1),
+                (widget_rect.bottom - widget_rect.top).max(1),
+            ))
+        }
+    }
+
+    fn position_bottom_right(
+        widget: HWND,
+        bounds: (i32, i32, i32, i32),
+        size: (i32, i32),
+        expanded: bool,
+    ) {
+        unsafe {
+            let (width, height) = size;
+            let logical_size = if expanded {
+                EXPANDED_WIDGET_SIZE
+            } else {
+                COLLAPSED_WIDGET_SIZE
+            };
             // SetWindowPos uses physical pixels here. Scale the visual margin from
             // the window's DPI-adjusted size, but never resize the webview: forcing
             // 320 physical pixels clips a 320-CSS-pixel panel at 150% display scale.
-            let right_margin = RIGHT_MARGIN * width / LOGICAL_WIDGET_SIZE;
-            let bottom_margin = BOTTOM_MARGIN * height / LOGICAL_WIDGET_SIZE;
+            let right_margin = RIGHT_MARGIN * width / logical_size;
+            let bottom_margin = BOTTOM_MARGIN * height / logical_size;
             let x = (bounds.2 - width - right_margin).max(bounds.0);
             let y = (bounds.3 - height - bottom_margin).max(bounds.1);
             SetWindowPos(
@@ -144,7 +163,7 @@ mod windows_host {
             let widget = raw.0 as HWND;
             WIDGET_HWND.store(widget as isize, Ordering::Relaxed);
             let mut attached_parent: HWND = std::ptr::null_mut();
-            let mut last_parent_bounds = None;
+            let mut last_layout = None;
             let mut shown = false;
 
             loop {
@@ -157,29 +176,31 @@ mod windows_host {
                         shown = false;
                     }
                     attached_parent = std::ptr::null_mut();
-                    last_parent_bounds = None;
+                    last_layout = None;
                 } else {
                     if parent != attached_parent {
                         attach(widget, parent);
                         attached_parent = parent;
-                        last_parent_bounds = None;
+                        last_layout = None;
                     }
-                    if let Some(bounds) = parent_bounds(parent) {
-                        if last_parent_bounds != Some(bounds) {
-                            position_bottom_right(widget, bounds);
-                            last_parent_bounds = Some(bounds);
-                        }
-                    }
-                    let panel_visible = app
+                    let (panel_visible, expanded) = app
                         .try_state::<crate::AppState>()
                         .and_then(|state| {
                             state
                                 .preferences
                                 .lock()
                                 .ok()
-                                .map(|prefs| prefs.panel_visible)
+                                .map(|prefs| (prefs.panel_visible, prefs.expanded))
                         })
-                        .unwrap_or(true);
+                        .unwrap_or((true, true));
+                    if let (Some(bounds), Some(size)) = (parent_bounds(parent), widget_size(widget))
+                    {
+                        let layout = (bounds, size, expanded);
+                        if last_layout != Some(layout) {
+                            position_bottom_right(widget, bounds, size, expanded);
+                            last_layout = Some(layout);
+                        }
+                    }
                     let should_show = panel_visible
                         && unsafe { IsIconic(parent) == 0 && IsWindowVisible(parent) != 0 };
                     if should_show != shown {

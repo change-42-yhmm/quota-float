@@ -13,9 +13,12 @@ Quota Float is designed to be local-first and minimal.
 Quota Float stores only widget preferences in its own application config directory:
 
 - locked state
+- panel visibility
+- expanded or collapsed panel state
 - always-on-top state
 - pinned provider
 - auto-rotate interval
+- interface language
 
 It does not copy or persist Codex tokens, account IDs, raw quota responses, user prompts, chat history, or local file paths.
 

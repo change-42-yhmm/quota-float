@@ -405,10 +405,12 @@ pub fn run() {
             if preferences.locked {
                 let _ = apply_lock(app.handle(), true);
             }
-            apply_panel_visibility(app.handle(), preferences.panel_visible);
             if let Some(window) = app.get_webview_window("widget") {
+                let size = if preferences.expanded { 320.0 } else { 100.0 };
+                let _ = window.set_size(tauri::LogicalSize::new(size, size));
                 let _ = window.set_always_on_top(false);
             }
+            apply_panel_visibility(app.handle(), preferences.panel_visible);
             codex_host::start(app.handle().clone());
             Ok(())
         })

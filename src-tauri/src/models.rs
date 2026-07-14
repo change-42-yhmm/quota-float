@@ -44,6 +44,8 @@ pub struct WidgetPreferences {
     pub locked: bool,
     #[serde(default = "default_panel_visible")]
     pub panel_visible: bool,
+    #[serde(default = "default_expanded")]
+    pub expanded: bool,
     #[serde(default = "default_always_on_top")]
     pub always_on_top: bool,
     pub pinned_provider: Option<String>,
@@ -58,6 +60,9 @@ fn default_always_on_top() -> bool {
 fn default_panel_visible() -> bool {
     true
 }
+fn default_expanded() -> bool {
+    true
+}
 fn default_language() -> String {
     "zh-CN".into()
 }
@@ -67,6 +72,7 @@ impl Default for WidgetPreferences {
         Self {
             locked: false,
             panel_visible: true,
+            expanded: true,
             always_on_top: true,
             pinned_provider: None,
             auto_rotate_seconds: 12,
@@ -87,6 +93,7 @@ mod tests {
         .expect("older settings should remain readable");
 
         assert!(preferences.panel_visible);
+        assert!(preferences.expanded);
     }
 }
 

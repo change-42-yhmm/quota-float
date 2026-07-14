@@ -430,7 +430,7 @@ pub fn run() {
             let client = reqwest::Client::builder()
                 .timeout(Duration::from_secs(12))
                 .redirect(reqwest::redirect::Policy::none())
-                .user_agent("QuotaFloat/0.1")
+                .user_agent(concat!("QuotaFloat/", env!("CARGO_PKG_VERSION")))
                 .build()
                 .expect("static HTTP client configuration must be valid");
             app.manage(AppState {

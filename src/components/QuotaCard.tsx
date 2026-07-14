@@ -13,7 +13,6 @@ interface Props {
   onNext: () => void;
   onTogglePin: () => void;
   onLanguage: () => void;
-  onDrag: () => void;
   onHover: (hovered: boolean) => void;
   onRefresh?: () => void;
   isConsuming?: boolean;
@@ -51,7 +50,6 @@ export const QuotaCard = memo(function QuotaCard({
   onNext,
   onTogglePin: _onTogglePin,
   onLanguage,
-  onDrag,
   onHover,
   onRefresh,
   isConsuming = false,
@@ -88,7 +86,6 @@ export const QuotaCard = memo(function QuotaCard({
       className={`quota-card quota-card--${snapshot.status} quota-card--${tier}`}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
-      onMouseDown={(event) => { if (event.button === 0) void onDrag(); }}
     >
       <div className="aurora" aria-hidden="true" />
       <button type="button" className="panel-resize-button" onMouseDown={(event) => event.stopPropagation()} onClick={onToggleExpanded} disabled={resizeDisabled} aria-label={t.collapsePanel} title={t.collapsePanel}>
@@ -155,7 +152,7 @@ export const QuotaCard = memo(function QuotaCard({
   );
 });
 
-export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, onToggleExpanded, resizeDisabled = false, notice = null, language = "zh-CN", compactActive = true }: Pick<Props, "snapshot" | "onDrag" | "onHover" | "onToggleExpanded" | "resizeDisabled" | "notice"> & { language?: Language; compactActive?: boolean }) {
+export const QuotaOrb = memo(function QuotaOrb({ snapshot, onHover, onToggleExpanded, resizeDisabled = false, notice = null, language = "zh-CN", compactActive = true }: Pick<Props, "snapshot" | "onHover" | "onToggleExpanded" | "resizeDisabled" | "notice"> & { language?: Language; compactActive?: boolean }) {
   const [idle, setIdle] = useState(false);
   const idleTimer = useRef<number | null>(null);
   const activeLanguage = normalizeLanguage(language);
@@ -187,7 +184,6 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, onTo
       className={`quota-orb quota-card--${snapshot.status} quota-card--${tier}${idle ? " quota-orb--idle" : ""}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => onHover(false)}
-      onMouseDown={(event) => { if (event.button === 0) void onDrag(); }}
       aria-label={available ? t.availableLabel(primary) : localizedBackendMessage(snapshot.message, activeLanguage) ?? t.unavailableStatus}
     >
       <div className="aurora" aria-hidden="true" />

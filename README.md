@@ -8,11 +8,12 @@ Lightweight floating desktop widget for checking Codex quota from the local Code
 
 - Shows your Codex plan, 5-hour quota, weekly quota, and next reset time in a compact always-on-top widget.
 - Uses clear quota states for healthy, caution, and critical remaining usage.
-- Collapses into a small floating orb when idle, then expands on hover.
+- Switches between the full panel and a small floating orb from the top-left control.
 - Indicates whether quota is currently being consumed.
 - Includes quick controls for language switching and always-on-top behavior.
 - Lets you hide the quota panel when it overlaps the Codex interface and restore it from the system tray; the choice persists across restarts.
 - Switches directly between the full 320 × 320 panel and the original compact 100 × 100 quota orb from an in-panel control. On Windows, size and bottom-right position are committed together, and the chosen mode persists across restarts.
+- Keeps the panel fixed instead of advertising or starting manual window dragging; Windows placement continues to follow the ChatGPT host window.
 - Shows reset credit count and available reset-credit expiration times when the quota service provides them.
 - Handles stale data, signed-out sessions, unavailable quota responses, and loading states without fabricating values.
 
@@ -108,7 +109,7 @@ src-tauri/target/release/quota-float.exe
 GitHub Actions are configured for:
 
 - CI on push/PR: frontend tests, Rust tests, web build, Tauri build.
-- `v*` tags: unsigned Windows and macOS Universal bundle artifacts and a public GitHub Release.
+- `v*` tags: verified unsigned Windows and macOS Universal bundle artifacts, SHA-256 checksums, and a draft GitHub Release for manual review.
 
 See [docs/GITHUB-RELEASE-CHECKLIST.md](docs/GITHUB-RELEASE-CHECKLIST.md) before publishing a version for others.
 

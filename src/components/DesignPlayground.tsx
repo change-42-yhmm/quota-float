@@ -94,7 +94,7 @@ export function DesignPlayground() {
         <div className="screenshot-stage screenshot-stage--states" style={style}>
           {[74, 35, 8].map((mode) => (
             <div className="design-card-frame" key={mode}>
-              <QuotaCard snapshot={makePreview(mode as PreviewMode)} preferences={preferences} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLanguage={() => {}} onDrag={() => {}} onHover={() => {}} onToggleExpanded={() => {}} isConsuming={mode === 35} />
+              <QuotaCard snapshot={makePreview(mode as PreviewMode)} preferences={preferences} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLanguage={() => {}} onHover={() => {}} onToggleExpanded={() => {}} isConsuming={mode === 35} />
             </div>
           ))}
         </div>
@@ -105,8 +105,8 @@ export function DesignPlayground() {
       <div className="screenshot-stage" style={style}>
         <div className={previewMode === "orb" ? "design-orb-frame" : "design-card-frame"}>
           {previewMode === "orb"
-            ? <QuotaOrb snapshot={activePreview} language="en" onDrag={() => {}} onHover={() => {}} onToggleExpanded={() => {}} />
-            : <QuotaCard snapshot={activePreview} preferences={preferences} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLanguage={() => {}} onDrag={() => {}} onHover={() => {}} onToggleExpanded={() => {}} initialShowCreditTip={showCreditTip} />}
+            ? <QuotaOrb snapshot={activePreview} language="en" onHover={() => {}} onToggleExpanded={() => {}} />
+            : <QuotaCard snapshot={activePreview} preferences={preferences} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLanguage={() => {}} onHover={() => {}} onToggleExpanded={() => {}} initialShowCreditTip={showCreditTip} />}
         </div>
       </div>
     );
@@ -122,8 +122,8 @@ export function DesignPlayground() {
         </div>
         <div className={previewMode === "orb" ? "design-orb-frame" : "design-card-frame"}>
           {previewMode === "orb"
-            ? <QuotaOrb snapshot={activePreview} onDrag={() => {}} onHover={() => {}} onToggleExpanded={() => {}} />
-            : <QuotaCard snapshot={activePreview} preferences={preferences} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLanguage={() => {}} onDrag={() => {}} onHover={() => {}} onToggleExpanded={() => {}} />}
+            ? <QuotaOrb snapshot={activePreview} onHover={() => {}} onToggleExpanded={() => {}} />
+            : <QuotaCard snapshot={activePreview} preferences={preferences} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLanguage={() => {}} onHover={() => {}} onToggleExpanded={() => {}} />}
         </div>
       </section>
       <aside className="design-controls">

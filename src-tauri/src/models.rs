@@ -81,6 +81,19 @@ impl Default for WidgetPreferences {
     }
 }
 
+impl WidgetPreferences {
+    pub fn normalized(mut self) -> Self {
+        self.auto_rotate_seconds = self.auto_rotate_seconds.clamp(5, 300);
+        if self.pinned_provider.as_deref() != Some("codex") {
+            self.pinned_provider = None;
+        }
+        if self.language != "en" && self.language != "zh-CN" {
+            self.language = default_language();
+        }
+        self
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::WidgetPreferences;
@@ -94,18 +107,5 @@ mod tests {
 
         assert!(preferences.panel_visible);
         assert!(preferences.expanded);
-    }
-}
-
-impl WidgetPreferences {
-    pub fn normalized(mut self) -> Self {
-        self.auto_rotate_seconds = self.auto_rotate_seconds.clamp(5, 300);
-        if self.pinned_provider.as_deref() != Some("codex") {
-            self.pinned_provider = None;
-        }
-        if self.language != "en" && self.language != "zh-CN" {
-            self.language = default_language();
-        }
-        self
     }
 }

@@ -5,7 +5,6 @@
   "windows": ["widget"],
   "permissions": [
     "core:default",
-    "core:window:allow-start-dragging",
     "core:window:allow-outer-position",
     "core:window:allow-set-size",
     "core:window:allow-set-always-on-top"

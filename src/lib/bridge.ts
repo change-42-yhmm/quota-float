@@ -46,12 +46,6 @@ export async function setAlwaysOnTop(alwaysOnTop: boolean): Promise<WidgetPrefer
   return invoke<WidgetPreferences>("set_widget_always_on_top", { alwaysOnTop });
 }
 
-export async function startDragging(): Promise<void> {
-  if (!isTauri()) return;
-  const { getCurrentWindow } = await import("@tauri-apps/api/window");
-  await getCurrentWindow().startDragging();
-}
-
 export async function setWidgetExpanded(expanded: boolean): Promise<WidgetPreferences> {
   if (!isTauri()) {
     if (expanded) delete document.documentElement.dataset.mockWidgetSize;

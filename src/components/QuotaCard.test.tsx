@@ -25,7 +25,6 @@ function renderOrb(snapshot: ProviderSnapshot) {
     <QuotaOrb
       snapshot={snapshot}
       language="zh-CN"
-      onDrag={() => undefined}
       onHover={() => undefined}
       onToggleExpanded={() => undefined}
     />,
@@ -72,7 +71,6 @@ describe("compact quota view", () => {
     const props = {
       snapshot: baseSnapshot,
       language: "zh-CN" as const,
-      onDrag: () => undefined,
       onHover: () => undefined,
       onToggleExpanded: () => undefined,
     };

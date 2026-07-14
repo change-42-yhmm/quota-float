@@ -178,7 +178,6 @@ export default function App() {
           onNext={() => setActiveIndex((value) => (value + 1) % snapshots.length)}
           onTogglePin={() => savePreferences({ ...preferences, pinnedProvider: preferences.pinnedProvider ? null : current.provider })}
           onLanguage={() => savePreferences({ ...preferences, language: nextLanguage(language) })}
-          onDrag={() => {}}
           onHover={() => {}}
           onRefresh={() => refresh(true)}
           isConsuming={consumingProviders.has(current.provider)}
@@ -191,7 +190,6 @@ export default function App() {
         <QuotaOrb
           snapshot={current}
           language={language}
-          onDrag={() => {}}
           onHover={() => {}}
           onToggleExpanded={() => changeExpanded(true)}
           resizeDisabled={resizing}

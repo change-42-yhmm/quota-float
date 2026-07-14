@@ -192,4 +192,3 @@ jobs:
           body_path: docs/RELEASE_TEMPLATE.md
           draft: true
           generate_release_notes: true
-

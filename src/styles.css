@@ -12,6 +12,15 @@
 .operation-notice { position: absolute; z-index: 3; left: 24px; right: 24px; bottom: 12px; margin: 0; padding: 7px 10px; border-radius: 9px; color: #5b2630; background: rgba(255,239,241,.9); font-size: 10px; text-align: center; }
 html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
 button { font: inherit; }
+.widget-view { width: 100%; height: 100%; }
+.widget-view--compact { display: none; }
+html[data-mock-widget-size="compact"] .widget-view--expanded { display: none; }
+html[data-mock-widget-size="compact"] .widget-view--compact { display: block; }
+
+@media (max-width: 199px) {
+  .widget-view--expanded { display: none; }
+  .widget-view--compact { display: block; }
+}
 
 .quota-card, .loading-card {
   position: relative;
@@ -29,6 +38,12 @@ button { font: inherit; }
   user-select: none;
 }
 .quota-card { color: #17191f; }
+.panel-resize-button { position: absolute; top: 14px; left: 14px; z-index: 4; width: 24px; height: 24px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.34); border-radius: 50%; color: rgba(17,20,27,.72); background: rgba(255,255,255,.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.38); cursor: pointer; backdrop-filter: blur(10px); }
+.panel-resize-button:hover { color: #17191f; background: rgba(255,255,255,.52); }
+.panel-resize-button:active { transform: scale(.94); }
+.panel-resize-button:focus-visible { outline: 2px solid #234977; outline-offset: -3px; }
+.panel-resize-button:disabled { opacity: .5; cursor: default; }
+.panel-resize-button svg { width: 13px; height: 13px; }
 .quota-card--healthy { --cool: #b9d5ee; --glow: #dff4e5; --warm: #c7ddf2; --aurora-opacity: .42; --progress-start: #397ae0; --progress-end: #91baf0; }
 .quota-card--caution { --cool: #b7d0ec; --glow: #fff0ba; --glow-fade: 58%; --warm: #f4c979; --warm-position: 12% 96%; --warm-fade: 66%; --linear-warm: #e4e7ed; --linear-end: #f1f5f8; --gradient-angle: 213deg; --aurora-opacity: .5; --progress-start: #4d88d8; --progress-end: #9fc2ee; }
 .quota-card--critical { --cool: #c4cee0; --glow: #ffd8a8; --glow-fade: 60%; --warm: #f07260; --warm-position: 11% 98%; --warm-fade: 68%; --linear-warm: #e3e4e9; --linear-end: #f3f5f8; --gradient-angle: 213deg; --aurora-opacity: .56; --progress-start: #ff7848; --progress-end: #ffd064; }
@@ -51,7 +66,7 @@ button { font: inherit; }
 
 @keyframes drift { to { transform: translate3d(5%, 4%, 0) scale(1.16) rotate(2deg); } }
 
-.card-header { min-height: 48px; display: flex; align-items: flex-start; justify-content: space-between; cursor: move; }
+.card-header { min-height: 48px; display: flex; align-items: flex-start; justify-content: space-between; padding-left: 18px; }
 .eyebrow, .updated, .weekly-metric p, .weekly-metric span, .reset-time { margin: 0; }
 .eyebrow, .updated, .weekly-metric, .reset-time { text-shadow: 0 1px 8px rgba(60,70,96,.18); }
 .eyebrow { font-size: 14px; font-weight: 600; letter-spacing: .18em; }
@@ -106,13 +121,14 @@ button { font: inherit; }
 .error-refresh-button:active { transform: scale(.97); }
 .error-refresh-button:disabled { opacity: .55; cursor: default; }
 .error-refresh-button svg { width: 13px; height: 13px; }
-.loading-card { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.loading-card span { width: 7px; height: 7px; border-radius: 50%; background: white; animation: pulse 1.2s ease-in-out infinite; }
-.loading-card span:nth-child(2) { animation-delay: .15s; }.loading-card span:nth-child(3) { animation-delay: .3s; }
+.loading-card, .quota-orb.loading-orb { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.loading-card span, .loading-orb span { width: 7px; height: 7px; border-radius: 50%; background: white; animation: pulse 1.2s ease-in-out infinite; }
+.loading-card span:nth-child(2), .loading-orb span:nth-child(2) { animation-delay: .15s; }
+.loading-card span:nth-child(3), .loading-orb span:nth-child(3) { animation-delay: .3s; }
 @keyframes pulse { 50% { opacity: .28; transform: translateY(-4px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .aurora, .loading-card span, .usage-indicator--active i { animation: none; }
+  .aurora, .loading-card span, .loading-orb span, .usage-indicator--active i { animation: none; }
   .progress span { transition: none; }
 }
 
@@ -135,7 +151,6 @@ button { font: inherit; }
   background: rgba(237,243,248,.82);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.48), 0 4px 14px rgba(72,88,112,.08);
   isolation: isolate;
-  cursor: move;
   user-select: none;
   opacity: 1;
   backdrop-filter: blur(14px) saturate(1.18);
@@ -150,6 +165,10 @@ button { font: inherit; }
   transition-duration: .5s;
 }
 .quota-orb .aurora { inset: -55%; opacity: var(--aurora-opacity, .55); }
+.orb-resize-button { top: 6px; left: 6px; width: 20px; height: 20px; }
+.orb-resize-button svg { width: 11px; height: 11px; }
+.orb-operation-notice { position: absolute; z-index: 4; left: 50%; bottom: 5px; width: 15px; height: 15px; display: grid; place-items: center; transform: translateX(-50%); color: #8b2635; }
+.orb-operation-notice svg { width: 13px; height: 13px; }
 .orb-metric { display: flex; align-items: flex-end; justify-content: center; line-height: .86; letter-spacing: -.06em; }
 .orb-metric span { font-size: 27px; font-weight: 560; font-variant-numeric: tabular-nums; }
 .orb-metric small { margin: 0 0 3px 1px; font-size: 10px; font-weight: 750; letter-spacing: 0; }

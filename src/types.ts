@@ -12,7 +12,6 @@ export interface ProviderSnapshot {
   provider: ProviderId;
   displayName: string;
   plan: string | null;
-  shortWindow: UsageWindow | null;
   weeklyWindow: UsageWindow | null;
   resetCredits: number | null;
   resetCreditExpiresAt?: string[];
@@ -23,6 +22,8 @@ export interface ProviderSnapshot {
 
 export interface WidgetPreferences {
   locked: boolean;
+  panelVisible: boolean;
+  expanded: boolean;
   alwaysOnTop: boolean;
   pinnedProvider: ProviderId | null;
   autoRotateSeconds: number;

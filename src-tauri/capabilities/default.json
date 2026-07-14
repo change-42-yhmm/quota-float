@@ -1,14 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capabilities for the floating widget",
+  "description": "Capabilities for the embedded quota panel",
   "windows": ["widget"],
   "permissions": [
     "core:default",
-    "core:window:allow-start-dragging",
     "core:window:allow-outer-position",
     "core:window:allow-set-size",
-    "core:window:allow-set-always-on-top",
-    "window-state:default"
+    "core:window:allow-set-always-on-top"
   ]
 }

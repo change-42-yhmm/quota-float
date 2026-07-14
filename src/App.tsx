@@ -1,23 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QuotaCard, QuotaOrb } from "./components/QuotaCard";
-import { fetchSnapshots, getPreferences, listenDesktopEvents, setAlwaysOnTop, setWidgetExpanded, startDragging, updatePreferences } from "./lib/bridge";
+import { fetchSnapshots, getPreferences, listenDesktopEvents, setWidgetExpanded, updatePreferences } from "./lib/bridge";
 import { needsFastRefresh } from "./lib/format";
 import { copy, nextLanguage, normalizeLanguage } from "./lib/i18n";
 import { mergeSnapshots } from "./lib/snapshots";
 import type { ProviderSnapshot, WidgetPreferences } from "./types";
 
-const DEFAULT_PREFS: WidgetPreferences = { locked: false, alwaysOnTop: true, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN" };
+const DEFAULT_PREFS: WidgetPreferences = { locked: false, panelVisible: true, expanded: true, alwaysOnTop: true, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN" };
 
 export default function App() {
   const [snapshots, setSnapshots] = useState<ProviderSnapshot[]>([]);
   const [preferences, setPreferences] = useState(DEFAULT_PREFS);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [hovered, setHovered] = useState(false);
-  const [compact, setCompact] = useState(() => window.innerWidth <= 120 || window.innerHeight <= 120);
   const [consumingProviders, setConsumingProviders] = useState<Set<string>>(() => new Set());
   const [operationError, setOperationError] = useState<string | null>(null);
+  const [resizing, setResizing] = useState(false);
   const failures = useRef(0);
-  const previousPrimary = useRef(new Map<string, number>());
+  const resizeInFlight = useRef(false);
+  const focusAfterResize = useRef<boolean | null>(null);
+  const previousWeekly = useRef(new Map<string, number>());
   const consumptionTimers = useRef(new Map<string, number>());
   const language = normalizeLanguage(preferences.language);
   const t = copy[language];
@@ -29,9 +30,9 @@ export default function App() {
       if (hasFailure) failures.current += 1;
       else failures.current = 0;
       for (const item of values) {
-        const nextPrimary = item.shortWindow?.remainingPercent;
-        const previous = previousPrimary.current.get(item.provider);
-        if (nextPrimary !== undefined && previous !== undefined && nextPrimary < previous) {
+        const nextWeekly = item.weeklyWindow?.remainingPercent;
+        const previous = previousWeekly.current.get(item.provider);
+        if (nextWeekly !== undefined && previous !== undefined && nextWeekly < previous) {
           setConsumingProviders((current) => new Set(current).add(item.provider));
           const oldTimer = consumptionTimers.current.get(item.provider);
           if (oldTimer !== undefined) window.clearTimeout(oldTimer);
@@ -41,34 +42,33 @@ export default function App() {
           }, 5 * 60_000);
           consumptionTimers.current.set(item.provider, timer);
         }
-        if (nextPrimary !== undefined) previousPrimary.current.set(item.provider, nextPrimary);
+        if (nextWeekly !== undefined) previousWeekly.current.set(item.provider, nextWeekly);
       }
       setSnapshots((current) => mergeSnapshots(current, values));
     } catch {
       failures.current += 1;
       setSnapshots((current) => current.length > 0
         ? current.map((item) => ({ ...item, status: "stale", message: "Refresh failed. Please try again later." }))
-        : [{ provider: "codex", displayName: "CODEX", plan: null, shortWindow: null, weeklyWindow: null, resetCredits: null, resetCreditExpiresAt: [], updatedAt: new Date().toISOString(), status: "unavailable", message: "Quota is temporarily unavailable. It will retry automatically." }]);
+        : [{ provider: "codex", displayName: "CODEX", plan: null, weeklyWindow: null, resetCredits: null, resetCreditExpiresAt: [], updatedAt: new Date().toISOString(), status: "unavailable", message: "Quota is temporarily unavailable. It will retry automatically." }]);
     }
   }, []);
 
   useEffect(() => {
     void refresh(true);
-    void getPreferences().then((value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) })).catch(() => setOperationError("Unable to read settings. Defaults are in use."));
+    void getPreferences().then((value) => {
+      const next = { ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) };
+      setPreferences(next);
+    }).catch(() => setOperationError("Unable to read settings. Defaults are in use."));
     return () => { for (const timer of consumptionTimers.current.values()) window.clearTimeout(timer); consumptionTimers.current.clear(); };
   }, [refresh]);
 
   useEffect(() => {
-    const updateCompact = () => setCompact(window.innerWidth <= 120 || window.innerHeight <= 120);
-    updateCompact();
-    window.addEventListener("resize", updateCompact);
-    return () => window.removeEventListener("resize", updateCompact);
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     let cleanup: () => void = () => {};
-    void listenDesktopEvents({ onPreferences: (value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) }), onRefresh: () => void refresh(true) }).then((value) => {
+    void listenDesktopEvents({ onPreferences: (value) => {
+      const next = { ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) };
+      setPreferences(next);
+    }, onRefresh: () => void refresh(true) }).then((value) => {
       if (cancelled) value(); else cleanup = value;
     }).catch(() => setOperationError("Desktop event listener failed to start."));
     return () => { cancelled = true; cleanup(); };
@@ -96,10 +96,10 @@ export default function App() {
   }, [refresh]);
 
   useEffect(() => {
-    if (hovered || preferences.pinnedProvider || snapshots.length < 2) return;
+    if (preferences.pinnedProvider || snapshots.length < 2) return;
     const id = window.setInterval(() => setActiveIndex((value) => (value + 1) % snapshots.length), preferences.autoRotateSeconds * 1000);
     return () => window.clearInterval(id);
-  }, [hovered, preferences.autoRotateSeconds, preferences.pinnedProvider, snapshots.length]);
+  }, [preferences.autoRotateSeconds, preferences.pinnedProvider, snapshots.length]);
 
   const current = preferences.pinnedProvider
     ? snapshots.find((item) => item.provider === preferences.pinnedProvider) ?? snapshots[0]
@@ -112,34 +112,91 @@ export default function App() {
     void updatePreferences(next).catch(() => { setPreferences(previous); setOperationError("Settings could not be saved. Previous state restored."); });
   }, [preferences]);
 
-  const handleHover = useCallback((value: boolean) => {
-    setHovered(value);
-    setCompact(!value);
-    if (value) void refresh(true);
-    void setWidgetExpanded(value).catch(() => setOperationError(value ? "Widget expand failed." : "Widget collapse failed."));
-  }, [refresh]);
+  useEffect(() => {
+    const expanded = focusAfterResize.current;
+    if (resizing || expanded === null) return;
+    focusAfterResize.current = null;
+    const frame = window.requestAnimationFrame(() => {
+      const view = expanded ? ".widget-view--expanded" : ".widget-view--compact";
+      document.querySelector<HTMLButtonElement>(`${view} .panel-resize-button`)?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [preferences.expanded, resizing]);
 
-  if (!current) return <div className="loading-card" aria-label={t.loadingQuota}><span /><span /><span /></div>;
+  const changeExpanded = useCallback((expanded: boolean) => {
+    if (resizeInFlight.current) return;
+    resizeInFlight.current = true;
+    setResizing(true);
+    setOperationError(null);
+    void setWidgetExpanded(expanded)
+      .then((next) => {
+        focusAfterResize.current = next.expanded;
+        setPreferences({ ...DEFAULT_PREFS, ...next, language: normalizeLanguage(next.language) });
+      })
+      .catch((error) => {
+        focusAfterResize.current = !expanded;
+        const needsReopen = String(error).includes("reopen the widget");
+        setOperationError(needsReopen
+          ? "Panel size change failed. Reopen the widget to restore its layout."
+          : "Panel size change failed. The previous layout was kept.");
+      })
+      .finally(() => {
+        resizeInFlight.current = false;
+        setResizing(false);
+      });
+  }, []);
 
-  if (compact) {
-    return <QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} />;
+  if (!current) {
+    return (
+      <>
+        <div className="widget-view widget-view--expanded">
+          <div className="loading-card" aria-label={t.loadingQuota} aria-busy="true">
+            <button type="button" className="panel-resize-button" onClick={() => changeExpanded(false)} disabled={resizing} aria-label={t.collapsePanel} title={t.collapsePanel}>−</button>
+            {operationError ? <p className="operation-notice" role="status">{operationError}</p> : null}
+            <span /><span /><span />
+          </div>
+        </div>
+        <div className="widget-view widget-view--compact">
+          <div className="quota-orb loading-orb" aria-label={t.loadingQuota} aria-busy="true">
+            <button type="button" className="panel-resize-button orb-resize-button" onClick={() => changeExpanded(true)} disabled={resizing} aria-label={t.expandPanel} title={t.expandPanel}>+</button>
+            {operationError ? <span className="orb-operation-notice" role="status" aria-label={operationError} title={operationError}>!</span> : null}
+            <span /><span /><span />
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
-    <QuotaCard
-      snapshot={current}
-      preferences={preferences}
-      providerCount={snapshots.length}
-      onPrevious={() => setActiveIndex((value) => (value - 1 + snapshots.length) % snapshots.length)}
-      onNext={() => setActiveIndex((value) => (value + 1) % snapshots.length)}
-      onTogglePin={() => savePreferences({ ...preferences, pinnedProvider: preferences.pinnedProvider ? null : current.provider })}
-      onLanguage={() => savePreferences({ ...preferences, language: nextLanguage(language) })}
-      onLock={() => { setOperationError(null); void setAlwaysOnTop(!preferences.alwaysOnTop).then((value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) })).catch(() => setOperationError("Always-on-top toggle failed.")); }}
-      onDrag={() => startDragging()}
-      onHover={handleHover}
-      onRefresh={() => refresh(true)}
-      isConsuming={consumingProviders.has(current.provider)}
-      notice={operationError}
-    />
+    <>
+      <div className="widget-view widget-view--expanded">
+        <QuotaCard
+          snapshot={current}
+          preferences={preferences}
+          providerCount={snapshots.length}
+          onPrevious={() => setActiveIndex((value) => (value - 1 + snapshots.length) % snapshots.length)}
+          onNext={() => setActiveIndex((value) => (value + 1) % snapshots.length)}
+          onTogglePin={() => savePreferences({ ...preferences, pinnedProvider: preferences.pinnedProvider ? null : current.provider })}
+          onLanguage={() => savePreferences({ ...preferences, language: nextLanguage(language) })}
+          onHover={() => {}}
+          onRefresh={() => refresh(true)}
+          isConsuming={consumingProviders.has(current.provider)}
+          notice={operationError}
+          onToggleExpanded={() => changeExpanded(false)}
+          resizeDisabled={resizing}
+        />
+      </div>
+      <div className="widget-view widget-view--compact">
+        <QuotaOrb
+          snapshot={current}
+          language={language}
+          onHover={() => {}}
+          onToggleExpanded={() => changeExpanded(true)}
+          resizeDisabled={resizing}
+          notice={operationError}
+          compactActive={!preferences.expanded}
+        />
+      </div>
+    </>
   );
 }

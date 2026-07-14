@@ -242,6 +242,22 @@ fn find_window<'a>(
         }
     }
 
+    // The service has used both primary_window and secondary_window for the
+    // weekly allowance. Prefer the actual seven-day duration over the label so
+    // a server-side rename does not make the quota disappear again.
+    if expected_seconds > 0 {
+        if let Some(object) = rate_limit.as_object() {
+            for value in object.values() {
+                let Some(window) = parse_window(Some(value)) else {
+                    continue;
+                };
+                if window.window_seconds.abs_diff(expected_seconds) <= 60 {
+                    return Some(value);
+                }
+            }
+        }
+    }
+
     for key in ["windows", "limit_windows", "limitWindows", "limits", "buckets"] {
         let Some(items) = rate_limit.get(key).and_then(Value::as_array) else {
             continue;
@@ -342,20 +358,6 @@ pub async fn fetch_snapshot(client: &reqwest::Client) -> ProviderSnapshot {
         .get("rate_limit")
         .or_else(|| usage.get("rateLimit"))
         .unwrap_or(&usage);
-    let short_window = parse_window(find_window(
-        rate_limit,
-        &[
-            "primary_window",
-            "primaryWindow",
-            "short_window",
-            "shortWindow",
-            "five_hour_window",
-            "fiveHourWindow",
-            "5h",
-            "primary",
-        ],
-        18_000,
-    ));
     let weekly_window = parse_window(find_window(
         rate_limit,
         &[
@@ -370,8 +372,8 @@ pub async fn fetch_snapshot(client: &reqwest::Client) -> ProviderSnapshot {
         ],
         604_800,
     ));
-    if short_window.is_none() {
-        return ProviderSnapshot::failure("unavailable", "Quota response is missing the 5h window.");
+    if weekly_window.is_none() {
+        return ProviderSnapshot::failure("unavailable", "Quota response is missing the weekly window.");
     }
 
     let usage_credits = usage
@@ -425,7 +427,6 @@ pub async fn fetch_snapshot(client: &reqwest::Client) -> ProviderSnapshot {
         provider: "codex".into(),
         display_name: "CODEX".into(),
         plan: pick_string(&usage, &["plan_type", "planType"]).map(|value| value.to_uppercase()),
-        short_window,
         weekly_window,
         reset_credits,
         reset_credit_expires_at,
@@ -521,5 +522,27 @@ mod tests {
                 .unwrap();
         assert_eq!(short.remaining_percent, 51.0);
         assert_eq!(weekly.remaining_percent, 88.0);
+    }
+
+    #[test]
+    fn finds_weekly_window_by_duration_when_service_uses_primary() {
+        let rate_limit = serde_json::json!({
+            "allowed": true,
+            "primary_window": {
+                "used_percent": 24,
+                "limit_window_seconds": 604800,
+                "reset_after_seconds": 596723,
+                "reset_at": 1784521572
+            },
+            "secondary_window": null
+        });
+        let weekly = parse_window(find_window(
+            &rate_limit,
+            &["secondary_window", "weekly"],
+            604_800,
+        ))
+        .unwrap();
+        assert_eq!(weekly.remaining_percent, 76.0);
+        assert_eq!(weekly.window_seconds, 604_800);
     }
 }

@@ -50,16 +50,17 @@ git push origin main
 推送 `v*` tag 会触发 release workflow：
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.8
+git push origin v0.1.8
 ```
 
-构建完成后，到 GitHub 仓库的 Releases 页面检查 draft release。附件应包含：
+Windows 与 macOS 均构建、检查成功后，工作流才会创建一个 draft release。附件应包含：
 
 - `quota-float-windows-unsigned.zip`
 - `quota-float-macos-universal-unsigned.zip`
+- `SHA256SUMS.txt`
 
-确认无误后点击 Publish release，然后把 Release 链接发给用户。
+先核对 SHA-256、版本、隐私扫描，以及两个平台的安装和启动结果。确认无误后才点击 Publish release，然后把 Release 链接发给用户。
 
 ## 发给 Mac 用户时的说明
 

@@ -161,7 +161,11 @@ jobs:
 
           $macZip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path release-assets/quota-float-macos-universal-unsigned.zip))
           try {
-            $macEntries = @($macZip.Entries | Where-Object { $_.Name } | Select-Object -ExpandProperty FullName)
+            $macEntries = @(
+              $macZip.Entries |
+                Where-Object { $_.Name -and $_.FullName -notmatch '(^|/)__MACOSX/|(^|/)\._' } |
+                Select-Object -ExpandProperty FullName
+            )
           } finally {
             $macZip.Dispose()
           }
@@ -188,3 +192,4 @@ jobs:
           body_path: docs/RELEASE_TEMPLATE.md
           draft: true
           generate_release_notes: true
+

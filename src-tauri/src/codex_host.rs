@@ -14,18 +14,30 @@ mod windows_host {
         System::Threading::{
             OpenProcess, QueryFullProcessImageNameW, PROCESS_QUERY_LIMITED_INFORMATION,
         },
-        UI::WindowsAndMessaging::{
-            EnumWindows, GetWindowRect, GetWindowThreadProcessId, IsIconic, IsWindowVisible,
-            SetWindowLongPtrW, SetWindowPos, ShowWindow, GWLP_HWNDPARENT, SWP_NOACTIVATE,
-            SWP_NOSIZE, SWP_NOZORDER, SW_HIDE, SW_SHOWNA,
+        UI::{
+            HiDpi::GetDpiForWindow,
+            WindowsAndMessaging::{
+                EnumWindows, GetWindowRect, GetWindowThreadProcessId, IsIconic, IsWindowVisible,
+                SetWindowLongPtrW, SetWindowPos, ShowWindow, GWLP_HWNDPARENT, SWP_NOACTIVATE,
+                SWP_NOZORDER, SW_HIDE, SW_SHOWNA,
+            },
         },
     };
 
+    const BASE_DPI: u32 = 96;
     const RIGHT_MARGIN: i32 = 24;
     const BOTTOM_MARGIN: i32 = 24;
     const EXPANDED_WIDGET_SIZE: i32 = 320;
     const COLLAPSED_WIDGET_SIZE: i32 = 100;
     static WIDGET_HWND: AtomicIsize = AtomicIsize::new(0);
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct WidgetLayout {
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+    }
 
     struct WindowSearch {
         hwnd: HWND,
@@ -109,49 +121,92 @@ mod windows_host {
         }
     }
 
-    fn widget_size(widget: HWND) -> Option<(i32, i32)> {
+    fn current_layout(widget: HWND) -> Option<WidgetLayout> {
         unsafe {
             let mut widget_rect: RECT = std::mem::zeroed();
             if GetWindowRect(widget, &mut widget_rect) == 0 {
                 return None;
             }
-            Some((
-                (widget_rect.right - widget_rect.left).max(1),
-                (widget_rect.bottom - widget_rect.top).max(1),
-            ))
+            Some(WidgetLayout {
+                x: widget_rect.left,
+                y: widget_rect.top,
+                width: (widget_rect.right - widget_rect.left).max(1),
+                height: (widget_rect.bottom - widget_rect.top).max(1),
+            })
         }
     }
 
-    fn position_bottom_right(
-        widget: HWND,
-        bounds: (i32, i32, i32, i32),
-        size: (i32, i32),
-        expanded: bool,
-    ) {
+    fn scale_logical(value: i32, dpi: u32) -> i32 {
+        let dpi = if dpi == 0 { BASE_DPI } else { dpi };
+        ((i64::from(value) * i64::from(dpi) + i64::from(BASE_DPI / 2)) / i64::from(BASE_DPI)) as i32
+    }
+
+    fn target_layout(bounds: (i32, i32, i32, i32), expanded: bool, dpi: u32) -> WidgetLayout {
+        let logical_size = if expanded {
+            EXPANDED_WIDGET_SIZE
+        } else {
+            COLLAPSED_WIDGET_SIZE
+        };
+        let width = scale_logical(logical_size, dpi);
+        let height = scale_logical(logical_size, dpi);
+        let right_margin = scale_logical(RIGHT_MARGIN, dpi);
+        let bottom_margin = scale_logical(BOTTOM_MARGIN, dpi);
+        WidgetLayout {
+            x: (bounds.2 - width - right_margin).max(bounds.0),
+            y: (bounds.3 - height - bottom_margin).max(bounds.1),
+            width,
+            height,
+        }
+    }
+
+    fn parent_layout(parent: HWND, expanded: bool) -> Option<WidgetLayout> {
+        let bounds = parent_bounds(parent)?;
+        let dpi = unsafe { GetDpiForWindow(parent) };
+        Some(target_layout(bounds, expanded, dpi))
+    }
+
+    fn apply_layout(widget: HWND, layout: WidgetLayout) -> Result<(), String> {
         unsafe {
-            let (width, height) = size;
-            let logical_size = if expanded {
-                EXPANDED_WIDGET_SIZE
-            } else {
-                COLLAPSED_WIDGET_SIZE
-            };
-            // SetWindowPos uses physical pixels here. Scale the visual margin from
-            // the window's DPI-adjusted size, but never resize the webview: forcing
-            // 320 physical pixels clips a 320-CSS-pixel panel at 150% display scale.
-            let right_margin = RIGHT_MARGIN * width / logical_size;
-            let bottom_margin = BOTTOM_MARGIN * height / logical_size;
-            let x = (bounds.2 - width - right_margin).max(bounds.0);
-            let y = (bounds.3 - height - bottom_margin).max(bounds.1);
-            SetWindowPos(
+            let result = SetWindowPos(
                 widget,
                 std::ptr::null_mut(),
-                x,
-                y,
-                0,
-                0,
-                SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER,
+                layout.x,
+                layout.y,
+                layout.width,
+                layout.height,
+                SWP_NOACTIVATE | SWP_NOZORDER,
             );
+            if result == 0 {
+                return Err("failed to apply widget layout".to_string());
+            }
         }
+        Ok(())
+    }
+
+    pub fn apply_expanded(app: &AppHandle, expanded: bool) -> Result<(), String> {
+        let window = app
+            .get_webview_window("widget")
+            .ok_or_else(|| "widget window missing".to_string())?;
+        let raw = window
+            .hwnd()
+            .map_err(|_| "widget window handle unavailable".to_string())?;
+        let widget = raw.0 as HWND;
+        WIDGET_HWND.store(widget as isize, Ordering::Relaxed);
+        let parent = codex_window();
+        if parent.is_null() {
+            let logical_size = if expanded {
+                EXPANDED_WIDGET_SIZE as f64
+            } else {
+                COLLAPSED_WIDGET_SIZE as f64
+            };
+            return window
+                .set_size(tauri::LogicalSize::new(logical_size, logical_size))
+                .map_err(|_| "failed to resize widget".to_string());
+        }
+        attach(widget, parent);
+        let layout = parent_layout(parent, expanded)
+            .ok_or_else(|| "host window bounds unavailable".to_string())?;
+        apply_layout(widget, layout)
     }
 
     pub fn start(app: AppHandle) {
@@ -163,7 +218,6 @@ mod windows_host {
             let widget = raw.0 as HWND;
             WIDGET_HWND.store(widget as isize, Ordering::Relaxed);
             let mut attached_parent: HWND = std::ptr::null_mut();
-            let mut last_layout = None;
             let mut shown = false;
 
             loop {
@@ -176,29 +230,27 @@ mod windows_host {
                         shown = false;
                     }
                     attached_parent = std::ptr::null_mut();
-                    last_layout = None;
                 } else {
+                    let Some(state) = app.try_state::<crate::AppState>() else {
+                        thread::sleep(Duration::from_millis(300));
+                        continue;
+                    };
+                    let Ok(_layout_guard) = state.layout_lock.lock() else {
+                        thread::sleep(Duration::from_millis(300));
+                        continue;
+                    };
                     if parent != attached_parent {
                         attach(widget, parent);
                         attached_parent = parent;
-                        last_layout = None;
                     }
-                    let (panel_visible, expanded) = app
-                        .try_state::<crate::AppState>()
-                        .and_then(|state| {
-                            state
-                                .preferences
-                                .lock()
-                                .ok()
-                                .map(|prefs| (prefs.panel_visible, prefs.expanded))
-                        })
+                    let (panel_visible, expanded) = state
+                        .preferences
+                        .lock()
+                        .map(|prefs| (prefs.panel_visible, prefs.expanded))
                         .unwrap_or((true, true));
-                    if let (Some(bounds), Some(size)) = (parent_bounds(parent), widget_size(widget))
-                    {
-                        let layout = (bounds, size, expanded);
-                        if last_layout != Some(layout) {
-                            position_bottom_right(widget, bounds, size, expanded);
-                            last_layout = Some(layout);
+                    if let Some(layout) = parent_layout(parent, expanded) {
+                        if current_layout(widget) != Some(layout) {
+                            let _ = apply_layout(widget, layout);
                         }
                     }
                     let should_show = panel_visible
@@ -214,10 +266,65 @@ mod windows_host {
             }
         });
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn target_layout_scales_size_margin_and_anchor_for_common_dpis() {
+            let bounds = (0, 0, 1600, 900);
+            for (dpi, expanded_size, collapsed_size, margin) in
+                [(96, 320, 100, 24), (120, 400, 125, 30), (144, 480, 150, 36)]
+            {
+                let expanded = target_layout(bounds, true, dpi);
+                assert_eq!(expanded.width, expanded_size);
+                assert_eq!(expanded.height, expanded_size);
+                assert_eq!(expanded.x, bounds.2 - expanded_size - margin);
+                assert_eq!(expanded.y, bounds.3 - expanded_size - margin);
+
+                let collapsed = target_layout(bounds, false, dpi);
+                assert_eq!(collapsed.width, collapsed_size);
+                assert_eq!(collapsed.height, collapsed_size);
+                assert_eq!(collapsed.x, bounds.2 - collapsed_size - margin);
+                assert_eq!(collapsed.y, bounds.3 - collapsed_size - margin);
+            }
+        }
+
+        #[test]
+        fn target_layout_keeps_negative_origin_monitors_in_bounds() {
+            let bounds = (-1920, -200, 0, 880);
+            let layout = target_layout(bounds, false, 144);
+            assert_eq!(
+                layout,
+                WidgetLayout {
+                    x: -186,
+                    y: 694,
+                    width: 150,
+                    height: 150
+                }
+            );
+            assert!(layout.x >= bounds.0);
+            assert!(layout.y >= bounds.1);
+        }
+    }
 }
 
 #[cfg(windows)]
-pub use windows_host::start;
+pub use windows_host::{apply_expanded, start};
+
+#[cfg(not(windows))]
+pub fn apply_expanded(app: &tauri::AppHandle, expanded: bool) -> Result<(), String> {
+    use tauri::Manager;
+
+    let window = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window missing".to_string())?;
+    let logical_size = if expanded { 320.0 } else { 100.0 };
+    window
+        .set_size(tauri::LogicalSize::new(logical_size, logical_size))
+        .map_err(|_| "failed to resize widget".to_string())
+}
 
 #[cfg(not(windows))]
 pub fn start(_app: tauri::AppHandle) {}

@@ -21,6 +21,7 @@ use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 pub(crate) struct AppState {
     client: reqwest::Client,
     pub(crate) preferences: Mutex<WidgetPreferences>,
+    pub(crate) layout_lock: Mutex<()>,
     preferences_path: PathBuf,
     fetch_lock: tokio::sync::Mutex<()>,
     snapshot_cache: Mutex<Option<(Instant, Vec<ProviderSnapshot>)>>,
@@ -134,13 +135,56 @@ fn set_preferences(
     preferences: WidgetPreferences,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let preferences = preferences.normalized();
-    persist_preferences(&state.preferences_path, &preferences)?;
-    *state
+    let mut current = state
         .preferences
         .lock()
-        .map_err(|_| "settings unavailable".to_string())? = preferences;
+        .map_err(|_| "settings unavailable".to_string())?;
+    let mut preferences = preferences.normalized();
+    // Expanded/collapsed mode is a native window transaction. Generic settings
+    // saves must not resize it or overwrite a concurrent native toggle.
+    preferences.expanded = current.expanded;
+    persist_preferences(&state.preferences_path, &preferences)?;
+    *current = preferences;
     Ok(())
+}
+
+#[tauri::command]
+fn set_widget_expanded(
+    expanded: bool,
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<WidgetPreferences, String> {
+    let _layout_guard = state
+        .layout_lock
+        .lock()
+        .map_err(|_| "window layout unavailable".to_string())?;
+    let mut preferences = state
+        .preferences
+        .lock()
+        .map_err(|_| "settings unavailable".to_string())?;
+    let previous = preferences.clone();
+    if previous.expanded == expanded {
+        codex_host::apply_expanded(&app, expanded)?;
+        return Ok(previous);
+    }
+
+    let mut next = previous.clone();
+    next.expanded = expanded;
+    codex_host::apply_expanded(&app, expanded)?;
+    if persist_preferences(&state.preferences_path, &next).is_err() {
+        return match codex_host::apply_expanded(&app, previous.expanded) {
+            Ok(()) => Err("failed to save panel size; previous layout restored".to_string()),
+            Err(_) => Err(
+                "failed to save panel size and restore the previous layout; reopen the widget"
+                    .to_string(),
+            ),
+        };
+    }
+
+    *preferences = next.clone();
+    drop(preferences);
+    let _ = app.emit_to("widget", "preferences-changed", next.clone());
+    Ok(next)
 }
 
 fn apply_panel_visibility(app: &AppHandle, visible: bool) {
@@ -392,6 +436,7 @@ pub fn run() {
             app.manage(AppState {
                 client,
                 preferences: Mutex::new(preferences.clone()),
+                layout_lock: Mutex::new(()),
                 preferences_path,
                 fetch_lock: tokio::sync::Mutex::new(()),
                 snapshot_cache: Mutex::new(None),
@@ -406,9 +451,10 @@ pub fn run() {
                 let _ = apply_lock(app.handle(), true);
             }
             if let Some(window) = app.get_webview_window("widget") {
-                let size = if preferences.expanded { 320.0 } else { 100.0 };
-                let _ = window.set_size(tauri::LogicalSize::new(size, size));
                 let _ = window.set_always_on_top(false);
+            }
+            if codex_host::apply_expanded(app.handle(), preferences.expanded).is_err() {
+                eprintln!("initial widget layout failed");
             }
             apply_panel_visibility(app.handle(), preferences.panel_visible);
             codex_host::start(app.handle().clone());
@@ -419,6 +465,7 @@ pub fn run() {
             refresh_snapshots,
             get_preferences,
             set_preferences,
+            set_widget_expanded,
             set_panel_visible,
             set_widget_locked,
             set_widget_always_on_top

@@ -155,21 +155,26 @@ export const QuotaCard = memo(function QuotaCard({
   );
 });
 
-export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, onToggleExpanded, resizeDisabled = false, language = "zh-CN" }: Pick<Props, "snapshot" | "onDrag" | "onHover" | "onToggleExpanded" | "resizeDisabled"> & { language?: Language }) {
+export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, onToggleExpanded, resizeDisabled = false, notice = null, language = "zh-CN", compactActive = true }: Pick<Props, "snapshot" | "onDrag" | "onHover" | "onToggleExpanded" | "resizeDisabled" | "notice"> & { language?: Language; compactActive?: boolean }) {
   const [idle, setIdle] = useState(false);
   const idleTimer = useRef<number | null>(null);
   const activeLanguage = normalizeLanguage(language);
   const t = copy[activeLanguage];
   const primary = snapshot.weeklyWindow ? clampPercent(snapshot.weeklyWindow.remainingPercent) : null;
   const tier = quotaTier(primary);
-  const available = snapshot.status === "ok" && primary !== null;
+  const staleAge = Date.now() - new Date(snapshot.updatedAt).getTime();
+  const staleExpired = snapshot.status === "stale" && staleAge > 30 * 60_000;
+  const available = (snapshot.status === "ok" || (snapshot.status === "stale" && !staleExpired)) && primary !== null;
 
   useEffect(() => {
+    if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
+    setIdle(false);
+    if (!compactActive) return;
     idleTimer.current = window.setTimeout(() => setIdle(true), 2000);
     return () => {
       if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
     };
-  }, []);
+  }, [compactActive]);
 
   const handleMouseEnter = () => {
     if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
@@ -189,6 +194,7 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, onTo
       <button type="button" className="panel-resize-button orb-resize-button" onMouseDown={(event) => event.stopPropagation()} onClick={onToggleExpanded} disabled={resizeDisabled} aria-label={t.expandPanel} title={t.expandPanel}>
         <ArrowsOutSimple weight="bold" />
       </button>
+      {notice ? <span className="orb-operation-notice" role="status" aria-label={notice} title={notice}><WarningCircle weight="fill" /></span> : null}
       {available ? (
         <section className="orb-metric">
           <span>{primary}</span>
@@ -196,7 +202,7 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, onTo
         </section>
       ) : (
         <section className="orb-unavailable">
-          <StatusIcon status={snapshot.status} />
+          <StatusIcon status={snapshot.status} expired={staleExpired} />
         </section>
       )}
     </main>

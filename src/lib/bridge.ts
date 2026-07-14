@@ -52,11 +52,14 @@ export async function startDragging(): Promise<void> {
   await getCurrentWindow().startDragging();
 }
 
-export async function setWidgetExpanded(expanded: boolean): Promise<void> {
-  if (!isTauri()) return;
-  const { getCurrentWindow, LogicalSize } = await import("@tauri-apps/api/window");
-  const size = expanded ? new LogicalSize(320, 320) : new LogicalSize(100, 100);
-  await getCurrentWindow().setSize(size);
+export async function setWidgetExpanded(expanded: boolean): Promise<WidgetPreferences> {
+  if (!isTauri()) {
+    if (expanded) delete document.documentElement.dataset.mockWidgetSize;
+    else document.documentElement.dataset.mockWidgetSize = "compact";
+    return { ...defaultPreferences, expanded };
+  }
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<WidgetPreferences>("set_widget_expanded", { expanded });
 }
 
 export async function listenDesktopEvents(handlers: {

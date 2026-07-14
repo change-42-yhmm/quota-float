@@ -16,6 +16,8 @@ export default function App() {
   const [operationError, setOperationError] = useState<string | null>(null);
   const [resizing, setResizing] = useState(false);
   const failures = useRef(0);
+  const resizeInFlight = useRef(false);
+  const focusAfterResize = useRef<boolean | null>(null);
   const previousWeekly = useRef(new Map<string, number>());
   const consumptionTimers = useRef(new Map<string, number>());
   const language = normalizeLanguage(preferences.language);
@@ -56,7 +58,6 @@ export default function App() {
     void getPreferences().then((value) => {
       const next = { ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) };
       setPreferences(next);
-      void setWidgetExpanded(next.expanded);
     }).catch(() => setOperationError("Unable to read settings. Defaults are in use."));
     return () => { for (const timer of consumptionTimers.current.values()) window.clearTimeout(timer); consumptionTimers.current.clear(); };
   }, [refresh]);
@@ -67,7 +68,6 @@ export default function App() {
     void listenDesktopEvents({ onPreferences: (value) => {
       const next = { ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) };
       setPreferences(next);
-      void setWidgetExpanded(next.expanded);
     }, onRefresh: () => void refresh(true) }).then((value) => {
       if (cancelled) value(); else cleanup = value;
     }).catch(() => setOperationError("Desktop event listener failed to start."));
@@ -112,54 +112,93 @@ export default function App() {
     void updatePreferences(next).catch(() => { setPreferences(previous); setOperationError("Settings could not be saved. Previous state restored."); });
   }, [preferences]);
 
-  const toggleExpanded = useCallback(() => {
-    if (resizing) return;
-    const previous = preferences;
-    const next = { ...preferences, expanded: !preferences.expanded };
+  useEffect(() => {
+    const expanded = focusAfterResize.current;
+    if (resizing || expanded === null) return;
+    focusAfterResize.current = null;
+    const frame = window.requestAnimationFrame(() => {
+      const view = expanded ? ".widget-view--expanded" : ".widget-view--compact";
+      document.querySelector<HTMLButtonElement>(`${view} .panel-resize-button`)?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [preferences.expanded, resizing]);
+
+  const changeExpanded = useCallback((expanded: boolean) => {
+    if (resizeInFlight.current) return;
+    resizeInFlight.current = true;
     setResizing(true);
-    setPreferences(next);
     setOperationError(null);
-    void setWidgetExpanded(next.expanded)
-      .then(() => updatePreferences(next))
-      .catch(() => {
-        setPreferences(previous);
-        setOperationError("Panel size could not be saved. Previous size restored.");
-        void setWidgetExpanded(previous.expanded);
+    void setWidgetExpanded(expanded)
+      .then((next) => {
+        focusAfterResize.current = next.expanded;
+        setPreferences({ ...DEFAULT_PREFS, ...next, language: normalizeLanguage(next.language) });
       })
-      .finally(() => setResizing(false));
-  }, [preferences, resizing]);
+      .catch((error) => {
+        focusAfterResize.current = !expanded;
+        const needsReopen = String(error).includes("reopen the widget");
+        setOperationError(needsReopen
+          ? "Panel size change failed. Reopen the widget to restore its layout."
+          : "Panel size change failed. The previous layout was kept.");
+      })
+      .finally(() => {
+        resizeInFlight.current = false;
+        setResizing(false);
+      });
+  }, []);
 
-  if (!current) return <div className="loading-card" aria-label={t.loadingQuota}><span /><span /><span /></div>;
-
-  if (!preferences.expanded) {
+  if (!current) {
     return (
-      <QuotaOrb
-        snapshot={current}
-        language={language}
-        onDrag={() => {}}
-        onHover={() => {}}
-        onToggleExpanded={toggleExpanded}
-        resizeDisabled={resizing}
-      />
+      <>
+        <div className="widget-view widget-view--expanded">
+          <div className="loading-card" aria-label={t.loadingQuota} aria-busy="true">
+            <button type="button" className="panel-resize-button" onClick={() => changeExpanded(false)} disabled={resizing} aria-label={t.collapsePanel} title={t.collapsePanel}>−</button>
+            {operationError ? <p className="operation-notice" role="status">{operationError}</p> : null}
+            <span /><span /><span />
+          </div>
+        </div>
+        <div className="widget-view widget-view--compact">
+          <div className="quota-orb loading-orb" aria-label={t.loadingQuota} aria-busy="true">
+            <button type="button" className="panel-resize-button orb-resize-button" onClick={() => changeExpanded(true)} disabled={resizing} aria-label={t.expandPanel} title={t.expandPanel}>+</button>
+            {operationError ? <span className="orb-operation-notice" role="status" aria-label={operationError} title={operationError}>!</span> : null}
+            <span /><span /><span />
+          </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <QuotaCard
-      snapshot={current}
-      preferences={preferences}
-      providerCount={snapshots.length}
-      onPrevious={() => setActiveIndex((value) => (value - 1 + snapshots.length) % snapshots.length)}
-      onNext={() => setActiveIndex((value) => (value + 1) % snapshots.length)}
-      onTogglePin={() => savePreferences({ ...preferences, pinnedProvider: preferences.pinnedProvider ? null : current.provider })}
-      onLanguage={() => savePreferences({ ...preferences, language: nextLanguage(language) })}
-      onDrag={() => {}}
-      onHover={() => {}}
-      onRefresh={() => refresh(true)}
-      isConsuming={consumingProviders.has(current.provider)}
-      notice={operationError}
-      onToggleExpanded={toggleExpanded}
-      resizeDisabled={resizing}
-    />
+    <>
+      <div className="widget-view widget-view--expanded">
+        <QuotaCard
+          snapshot={current}
+          preferences={preferences}
+          providerCount={snapshots.length}
+          onPrevious={() => setActiveIndex((value) => (value - 1 + snapshots.length) % snapshots.length)}
+          onNext={() => setActiveIndex((value) => (value + 1) % snapshots.length)}
+          onTogglePin={() => savePreferences({ ...preferences, pinnedProvider: preferences.pinnedProvider ? null : current.provider })}
+          onLanguage={() => savePreferences({ ...preferences, language: nextLanguage(language) })}
+          onDrag={() => {}}
+          onHover={() => {}}
+          onRefresh={() => refresh(true)}
+          isConsuming={consumingProviders.has(current.provider)}
+          notice={operationError}
+          onToggleExpanded={() => changeExpanded(false)}
+          resizeDisabled={resizing}
+        />
+      </div>
+      <div className="widget-view widget-view--compact">
+        <QuotaOrb
+          snapshot={current}
+          language={language}
+          onDrag={() => {}}
+          onHover={() => {}}
+          onToggleExpanded={() => changeExpanded(true)}
+          resizeDisabled={resizing}
+          notice={operationError}
+          compactActive={!preferences.expanded}
+        />
+      </div>
+    </>
   );
 }

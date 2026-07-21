@@ -1,0 +1,2 @@
+order_id,platform,skin_id,device_hash_prefix,license_id,issued_at,status,notes
+example-001,manual,blur,QF1-1234-5678,license-id,2026-07-17T00:00:00Z,issued,

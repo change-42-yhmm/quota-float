@@ -1,53 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Quota Float",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "identifier": "app.quotafloat.desktop",
-  "build": {
-    "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist"
-  },
-  "app": {
-    "macOSPrivateApi": true,
-    "windows": [
-      {
-        "label": "widget",
-        "title": "Quota Float",
-        "width": 88,
-        "height": 88,
-        "minWidth": 88,
-        "minHeight": 88,
-        "maxWidth": 328,
-        "maxHeight": 328,
-        "resizable": false,
-        "decorations": false,
-        "transparent": true,
-        "backgroundColor": "#00000000",
-        "alwaysOnTop": true,
-        "skipTaskbar": true,
-        "shadow": false,
-        "visible": true
-      }
-    ],
-    "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:" }
-  },
-  "bundle": {
-    "active": true,
-    "createUpdaterArtifacts": true,
-    "targets": "all",
-    "category": "Utility",
-    "shortDescription": "Codex quota at a glance",
-    "longDescription": "A lightweight floating desktop card for Codex usage limits.",
-    "copyright": "Copyright Quota Float contributors",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
-  },
-  "plugins": {
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgwQjI3N0FFOEQyRUMzQjcKUldTM3d5Nk5ybmV5Z0gzVUhuWmE4Vk54bnU3WWV3Z1RTQU5TWTlQZ0pxVExhS2dZWkRNU2s5UDEK",
-      "endpoints": ["https://github.com/change-42-yhmm/quota-float/releases/latest/download/latest.json"],
-      "windows": { "installMode": "passive" }
-    }
-  }
+  "build": { "beforeDevCommand": "npm run dev", "devUrl": "http://localhost:1421", "beforeBuildCommand": "npm run build", "frontendDist": "../dist" },
+  "app": { "macOSPrivateApi": true, "windows": [
+    { "label": "widget", "title": "Quota Float", "width": 80, "height": 80, "minWidth": 80, "minHeight": 80, "maxWidth": 314, "maxHeight": 314, "resizable": false, "decorations": false, "transparent": true, "backgroundColor": "#00000000", "alwaysOnTop": true, "skipTaskbar": true, "shadow": false, "visible": true },
+    { "label": "supporter", "title": "Quota Float - Supporter skins", "url": "index.html?supporter", "width": 520, "height": 960, "minWidth": 440, "minHeight": 820, "resizable": true, "decorations": true, "transparent": false, "backgroundColor": "#ffffff", "alwaysOnTop": false, "skipTaskbar": false, "visible": false }
+  ], "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:" } },
+  "bundle": { "active": true, "createUpdaterArtifacts": true, "targets": "all", "category": "Utility", "shortDescription": "Codex quota at a glance", "longDescription": "A lightweight floating desktop card for Codex usage limits.", "copyright": "Copyright Quota Float contributors", "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"] },
+  "plugins": { "updater": { "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgwQjI3N0FFOEQyRUMzQjcKUldTM3d5Nk5ybmV5Z0gzVUhuWmE4Vk54bnU3WWV3Z1RTQU5TWTlQZ0pxVExhS2dZWkRNU2s5UDEK", "endpoints": ["https://github.com/change-42-yhmm/quota-float/releases/latest/download/latest.json"], "windows": { "installMode": "passive" } } }
 }

@@ -52,6 +52,18 @@ pub struct WidgetPreferences {
     pub auto_rotate_seconds: u64,
     #[serde(default = "default_language")]
     pub language: String,
+    #[serde(default = "default_appearance")]
+    pub appearance: String,
+    #[serde(default)]
+    pub license: Option<String>,
+    #[serde(default)]
+    pub licenses: Vec<String>,
+    #[serde(default)]
+    pub unlocked_skin: Option<String>,
+    #[serde(default)]
+    pub unlocked_skins: Vec<String>,
+    #[serde(default = "default_skin")]
+    pub selected_skin: String,
 }
 
 fn default_always_on_top() -> bool {
@@ -59,6 +71,12 @@ fn default_always_on_top() -> bool {
 }
 fn default_language() -> String {
     "zh-CN".into()
+}
+fn default_appearance() -> String {
+    "system".into()
+}
+fn default_skin() -> String {
+    "default".into()
 }
 
 impl Default for WidgetPreferences {
@@ -70,6 +88,12 @@ impl Default for WidgetPreferences {
             pinned_provider: None,
             auto_rotate_seconds: 12,
             language: default_language(),
+            appearance: default_appearance(),
+            license: None,
+            licenses: Vec::new(),
+            unlocked_skin: None,
+            unlocked_skins: Vec::new(),
+            selected_skin: default_skin(),
         }
     }
 }
@@ -83,6 +107,34 @@ impl WidgetPreferences {
         if self.language != "en" && self.language != "zh-CN" {
             self.language = default_language();
         }
+        if self.appearance != "system" && self.appearance != "light" && self.appearance != "dark" {
+            self.appearance = default_appearance();
+        }
+        if self.licenses.is_empty() {
+            if let Some(legacy) = self.license.take() {
+                self.licenses.push(legacy);
+            }
+        }
+        self.licenses.retain(|license| !license.trim().is_empty());
+        self.licenses.sort();
+        self.licenses.dedup();
+        if self.unlocked_skins.is_empty() {
+            if let Some(legacy) = self.unlocked_skin.take() {
+                self.unlocked_skins.push(legacy);
+            }
+        }
+        self.unlocked_skins.retain(|skin| matches!(skin.as_str(), "blur" | "computer"));
+        self.unlocked_skins.sort();
+        self.unlocked_skins.dedup();
+        if !matches!(self.selected_skin.as_str(), "default" | "blur" | "computer") {
+            self.selected_skin = default_skin();
+        }
+        if self.selected_skin != "default" && !self.unlocked_skins.iter().any(|skin| skin == &self.selected_skin) {
+            self.selected_skin = default_skin();
+        }
+        // Keep the legacy fields populated for pre-migration renderer payloads.
+        self.license = self.licenses.first().cloned();
+        self.unlocked_skin = self.unlocked_skins.first().cloned();
         self
     }
 }

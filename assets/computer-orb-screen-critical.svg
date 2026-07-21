@@ -1,0 +1,56 @@
+<svg viewBox="0 0 66 51" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="66.000000" height="51.000000" fill="none" customFrame="#000000">
+	<defs>
+		<linearGradient id="paint_linear_28" x1="3.81469727e-06" x2="56.8613777" y1="-9.56249237" y2="57.2856674" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(246,165,158)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(245,206,174)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_29" x1="64" x2="2" y1="6" y2="6" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_30" x1="64" x2="2" y1="12" y2="12" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_31" x1="64" x2="2" y1="18" y2="18" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_32" x1="64" x2="2" y1="24" y2="24" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_33" x1="64" x2="2" y1="30" y2="30" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_34" x1="64" x2="2" y1="36" y2="36" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_35" x1="64" x2="2" y1="42" y2="42" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+	</defs>
+	<g id="组合 348">
+		<rect id="矩形 449" width="66.000000" height="51.000000" x="0.000000" y="0.000000" rx="4.000000" fill="url(#paint_linear_28)" />
+		<rect id="矩形 449" width="64.000000" height="49.000000" x="1.000000" y="1.000000" rx="3.000000" stroke="rgb(133,135,127)" stroke-width="2.000000" />
+		<g id="组合 324" opacity="0.099999994">
+			<path id="矢量 175" d="M2 6L64 6" stroke="url(#paint_linear_29)" stroke-width="0.600000" />
+			<path id="矢量 176" d="M2 12L64 12" stroke="url(#paint_linear_30)" stroke-width="0.600000" />
+			<path id="矢量 177" d="M2 18L64 18" stroke="url(#paint_linear_31)" stroke-width="0.600000" />
+			<path id="矢量 178" d="M2 24L64 24" stroke="url(#paint_linear_32)" stroke-width="0.600000" />
+			<path id="矢量 179" d="M2 30L64 30" stroke="url(#paint_linear_33)" stroke-width="0.600000" />
+			<path id="矢量 180" d="M2 36L64 36" stroke="url(#paint_linear_34)" stroke-width="0.600000" />
+			<path id="矢量 181" d="M2 42L64 42" stroke="url(#paint_linear_35)" stroke-width="0.600000" />
+		</g>
+	</g>
+</svg>

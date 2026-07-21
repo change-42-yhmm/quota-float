@@ -28,5 +28,10 @@
 auth.json
 credentials.json
 token.json
+/tools/license-cli/*.key
+/tools/license-cli/ledger.csv
+/tools/license-cli/*.license.json
+/tools/license-cli/local-test/
+/tools/license-cli/target/
 .tauri-updater.key
 /效果/

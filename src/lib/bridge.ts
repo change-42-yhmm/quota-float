@@ -1,6 +1,6 @@
-import type { ProviderSnapshot, WidgetPreferences } from "../types";
+import type { ProviderSnapshot, SupporterStatus, WidgetPreferences, WidgetSkin } from "../types";
 
-const defaultPreferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN" };
+const defaultPreferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN", appearance: "system", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
 
 const mockSnapshot: ProviderSnapshot = {
   provider: "codex",
@@ -53,6 +53,30 @@ export async function setAlwaysOnTop(alwaysOnTop: boolean): Promise<WidgetPrefer
   if (!isTauri()) return { ...defaultPreferences, alwaysOnTop };
   const { invoke } = await import("@tauri-apps/api/core");
   return invoke<WidgetPreferences>("set_widget_always_on_top", { alwaysOnTop });
+}
+
+export async function syncWidgetAppearance(appearance: "light" | "dark"): Promise<void> {
+  if (!isTauri()) return;
+  const { invoke } = await import("@tauri-apps/api/core");
+  await invoke("sync_widget_appearance", { appearance });
+}
+
+export async function getSupporterStatus(): Promise<SupporterStatus> {
+  if (!isTauri()) return { requestCode: "Browser preview does not have a device code", active: false, message: "Supporter activation is available in the desktop app.", unlockedSkin: null, unlockedSkins: [], selectedSkin: "default", availableSkins: ["default"] };
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<SupporterStatus>("get_supporter_status");
+}
+
+export async function activateSupporterLicense(license: string): Promise<SupporterStatus> {
+  if (!isTauri()) throw new Error("Supporter activation is available in the desktop app.");
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<SupporterStatus>("activate_supporter_license", { license });
+}
+
+export async function selectSupporterSkin(skinId: WidgetSkin): Promise<SupporterStatus> {
+  if (!isTauri()) throw new Error("Supporter skin selection is available in the desktop app.");
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<SupporterStatus>("select_supporter_skin", { skinId });
 }
 
 export async function startDragging(): Promise<void> {

@@ -1,0 +1,26 @@
+<svg viewBox="0 0 306 306" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="306.000000" height="306.000000" fill="none" customFrame="#000000">
+	<defs>
+		<filter id="pixso_custom_mask_type_alpha">
+			<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0 " />
+		</filter>
+		<linearGradient id="paint_linear_0" x1="14.7535858" x2="278.678589" y1="8.74286652" y2="286.875061" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(225,222,214)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(232,229,218)" offset="0.502215803" stop-opacity="1" />
+			<stop stop-color="rgb(245,242,234)" offset="0.543188155" stop-opacity="1" />
+			<stop stop-color="rgb(247,244,237)" offset="1" stop-opacity="1" />
+		</linearGradient>
+	</defs>
+	<mask id="mask_2" width="306.000000" height="306.000000" x="0.000000" y="0.000000" maskUnits="userSpaceOnUse">
+		<g filter="url(#pixso_custom_mask_type_alpha)">
+			<rect id="矩形 413" width="306.000000" height="306.000000" x="0.000000" y="0.000000" rx="10.928572" fill="rgb(196,196,196)" />
+		</g>
+	</mask>
+	<g id="组合 344">
+		<g id="蒙版" mask="url(#mask_2)">
+			<rect id="矩形 414" width="306.000000" height="306.000000" x="0.000000" y="0.000000" rx="10.928572" fill="url(#paint_linear_0)" />
+			<rect id="矩形 414" width="303.814301" height="303.814301" x="1.092857" y="1.092857" rx="9.835714" stroke="rgb(205,206,204)" stroke-width="2.185714" />
+			<rect id="矩形 415" width="288.514282" height="288.514282" x="8.743164" y="8.743164" rx="4.371428" fill="rgb(237,234,226)" />
+			<rect id="矩形 415" width="286.328583" height="286.328583" x="9.836021" y="9.836021" rx="3.278571" stroke="rgb(205,206,204)" stroke-opacity="0" stroke-width="2.185714" />
+		</g>
+	</g>
+</svg>

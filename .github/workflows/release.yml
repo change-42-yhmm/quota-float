@@ -40,6 +40,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          QUOTA_FLOAT_LICENSE_PUBLIC_KEY: ${{ secrets.QUOTA_FLOAT_LICENSE_PUBLIC_KEY }}
         with:
           tagName: v__VERSION__
           releaseName: Quota Float v__VERSION__
@@ -56,6 +57,6 @@ jobs:
             ## Privacy
 
             Quota Float remains local-first: it reads the existing Codex Desktop login state only for quota requests and does not upload prompts, chats, raw quota responses, or local credentials.
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

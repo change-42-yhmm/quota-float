@@ -1,0 +1,56 @@
+<svg viewBox="0 0 43.2 33.3818" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="43.199951" height="33.381836" fill="none" customFrame="#000000">
+	<defs>
+		<linearGradient id="paint_linear_12" x1="3.81469727e-06" x2="37.2183533" y1="-6.25908661" y2="37.496067" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(148,196,241)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(199,224,248)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_13" x1="41.8908997" x2="1.30908203" y1="3.92675781" y2="3.92675781" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_14" x1="41.8908997" x2="1.30908203" y1="7.85449219" y2="7.85449219" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_15" x1="41.8908997" x2="1.30908203" y1="11.78125" y2="11.78125" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_16" x1="41.8908997" x2="1.30908203" y1="15.7089844" y2="15.7089844" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_17" x1="41.8908997" x2="1.30908203" y1="19.6357422" y2="19.6357422" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_18" x1="41.8908997" x2="1.30908203" y1="23.5634766" y2="23.5634766" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_19" x1="41.8908997" x2="1.30908203" y1="27.4902344" y2="27.4902344" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(255,255,255)" offset="0.5" stop-opacity="0.400000006" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="1" />
+		</linearGradient>
+	</defs>
+	<g id="组合 346">
+		<rect id="矩形 449" width="43.199997" height="33.381817" x="0.000000" y="0.000000" rx="2.618182" fill="url(#paint_linear_12)" />
+		<rect id="矩形 449" width="41.890907" height="32.072727" x="0.654545" y="0.654545" rx="1.963636" stroke="rgb(133,135,127)" stroke-width="1.309091" />
+		<g id="组合 324" opacity="0.099999994">
+			<path id="矢量 175" d="M1.30908 3.92676L41.8909 3.92676" stroke="url(#paint_linear_13)" stroke-width="0.392727" />
+			<path id="矢量 176" d="M1.30908 7.85449L41.8909 7.85449" stroke="url(#paint_linear_14)" stroke-width="0.392727" />
+			<path id="矢量 177" d="M1.30908 11.7812L41.8909 11.7812" stroke="url(#paint_linear_15)" stroke-width="0.392727" />
+			<path id="矢量 178" d="M1.30908 15.709L41.8909 15.709" stroke="url(#paint_linear_16)" stroke-width="0.392727" />
+			<path id="矢量 179" d="M1.30908 19.6357L41.8909 19.6357" stroke="url(#paint_linear_17)" stroke-width="0.392727" />
+			<path id="矢量 180" d="M1.30908 23.5635L41.8909 23.5635" stroke="url(#paint_linear_18)" stroke-width="0.392727" />
+			<path id="矢量 181" d="M1.30908 27.4902L41.8909 27.4902" stroke="url(#paint_linear_19)" stroke-width="0.392727" />
+		</g>
+	</g>
+</svg>

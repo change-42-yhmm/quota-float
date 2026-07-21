@@ -1,28 +1,34 @@
 mod codex;
+mod license;
 mod models;
 
 use std::{
     fs,
     io::Write,
     path::PathBuf,
-    sync::Mutex,
+    sync::{Mutex, MutexGuard},
     time::{Duration, Instant},
 };
 
+use license::{device_request_code, parse_and_verify, SupporterStatus, BLUR_SKIN_ID, COMPUTER_SKIN_ID};
 use models::{ProviderSnapshot, WidgetPreferences};
 #[cfg(debug_assertions)]
 use models::UsageWindow;
 use serde::Deserialize;
 use tauri::{
-    menu::{CheckMenuItem, Menu, MenuItem},
+    menu::{CheckMenuItem, Menu, MenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State, WindowEvent,
+    AppHandle, Emitter, Listener, Manager, PhysicalPosition, PhysicalSize, State, WindowEvent,
 };
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
+use tauri_plugin_updater::UpdaterExt;
 use tauri_plugin_window_state::Builder as WindowStateBuilder;
 
-const COLLAPSED_LOGICAL_SIZE: f64 = 80.0;
-const EXPANDED_LOGICAL_SIZE: f64 = 320.0;
+// These are the light-theme visual dimensions. They deliberately do not vary
+// by appearance: a theme changes colours only, while the native window keeps
+// the same footprint as its CSS content.
+const COLLAPSED_LOGICAL_SIZE: f64 = 72.0;
+const EXPANDED_LOGICAL_SIZE: f64 = 306.0;
 const EDGE_SAFE_INSET_LOGICAL: f64 = 4.0;
 const SNAP_THRESHOLD_LOGICAL: f64 = 24.0;
 const POSITION_EPSILON: u32 = 2;
@@ -100,6 +106,16 @@ struct AppState {
     simulate_short_window_for_testing: Mutex<bool>,
     geometry: Mutex<Option<WidgetGeometryState>>,
     drag_mode: Mutex<Option<WidgetMode>>,
+    update_available: Mutex<bool>,
+}
+
+fn update_menu_label(language: &str, update_available: bool) -> &'static str {
+    match (language == "en", update_available) {
+        (true, true) => "🟢 Check for updates",
+        (false, true) => "🟢 检查更新",
+        (true, false) => "Check for updates",
+        (false, false) => "检查更新",
+    }
 }
 
 fn apply_short_window_test_override(
@@ -151,6 +167,13 @@ fn load_preferences(path: &PathBuf) -> WidgetPreferences {
         return value.normalized();
     }
     WidgetPreferences::default()
+}
+
+fn preferences_lock(state: &AppState) -> MutexGuard<'_, WidgetPreferences> {
+    state.preferences.lock().unwrap_or_else(|poisoned| {
+        eprintln!("preferences lock was poisoned; recovering the last in-memory settings");
+        poisoned.into_inner()
+    })
 }
 
 fn persist_preferences(path: &PathBuf, value: &WidgetPreferences) -> Result<(), String> {
@@ -245,6 +268,11 @@ fn clamp_position_to_monitor(
 
 fn logical_to_physical(value: f64, scale_factor: f64) -> u32 {
     (value * scale_factor).round().max(1.0) as u32
+}
+
+fn safe_inset_for_current_appearance(state: &AppState, scale_factor: f64) -> u32 {
+    let _ = state;
+    logical_to_physical(EDGE_SAFE_INSET_LOGICAL, scale_factor)
 }
 
 fn window_size_for_visual_size(visual_size: u32, safe_inset: u32) -> u32 {
@@ -504,7 +532,7 @@ fn expand_widget(
         .ok_or_else(|| "widget window missing".to_string())?;
     let current = current_widget_rect(&window)?;
     let (monitor, scale_factor) = monitor_and_scale(&window)?;
-    let safe_inset = logical_to_physical(EDGE_SAFE_INSET_LOGICAL, scale_factor);
+    let safe_inset = safe_inset_for_current_appearance(state.inner(), scale_factor);
     let collapsed_size = PhysicalSize::new(
         widget_window_size(COLLAPSED_LOGICAL_SIZE, scale_factor, safe_inset),
         widget_window_size(COLLAPSED_LOGICAL_SIZE, scale_factor, safe_inset),
@@ -572,15 +600,15 @@ mod geometry_tests {
 
     #[test]
     fn window_size_includes_the_transparent_safe_inset() {
-        assert_eq!(window_size_for_visual_size(80, 4), 88);
-        assert_eq!(widget_window_size(320.0, 1.5, 6), 492);
+        assert_eq!(window_size_for_visual_size(72, 4), 80);
+        assert_eq!(widget_window_size(306.0, 1.5, 6), 471);
     }
 
     #[test]
     fn expansion_stays_above_a_bottom_taskbar() {
         let position = expanded_position_in_bounds(
-            rect(1812, 952, 88),
-            PhysicalSize::new(328, 328),
+            rect(1844, 964, 80),
+            PhysicalSize::new(314, 314),
             DockState {
                 horizontal: Some(HorizontalDock::Right),
                 vertical: Some(VerticalDock::Bottom),
@@ -589,14 +617,14 @@ mod geometry_tests {
             PhysicalSize::new(1920, 1040),
             4,
         );
-        assert_eq!(position, PhysicalPosition::new(1572, 712));
+        assert_eq!(position, PhysicalPosition::new(1610, 730));
     }
 
     #[test]
     fn expansion_handles_negative_origin_work_areas() {
         let position = expanded_position_in_bounds(
-            rect(-1284, -4, 88),
-            PhysicalSize::new(328, 328),
+            rect(-1284, -4, 80),
+            PhysicalSize::new(314, 314),
             DockState {
                 horizontal: Some(HorizontalDock::Left),
                 vertical: Some(VerticalDock::Top),
@@ -611,14 +639,14 @@ mod geometry_tests {
     #[test]
     fn undocked_expansion_flips_inward_near_work_area_edges() {
         let position = expanded_position_in_bounds(
-            rect(1750, 900, 88),
-            PhysicalSize::new(328, 328),
+            rect(1750, 900, 80),
+            PhysicalSize::new(314, 314),
             DockState::default(),
             PhysicalPosition::new(0, 0),
             PhysicalSize::new(1920, 1040),
             4,
         );
-        assert_eq!(position, PhysicalPosition::new(1510, 660));
+        assert_eq!(position, PhysicalPosition::new(1516, 666));
     }
 }
 
@@ -629,7 +657,7 @@ fn collapse_widget(app: AppHandle, state: State<'_, AppState>) -> Result<(), Str
         .ok_or_else(|| "widget window missing".to_string())?;
     let current = current_widget_rect(&window)?;
     let (monitor, scale_factor) = monitor_and_scale(&window)?;
-    let safe_inset = logical_to_physical(EDGE_SAFE_INSET_LOGICAL, scale_factor);
+    let safe_inset = safe_inset_for_current_appearance(state.inner(), scale_factor);
     let collapsed_size = PhysicalSize::new(
         widget_window_size(COLLAPSED_LOGICAL_SIZE, scale_factor, safe_inset),
         widget_window_size(COLLAPSED_LOGICAL_SIZE, scale_factor, safe_inset),
@@ -692,7 +720,7 @@ fn begin_widget_drag(app: AppHandle, state: State<'_, AppState>) -> Result<(), S
         .ok_or_else(|| "widget window missing".to_string())?;
     let current = current_widget_rect(&window)?;
     let (_, scale_factor) = monitor_and_scale(&window)?;
-    let safe_inset = logical_to_physical(EDGE_SAFE_INSET_LOGICAL, scale_factor);
+    let safe_inset = safe_inset_for_current_appearance(state.inner(), scale_factor);
     let collapsed_size = PhysicalSize::new(
         widget_window_size(COLLAPSED_LOGICAL_SIZE, scale_factor, safe_inset),
         widget_window_size(COLLAPSED_LOGICAL_SIZE, scale_factor, safe_inset),
@@ -721,7 +749,7 @@ fn finish_widget_drag(app: AppHandle, state: State<'_, AppState>) -> Result<(), 
         return Ok(());
     };
     let threshold = logical_to_physical(SNAP_THRESHOLD_LOGICAL, scale_factor) as i32;
-    let safe_inset = logical_to_physical(EDGE_SAFE_INSET_LOGICAL, scale_factor);
+    let safe_inset = safe_inset_for_current_appearance(state.inner(), scale_factor);
     let collapsed_size = PhysicalSize::new(
         widget_window_size(COLLAPSED_LOGICAL_SIZE, scale_factor, safe_inset),
         widget_window_size(COLLAPSED_LOGICAL_SIZE, scale_factor, safe_inset),
@@ -815,12 +843,11 @@ fn finish_widget_drag(app: AppHandle, state: State<'_, AppState>) -> Result<(), 
 }
 
 #[tauri::command]
-fn get_preferences(state: State<'_, AppState>) -> Result<WidgetPreferences, String> {
-    state
-        .preferences
-        .lock()
-        .map(|value| value.clone())
-        .map_err(|_| "settings unavailable".into())
+fn get_preferences(state: State<'_, AppState>) -> WidgetPreferences {
+    // Preferences are always recoverable: an empty or invalid on-disk file
+    // was normalized at startup, and a poisoned mutex is recovered above.
+    // Do not turn a safe default into a user-facing startup error.
+    preferences_lock(&state).clone()
 }
 
 #[tauri::command]
@@ -828,13 +855,174 @@ fn set_preferences(
     preferences: WidgetPreferences,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let preferences = preferences.normalized();
+    let current = preferences_lock(&state).clone();
+    let preferences = renderer_preferences(&current, preferences);
     persist_preferences(&state.preferences_path, &preferences)?;
-    *state
-        .preferences
-        .lock()
-        .map_err(|_| "settings unavailable".to_string())? = preferences;
+    *preferences_lock(&state) = preferences;
     Ok(())
+}
+
+fn renderer_preferences(current: &WidgetPreferences, requested: WidgetPreferences) -> WidgetPreferences {
+    // License state can only be changed by the commands that validate it.
+    // Never trust an arbitrary renderer payload to unlock a supporter skin.
+    let mut preferences = requested.normalized();
+    preferences.license = current.license.clone();
+    preferences.licenses = current.licenses.clone();
+    preferences.unlocked_skin = current.unlocked_skin.clone();
+    preferences.unlocked_skins = current.unlocked_skins.clone();
+    preferences.selected_skin = current.selected_skin.clone();
+    preferences
+}
+
+#[cfg(test)]
+mod supporter_preference_tests {
+    use super::*;
+
+    #[test]
+    fn renderer_preferences_cannot_unlock_or_select_a_supporter_skin() {
+        let current = WidgetPreferences::default();
+        let requested = WidgetPreferences {
+            license: Some("forged".into()),
+            unlocked_skin: Some(BLUR_SKIN_ID.into()),
+            selected_skin: BLUR_SKIN_ID.into(),
+            ..WidgetPreferences::default()
+        };
+        let saved = renderer_preferences(&current, requested);
+        assert_eq!(saved.license, None);
+        assert_eq!(saved.unlocked_skin, None);
+        assert_eq!(saved.selected_skin, "default");
+    }
+
+    #[test]
+    fn forged_stored_unlock_flags_do_not_activate_supporter_skins() {
+        let preferences = WidgetPreferences {
+            unlocked_skin: Some(BLUR_SKIN_ID.into()),
+            unlocked_skins: vec![BLUR_SKIN_ID.into(), COMPUTER_SKIN_ID.into()],
+            selected_skin: COMPUTER_SKIN_ID.into(),
+            ..WidgetPreferences::default()
+        };
+        let status = supporter_status(&preferences, "QF1-FORGED-DEVICE-CODE");
+        assert!(!status.active);
+        assert_eq!(status.available_skins, vec!["default"]);
+        assert_eq!(status.selected_skin, "default");
+    }
+}
+
+fn verified_supporter_documents(preferences: &WidgetPreferences, request_code: &str) -> Vec<license::LicenseDocument> {
+    let mut raw_licenses = preferences.licenses.clone();
+    if let Some(legacy) = preferences.license.as_ref() {
+        if !raw_licenses.contains(legacy) {
+            raw_licenses.push(legacy.clone());
+        }
+    }
+    let mut documents = Vec::new();
+    for raw in raw_licenses {
+        if let Ok(document) = parse_and_verify(&raw, request_code) {
+            if !documents.iter().any(|known: &license::LicenseDocument| known.skin_id == document.skin_id) {
+                documents.push(document);
+            }
+        }
+    }
+    documents
+}
+
+fn supporter_status(preferences: &WidgetPreferences, request_code: &str) -> SupporterStatus {
+    let documents = verified_supporter_documents(preferences, request_code);
+    if !documents.is_empty() {
+        let unlocked_skins = documents.iter().map(|document| document.skin_id.clone()).collect::<Vec<_>>();
+        SupporterStatus {
+            request_code: request_code.into(),
+            active: true,
+            message: "Supporter licenses are active.".into(),
+            unlocked_skin: unlocked_skins.first().cloned(),
+            unlocked_skins: unlocked_skins.clone(),
+            selected_skin: preferences.selected_skin.clone(),
+            available_skins: std::iter::once("default".into()).chain(unlocked_skins).collect(),
+        }
+    } else {
+        SupporterStatus {
+            request_code: request_code.into(),
+            active: false,
+            message: "No supporter license has been activated on this device.".into(),
+            unlocked_skin: None,
+            unlocked_skins: Vec::new(),
+            selected_skin: "default".into(),
+            available_skins: vec!["default".into()],
+        }
+    }
+}
+
+#[tauri::command]
+fn get_supporter_status(state: State<'_, AppState>) -> Result<SupporterStatus, String> {
+    let request_code = device_request_code()?;
+    let mut preferences = preferences_lock(&state);
+    let status = supporter_status(&preferences, &request_code);
+    if !status.active && preferences.selected_skin != "default" {
+        preferences.selected_skin = "default".into();
+        preferences.unlocked_skin = None;
+        preferences.unlocked_skins.clear();
+        // Returning the request code must not depend on a best-effort cleanup
+        // of an obsolete skin selection. Otherwise a transient file-write
+        // failure hides the device code even though it was generated safely.
+        if persist_preferences(&state.preferences_path, &preferences).is_err() {
+            eprintln!("failed to persist supporter skin cleanup");
+        }
+    }
+    Ok(status)
+}
+
+#[tauri::command]
+fn activate_supporter_license(
+    license: String,
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<SupporterStatus, String> {
+    let request_code = device_request_code()?;
+    let document = parse_and_verify(&license, &request_code)?;
+    let mut preferences = preferences_lock(&state);
+    preferences.licenses.retain(|raw| {
+        serde_json::from_str::<license::LicenseDocument>(raw)
+            .map(|existing| existing.skin_id != document.skin_id)
+            .unwrap_or(true)
+    });
+    preferences.licenses.push(license.trim().into());
+    preferences.unlocked_skins.push(document.skin_id.clone());
+    let mut normalized = preferences.clone().normalized();
+    normalized.selected_skin = document.skin_id;
+    *preferences = normalized;
+    persist_preferences(&state.preferences_path, &preferences)?;
+    let saved = preferences.clone();
+    let _ = app.emit_to("widget", "preferences-changed", saved.clone());
+    let _ = app.emit("supporter-skin-changed", saved.selected_skin.clone());
+    let status = supporter_status(&saved, &request_code);
+    let _ = app.emit("supporter-skins-changed", status.clone());
+    Ok(status)
+}
+
+#[tauri::command]
+fn select_supporter_skin(
+    skin_id: String,
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<SupporterStatus, String> {
+    let request_code = device_request_code()?;
+    let mut preferences = preferences_lock(&state);
+    if skin_id == "default" {
+        preferences.selected_skin = "default".into();
+    } else if matches!(skin_id.as_str(), BLUR_SKIN_ID | COMPUTER_SKIN_ID) {
+        let status = supporter_status(&preferences, &request_code);
+        if !status.available_skins.iter().any(|available| available == &skin_id) {
+            return Err("this skin is not activated on this device".into());
+        }
+        preferences.selected_skin = skin_id;
+    } else {
+        return Err("unknown supporter skin".into());
+    }
+    persist_preferences(&state.preferences_path, &preferences)?;
+    let saved = preferences.clone();
+    let _ = app.emit_to("widget", "preferences-changed", saved.clone());
+    let _ = app.emit("supporter-skin-changed", saved.selected_skin.clone());
+    Ok(supporter_status(&saved, &request_code))
 }
 
 fn apply_lock(app: &AppHandle, locked: bool) -> Result<(), String> {
@@ -900,6 +1088,26 @@ fn set_widget_always_on_top(
     Ok(next)
 }
 
+#[tauri::command]
+fn sync_widget_appearance(_appearance: String, app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let window = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "widget window missing".to_string())?;
+    let current = current_widget_rect(&window)?;
+    let (_, scale_factor) = monitor_and_scale(&window)?;
+    let safe_inset = safe_inset_for_current_appearance(state.inner(), scale_factor);
+    let expanded_threshold = logical_to_physical((COLLAPSED_LOGICAL_SIZE + EXPANDED_LOGICAL_SIZE) / 2.0, scale_factor);
+    let visual_size = if current.size.width > expanded_threshold {
+        EXPANDED_LOGICAL_SIZE
+    } else {
+        COLLAPSED_LOGICAL_SIZE
+    };
+    let side = widget_window_size(visual_size, scale_factor, safe_inset);
+    window
+        .set_size(PhysicalSize::new(side, side))
+        .map_err(|_| "failed to resize widget for appearance".to_string())
+}
+
 fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let show = MenuItem::with_id(app, "show", "Show / Hide", true, None::<&str>)?;
     let refresh = MenuItem::with_id(app, "refresh", "Refresh now", true, None::<&str>)?;
@@ -913,6 +1121,18 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         true,
         None::<&str>,
     )?;
+    let theme_system = MenuItem::with_id(app, "theme-system", "Follow system", true, None::<&str>)?;
+    let theme_dark = MenuItem::with_id(app, "theme-dark", "Dark", true, None::<&str>)?;
+    let theme_light = MenuItem::with_id(app, "theme-light", "Light", true, None::<&str>)?;
+    let default_skin_choice = CheckMenuItem::with_id(app, "default-skin", "Use default skin", true, true, None::<&str>)?;
+    // Keep every built-in supporter skin visible. Selecting one that is not
+    // activated on this device opens the supporter window instead.
+    let supporter_blur = CheckMenuItem::with_id(app, "supporter-skin-blur", "Blur", true, false, None::<&str>)?;
+    let supporter_computer = CheckMenuItem::with_id(app, "supporter-skin-computer", "Computer", true, false, None::<&str>)?;
+    let supporter_skins = Submenu::with_items(app, "Supporter skins / 支持者皮肤", true, &[&supporter_blur, &supporter_computer])?;
+    let supporter_skins_top = MenuItem::with_id(app, "supporter-skins-top", "Support developer (skins) / 赞赏开发者（皮肤）", true, None::<&str>)?;
+    let default_skin = Submenu::with_items(app, "Default skin / 默认皮肤", true, &[&default_skin_choice, &theme_system, &theme_dark, &theme_light])?;
+    let theme = Submenu::with_items(app, "Theme / 主题", true, &[&default_skin, &supporter_skins])?;
     let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
     let autostart = CheckMenuItem::with_id(
         app,
@@ -932,6 +1152,12 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    let settings = Submenu::with_items(
+        app,
+        "Settings / 设置",
+        true,
+        &[&unlock, &pin, &language, &autostart],
+    )?;
     let initial_language = app
         .try_state::<AppState>()
         .and_then(|state| {
@@ -942,15 +1168,50 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                 .map(|prefs| prefs.language.clone())
         })
         .unwrap_or_else(|| "zh-CN".into());
+    let initial_selected_skin = app
+        .try_state::<AppState>()
+        .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.selected_skin.clone()))
+        .unwrap_or_else(|| "default".into());
+    let _ = supporter_blur.set_checked(initial_selected_skin == BLUR_SKIN_ID);
+    let _ = supporter_computer.set_checked(initial_selected_skin == COMPUTER_SKIN_ID);
+    let _ = default_skin_choice.set_checked(initial_selected_skin == "default");
+    let enabled_skins = app
+        .try_state::<AppState>()
+        .and_then(|state| {
+            let preferences = state.preferences.lock().ok()?.clone();
+            let request_code = device_request_code().ok()?;
+            Some(supporter_status(&preferences, &request_code))
+        })
+        .map(|status| status.available_skins)
+        .unwrap_or_else(|| vec!["default".into()]);
+    let _ = supporter_blur.set_enabled(enabled_skins.iter().any(|skin| skin == BLUR_SKIN_ID));
+    let _ = supporter_computer.set_enabled(enabled_skins.iter().any(|skin| skin == COMPUTER_SKIN_ID));
     if initial_language != "en" {
         let _ = show.set_text("显示 / 隐藏");
         let _ = refresh.set_text("立即刷新");
-        let _ = update.set_text("检查更新");
+        let _ = update.set_text(update_menu_label(&initial_language, false));
         let _ = unlock.set_text("解锁悬浮窗");
         let _ = pin.set_text("固定 / 取消固定 Codex");
         let _ = language.set_text("Switch to English");
+        let _ = theme.set_text("主题");
+        let _ = default_skin.set_text("默认皮肤");
+        let _ = default_skin_choice.set_text("使用默认皮肤");
+        let _ = theme_system.set_text("跟随系统");
+        let _ = theme_dark.set_text("深色");
+        let _ = theme_light.set_text("浅色");
+        let _ = supporter_skins.set_text("支持者皮肤");
+        let _ = supporter_skins_top.set_text("赞赏开发者（皮肤）");
         let _ = autostart.set_text("开机启动");
         let _ = quit.set_text("退出");
+    }
+    if initial_language == "en" {
+        let _ = theme.set_text("Theme");
+        let _ = default_skin.set_text("Default skin");
+        let _ = theme_system.set_text("Follow system");
+        let _ = theme_dark.set_text("Dark");
+        let _ = theme_light.set_text("Light");
+        let _ = supporter_skins.set_text("Supporter skins");
+        let _ = supporter_skins_top.set_text("Support developer (skins)");
     }
     #[cfg(debug_assertions)]
     let menu = Menu::with_items(
@@ -959,10 +1220,9 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
             &show,
             &refresh,
             &update,
-            &unlock,
-            &pin,
-            &language,
-            &autostart,
+            &settings,
+            &theme,
+            &supporter_skins_top,
             &test_short_window,
             &quit,
         ],
@@ -970,9 +1230,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     #[cfg(not(debug_assertions))]
     let menu = Menu::with_items(
         app,
-        &[
-            &show, &refresh, &update, &unlock, &pin, &language, &autostart, &quit,
-        ],
+        &[&show, &refresh, &update, &settings, &theme, &supporter_skins_top, &quit],
     )?;
     let mut builder = TrayIconBuilder::with_id("main")
         .menu(&menu)
@@ -984,12 +1242,42 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let show_menu = show.clone();
     let refresh_menu = refresh.clone();
     let update_menu = update.clone();
+    let update_indicator = update.clone();
     let unlock_menu = unlock.clone();
     let pin_menu = pin.clone();
     let language_menu = language.clone();
+    let theme_menu = theme.clone();
+    let default_skin_menu = default_skin.clone();
+    let theme_system_menu = theme_system.clone();
+    let theme_dark_menu = theme_dark.clone();
+    let theme_light_menu = theme_light.clone();
+    let supporter_skins_menu = supporter_skins.clone();
+    let supporter_blur_menu = supporter_blur.clone();
+    let supporter_computer_menu = supporter_computer.clone();
+    let supporter_blur_state = supporter_blur.clone();
+    let supporter_computer_state = supporter_computer.clone();
+    let default_skin_choice_menu = default_skin_choice.clone();
+    let default_skin_state = default_skin_choice.clone();
+    let default_skin_listener = default_skin_choice.clone();
+    let supporter_blur_access = supporter_blur.clone();
+    let supporter_computer_access = supporter_computer.clone();
+    let supporter_skins_top_menu = supporter_skins_top.clone();
     let quit_menu = quit.clone();
     #[cfg(debug_assertions)]
     let test_short_window_menu = test_short_window.clone();
+    let _tray_skin_listener = app.listen("supporter-skin-changed", move |event| {
+        if let Ok(skin_id) = serde_json::from_str::<String>(event.payload()) {
+            let _ = supporter_blur_state.set_checked(skin_id == BLUR_SKIN_ID);
+            let _ = supporter_computer_state.set_checked(skin_id == COMPUTER_SKIN_ID);
+            let _ = default_skin_listener.set_checked(skin_id == "default");
+        }
+    });
+    let _tray_skin_access_listener = app.listen("supporter-skins-changed", move |event| {
+        if let Ok(status) = serde_json::from_str::<SupporterStatus>(event.payload()) {
+            let _ = supporter_blur_access.set_enabled(status.available_skins.iter().any(|skin| skin == BLUR_SKIN_ID));
+            let _ = supporter_computer_access.set_enabled(status.available_skins.iter().any(|skin| skin == COMPUTER_SKIN_ID));
+        }
+    });
     builder
         .on_menu_event(move |app, event| match event.id.as_ref() {
             "show" => {
@@ -1007,6 +1295,68 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
             }
             "update" => {
                 let _ = app.emit_to("widget", "update-check-requested", ());
+            }
+            "supporter-skins-top" => {
+                if let Some(window) = app.get_webview_window("supporter") {
+                    if let Some(state) = app.try_state::<AppState>() {
+                        if let Ok(preferences) = state.preferences.lock() {
+                            let english = preferences.language == "en";
+                            let _ = window.set_title(if english {
+                                "Quota Float · Supporter skins"
+                            } else {
+                                "Quota Float · 支持者皮肤"
+                            });
+                            let _ = app.emit_to("supporter", "preferences-changed", preferences.clone());
+                        }
+                    }
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+            "supporter-skin-blur" | "supporter-skin-computer" => {
+                let requested_skin = if event.id.as_ref() == "supporter-skin-blur" {
+                    BLUR_SKIN_ID
+                } else {
+                    COMPUTER_SKIN_ID
+                };
+                if let Some(state) = app.try_state::<AppState>() {
+                    if let Ok(request_code) = device_request_code() {
+                        if let Ok(mut preferences) = state.preferences.lock() {
+                            let status = supporter_status(&preferences, &request_code);
+                            if status.available_skins.iter().any(|skin| skin == requested_skin) {
+                                preferences.selected_skin = requested_skin.into();
+                                if persist_preferences(&state.preferences_path, &preferences).is_ok() {
+                                    let saved = preferences.clone();
+                                    let _ = supporter_blur_menu.set_checked(requested_skin == BLUR_SKIN_ID);
+                                    let _ = supporter_computer_menu.set_checked(requested_skin == COMPUTER_SKIN_ID);
+                                    let _ = default_skin_choice_menu.set_checked(false);
+                                    let _ = app.emit_to("widget", "preferences-changed", saved.clone());
+                                    let _ = app.emit_to("supporter", "preferences-changed", saved);
+                                }
+                            } else if let Some(window) = app.get_webview_window("supporter") {
+                                let _ = app.emit_to("supporter", "preferences-changed", preferences.clone());
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    }
+                }
+            }
+            "default-skin" => {
+                if let Some(state) = app.try_state::<AppState>() {
+                    if let Ok(mut preferences) = state.preferences.lock() {
+                        preferences.selected_skin = "default".into();
+                        if persist_preferences(&state.preferences_path, &preferences).is_ok() {
+                            let saved = preferences.clone();
+                            let _ = default_skin_choice_menu.set_checked(true);
+                            let _ = supporter_blur_menu.set_checked(false);
+                            let _ = supporter_computer_menu.set_checked(false);
+                            let _ = app.emit_to("widget", "preferences-changed", saved.clone());
+                            let _ = app.emit_to("supporter", "preferences-changed", saved.clone());
+                            let _ = app.emit("supporter-skin-changed", saved.selected_skin);
+                        }
+                    }
+                }
             }
             "debug-short-window" =>
             {
@@ -1064,11 +1414,12 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         } else {
                             "立即刷新"
                         });
-                        let _ = update_menu.set_text(if english {
-                            "Check for updates"
-                        } else {
-                            "检查更新"
-                        });
+                        let update_available = state
+                            .update_available
+                            .lock()
+                            .map(|value| *value)
+                            .unwrap_or(false);
+                        let _ = update_menu.set_text(update_menu_label(&normalized.language, update_available));
                         let _ = unlock_menu.set_text(if english {
                             "Unlock widget"
                         } else {
@@ -1084,12 +1435,43 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         } else {
                             "Switch to English"
                         });
+                        let _ = theme_menu.set_text(if english { "Theme" } else { "主题" });
+                        let _ = default_skin_menu.set_text(if english { "Default skin" } else { "默认皮肤" });
+                        let _ = default_skin_state.set_text(if english { "Use default skin" } else { "使用默认皮肤" });
+                        let _ = theme_system_menu.set_text(if english { "Follow system" } else { "跟随系统" });
+                        let _ = theme_dark_menu.set_text(if english { "Dark" } else { "深色" });
+                        let _ = theme_light_menu.set_text(if english { "Light" } else { "浅色" });
+                        let _ = supporter_skins_menu.set_text(if english { "Supporter skins" } else { "支持者皮肤" });
+                        let _ = supporter_skins_top_menu.set_text(if english { "Support developer (skins)" } else { "赞赏开发者（皮肤）" });
                         let _ = autostart_menu.set_text(if english {
                             "Start at login"
                         } else {
                             "开机启动"
                         });
                         let _ = quit_menu.set_text(if english { "Quit" } else { "退出" });
+                        let _ = app.emit_to("widget", "preferences-changed", normalized.clone());
+                        let _ = app.emit_to("supporter", "preferences-changed", normalized);
+                        if let Some(window) = app.get_webview_window("supporter") {
+                            let _ = window.set_title(if english {
+                                "Quota Float · Supporter skins"
+                            } else {
+                                "Quota Float · 支持者皮肤"
+                            });
+                        }
+                    }
+                }
+            }
+            "theme-system" | "theme-dark" | "theme-light" => {
+                if let Some(state) = app.try_state::<AppState>() {
+                    if let Ok(mut prefs) = state.preferences.lock() {
+                        prefs.appearance = match event.id.as_ref() {
+                            "theme-dark" => "dark".into(),
+                            "theme-light" => "light".into(),
+                            _ => "system".into(),
+                        };
+                        let normalized = prefs.clone().normalized();
+                        *prefs = normalized.clone();
+                        let _ = persist_preferences(&state.preferences_path, &normalized);
                         let _ = app.emit_to("widget", "preferences-changed", normalized);
                     }
                 }
@@ -1113,6 +1495,27 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
             _ => {}
         })
         .build(app)?;
+    // Do this after creating the tray and off the UI thread. A failed or slow
+    // network check leaves the ordinary menu item untouched.
+    let update_app = app.handle().clone();
+    tauri::async_runtime::spawn(async move {
+        let Ok(updater) = update_app.updater() else {
+            return;
+        };
+        if updater.check().await.ok().flatten().is_none() {
+            return;
+        }
+        let language = update_app
+            .try_state::<AppState>()
+            .and_then(|state| {
+                if let Ok(mut available) = state.update_available.lock() {
+                    *available = true;
+                }
+                state.preferences.lock().ok().map(|prefs| prefs.language.clone())
+            })
+            .unwrap_or_else(|| "zh-CN".into());
+        let _ = update_indicator.set_text(update_menu_label(&language, true));
+    });
     Ok(())
 }
 
@@ -1152,6 +1555,7 @@ pub fn run() {
                 simulate_short_window_for_testing: Mutex::new(false),
                 geometry: Mutex::new(None),
                 drag_mode: Mutex::new(None),
+                update_available: Mutex::new(false),
             });
             if setup_tray(app).is_err() {
                 eprintln!("tray setup failed; enabling taskbar fallback");
@@ -1164,6 +1568,26 @@ pub fn run() {
             }
             if let Some(window) = app.get_webview_window("widget") {
                 let _ = window.set_always_on_top(preferences.always_on_top);
+                // A saved window position can be outside the active monitor while
+                // iterating in development. Keep the test widget discoverable.
+                #[cfg(debug_assertions)]
+                {
+                    let _ = window.center();
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+            #[cfg(debug_assertions)]
+            {
+                let handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(800));
+                    if let Some(window) = handle.get_webview_window("widget") {
+                        let _ = window.set_position(PhysicalPosition::new(120, 120));
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
+                });
             }
             Ok(())
         })
@@ -1177,7 +1601,11 @@ pub fn run() {
             get_preferences,
             set_preferences,
             set_widget_locked,
-            set_widget_always_on_top
+            set_widget_always_on_top,
+            sync_widget_appearance,
+            get_supporter_status,
+            activate_supporter_license,
+            select_supporter_skin
         ])
         .on_tray_icon_event(|app, event| {
             if let TrayIconEvent::Click {

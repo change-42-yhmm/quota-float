@@ -64,6 +64,16 @@ Please use GitHub Issues for bugs, compatibility reports, and feature requests:
 
 https://github.com/change-42-yhmm/quota-float/issues
 
+## Supporter skins
+
+The standard installer includes the free default appearances and can unlock optional supporter skins with a signed, device-bound license. Licenses are verified locally; the app does not send device request codes or license text to a service.
+
+### Maintainer license issuer
+
+The shipped desktop app never contains a private-key signer. Maintenance signing is performed only with the offline [tools/license-cli](tools/license-cli/README.md) tool. Keep private keys and completed order ledgers outside the repository; never distribute either to end users. Release builds must set `QUOTA_FLOAT_LICENSE_PUBLIC_KEY` to the Base64 public key produced by that tool. Optionally set `VITE_SUPPORT_EMAIL` at build time to show a support email inside the Supporter skins panel.
+
+For the module map, license format, release setup, and future skin-change checklist, see [docs/SUPPORTER-STATUS.md](docs/SUPPORTER-STATUS.md).
+
 ## Privacy Boundary
 
 Quota Float is local-first and intentionally narrow:

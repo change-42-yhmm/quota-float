@@ -1,13 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QuotaCard, QuotaOrb } from "./components/QuotaCard";
-import { fetchSnapshots, getPreferences, listenDesktopEvents, setAlwaysOnTop, setWidgetExpanded, startDragging, updatePreferences } from "./lib/bridge";
-import { needsFastRefresh } from "./lib/format";
+import { fetchSnapshots, getPreferences, getSupporterStatus, listenDesktopEvents, setAlwaysOnTop, setWidgetExpanded, startDragging, syncWidgetAppearance, updatePreferences } from "./lib/bridge";
+import { needsFastRefresh, quotaTier } from "./lib/format";
 import { checkForAppUpdate, openReleasePage } from "./lib/appUpdate";
 import { copy, normalizeLanguage } from "./lib/i18n";
 import { mergeSnapshots } from "./lib/snapshots";
-import type { ProviderSnapshot, WidgetPreferences } from "./types";
+import { DESKTOP_PALETTES } from "./lib/desktopPalette";
+import type { ProviderSnapshot, WidgetPreferences, WidgetSkin, WidgetTheme } from "./types";
 
-const DEFAULT_PREFS: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN" };
+const DEFAULT_PREFS: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN", appearance: "system", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
+const INITIAL_SNAPSHOT: ProviderSnapshot = {
+  provider: "codex",
+  displayName: "CODEX",
+  plan: null,
+  shortWindow: null,
+  weeklyWindow: null,
+  resetCredits: null,
+  resetCreditExpiresAt: [],
+  updatedAt: new Date().toISOString(),
+  status: "unavailable",
+  message: "Quota is loading.",
+};
 
 export default function App() {
   const [snapshots, setSnapshots] = useState<ProviderSnapshot[]>([]);
@@ -18,6 +31,7 @@ export default function App() {
   const [consumingProviders, setConsumingProviders] = useState<Set<string>>(() => new Set());
   const [operationError, setOperationError] = useState<string | null>(null);
   const [showUpdateFallback, setShowUpdateFallback] = useState(false);
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
   const failures = useRef(0);
   const previousPrimary = useRef(new Map<string, number>());
   const consumptionTimers = useRef(new Map<string, number>());
@@ -25,6 +39,24 @@ export default function App() {
   const hoverSequence = useRef(0);
   const language = normalizeLanguage(preferences.language);
   const t = copy[language];
+  const theme: WidgetTheme = preferences.appearance === "system" ? (systemDark ? "dark" : "light") : preferences.appearance;
+  const skin: WidgetSkin = preferences.unlockedSkins.includes(preferences.selectedSkin as Exclude<WidgetSkin, "default">)
+    && (preferences.selectedSkin === "blur" || preferences.selectedSkin === "computer")
+    ? preferences.selectedSkin
+    : "default";
+
+  useEffect(() => {
+    void syncWidgetAppearance(theme).catch(() => setOperationError("Widget size sync failed."));
+  }, [theme]);
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!media) return;
+    const onChange = () => setSystemDark(media.matches);
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   const checkUpdate = useCallback((manual = false) => {
     setShowUpdateFallback(false);
@@ -74,7 +106,19 @@ export default function App() {
 
   useEffect(() => {
     void refresh(true);
-    void getPreferences().then((value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) })).catch(() => setOperationError("Unable to read settings. Defaults are in use."));
+    void (async () => {
+      // Validate and normalize stored supporter state before allowing it to
+      // affect rendering, avoiding a stale preference response re-enabling it.
+      await getSupporterStatus().catch(() => undefined);
+      const value = await getPreferences().catch(async () => {
+        // A WebView can occasionally issue its first invoke while it is
+        // resuming. Retry once, then retain the already-safe defaults without
+        // showing a persistent warning on the quota card.
+        await new Promise((resolve) => window.setTimeout(resolve, 120));
+        return getPreferences().catch(() => DEFAULT_PREFS);
+      });
+      setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) });
+    })().catch(() => setPreferences(DEFAULT_PREFS));
     return () => {
       for (const timer of consumptionTimers.current.values()) window.clearTimeout(timer);
       consumptionTimers.current.clear();
@@ -124,8 +168,18 @@ export default function App() {
   }, [hovered, preferences.autoRotateSeconds, preferences.pinnedProvider, snapshots.length]);
 
   const current = preferences.pinnedProvider
-    ? snapshots.find((item) => item.provider === preferences.pinnedProvider) ?? snapshots[0]
-    : snapshots[activeIndex % Math.max(1, snapshots.length)];
+    ? snapshots.find((item) => item.provider === preferences.pinnedProvider) ?? snapshots[0] ?? INITIAL_SNAPSHOT
+    : snapshots[activeIndex % Math.max(1, snapshots.length)] ?? INITIAL_SNAPSHOT;
+
+  const primaryPercent = current?.shortWindow?.remainingPercent ?? current?.weeklyWindow?.remainingPercent ?? null;
+  const tier = quotaTier(primaryPercent);
+  const paletteName = current.status === "unavailable" || current.status === "stale" || current.status === "signed_out"
+    ? current.status
+    : tier === "healthy" || tier === "caution" || tier === "critical" ? tier : null;
+  // The production widget and design workbench share one explicit palette
+  // source. Theme records are independent so light and dark cannot leak into
+  // one another through CSS defaults or preview state.
+  const cardStyle = paletteName ? DESKTOP_PALETTES[theme][paletteName] : undefined;
 
   const savePreferences = useCallback((next: WidgetPreferences) => {
     const previous = preferences;
@@ -167,10 +221,8 @@ export default function App() {
     void setWidgetExpanded(true).catch(() => setOperationError("Widget expand failed."));
   }, [preferences.stayExpanded]);
 
-  if (!current) return <div className="loading-card" aria-label={t.loadingQuota}><span /><span /><span /></div>;
-
   if (compact) {
-    return <QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} />;
+    return <QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} theme={theme} skin={skin} style={cardStyle} />;
   }
 
   return (
@@ -187,6 +239,9 @@ export default function App() {
       onHover={handleHover}
       onRefresh={() => refresh(true)}
       isConsuming={consumingProviders.has(current.provider)}
+      theme={theme}
+      skin={skin}
+      style={cardStyle}
       notice={showUpdateFallback && operationError ? <><span>{operationError}</span><button type="button" onMouseDown={(event) => event.stopPropagation()} onClick={() => void openReleasePage().catch(() => setOperationError("Could not open GitHub Releases."))}>GitHub Releases</button></> : operationError}
     />
   );

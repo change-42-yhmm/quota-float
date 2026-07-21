@@ -1,6 +1,6 @@
 [package]
 name = "quota-float"
-version = "0.2.1-rc.1"
+version = "0.2.1"
 description = "A lightweight floating Codex quota monitor"
 authors = ["Quota Float contributors"]
 license = "MIT"

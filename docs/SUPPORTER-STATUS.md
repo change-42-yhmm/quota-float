@@ -50,6 +50,7 @@
 - 正式构建必须提供 `QUOTA_FLOAT_LICENSE_PUBLIC_KEY`，用于验证 `supporter-v1`。未注入时可打开页面、生成设备码，但真实许可证无法激活。
 - 尚未记录密钥生成与私钥离线保管、发布构建注入公钥、Windows/macOS 打包应用上的端到端激活验收。
 - 当前代码与资源是 `v0.2.0` 的候选发布内容；在提交、产物审计与草稿发布验收完成前，不得视为已发布功能。
+- 维护者离线签发工具的跨电脑迁移、必需文件与签发步骤见 [MAINTAINER-LICENSE-SIGNING.md](MAINTAINER-LICENSE-SIGNING.md)。私钥只保存在维护者受控设备，正式用户包只包含公钥。
 
 ## 页面与调用链
 

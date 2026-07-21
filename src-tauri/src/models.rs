@@ -64,6 +64,10 @@ pub struct WidgetPreferences {
     pub unlocked_skins: Vec<String>,
     #[serde(default = "default_skin")]
     pub selected_skin: String,
+    #[serde(default)]
+    pub supporter_prompt_first_seen_at: Option<String>,
+    #[serde(default)]
+    pub supporter_prompt_shown_at: Option<String>,
 }
 
 fn default_always_on_top() -> bool {
@@ -73,7 +77,7 @@ fn default_language() -> String {
     "zh-CN".into()
 }
 fn default_appearance() -> String {
-    "system".into()
+    "light".into()
 }
 fn default_skin() -> String {
     "default".into()
@@ -94,6 +98,8 @@ impl Default for WidgetPreferences {
             unlocked_skin: None,
             unlocked_skins: Vec::new(),
             selected_skin: default_skin(),
+            supporter_prompt_first_seen_at: None,
+            supporter_prompt_shown_at: None,
         }
     }
 }

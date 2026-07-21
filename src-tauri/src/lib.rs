@@ -15,6 +15,7 @@ use models::{ProviderSnapshot, WidgetPreferences};
 #[cfg(debug_assertions)]
 use models::UsageWindow;
 use serde::Deserialize;
+use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -199,6 +200,32 @@ fn persist_preferences(path: &PathBuf, value: &WidgetPreferences) -> Result<(), 
         return Err(format!("failed to commit settings: {error}"));
     }
     Ok(())
+}
+
+const SUPPORTER_PROMPT_DELAY_DAYS: i64 = 3;
+
+fn should_show_supporter_prompt(
+    preferences: &mut WidgetPreferences,
+    now: DateTime<Utc>,
+    has_supporter_license: bool,
+) -> bool {
+    if has_supporter_license || preferences.supporter_prompt_shown_at.is_some() {
+        return false;
+    }
+    let first_seen = preferences
+        .supporter_prompt_first_seen_at
+        .as_deref()
+        .and_then(|value| DateTime::parse_from_rfc3339(value).ok())
+        .map(|value| value.with_timezone(&Utc));
+    let Some(first_seen) = first_seen else {
+        preferences.supporter_prompt_first_seen_at = Some(now.to_rfc3339());
+        return false;
+    };
+    if now.signed_duration_since(first_seen) < ChronoDuration::days(SUPPORTER_PROMPT_DELAY_DAYS) {
+        return false;
+    }
+    preferences.supporter_prompt_shown_at = Some(now.to_rfc3339());
+    true
 }
 
 #[tauri::command]
@@ -871,6 +898,8 @@ fn renderer_preferences(current: &WidgetPreferences, requested: WidgetPreference
     preferences.unlocked_skin = current.unlocked_skin.clone();
     preferences.unlocked_skins = current.unlocked_skins.clone();
     preferences.selected_skin = current.selected_skin.clone();
+    preferences.supporter_prompt_first_seen_at = current.supporter_prompt_first_seen_at.clone();
+    preferences.supporter_prompt_shown_at = current.supporter_prompt_shown_at.clone();
     preferences
 }
 
@@ -905,6 +934,28 @@ mod supporter_preference_tests {
         assert!(!status.active);
         assert_eq!(status.available_skins, vec!["default"]);
         assert_eq!(status.selected_skin, "default");
+    }
+
+    #[test]
+    fn supporter_prompt_waits_three_days_then_only_shows_once() {
+        let first_seen = Utc::now() - ChronoDuration::days(SUPPORTER_PROMPT_DELAY_DAYS);
+        let mut preferences = WidgetPreferences {
+            supporter_prompt_first_seen_at: Some(first_seen.to_rfc3339()),
+            ..WidgetPreferences::default()
+        };
+        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), false));
+        assert!(preferences.supporter_prompt_shown_at.is_some());
+        assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), false));
+    }
+
+    #[test]
+    fn supporter_prompt_never_shows_for_an_active_supporter() {
+        let mut preferences = WidgetPreferences {
+            supporter_prompt_first_seen_at: Some((Utc::now() - ChronoDuration::days(4)).to_rfc3339()),
+            ..WidgetPreferences::default()
+        };
+        assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), true));
+        assert!(preferences.supporter_prompt_shown_at.is_none());
     }
 }
 
@@ -1121,9 +1172,9 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         true,
         None::<&str>,
     )?;
-    let theme_system = MenuItem::with_id(app, "theme-system", "Follow system", true, None::<&str>)?;
-    let theme_dark = MenuItem::with_id(app, "theme-dark", "Dark", true, None::<&str>)?;
-    let theme_light = MenuItem::with_id(app, "theme-light", "Light", true, None::<&str>)?;
+    let theme_system = CheckMenuItem::with_id(app, "theme-system", "Follow system", true, false, None::<&str>)?;
+    let theme_dark = CheckMenuItem::with_id(app, "theme-dark", "Dark", true, false, None::<&str>)?;
+    let theme_light = CheckMenuItem::with_id(app, "theme-light", "Light", true, false, None::<&str>)?;
     let default_skin_choice = CheckMenuItem::with_id(app, "default-skin", "Use default skin", true, true, None::<&str>)?;
     // Keep every built-in supporter skin visible. Selecting one that is not
     // activated on this device opens the supporter window instead.
@@ -1172,9 +1223,16 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .try_state::<AppState>()
         .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.selected_skin.clone()))
         .unwrap_or_else(|| "default".into());
+    let initial_appearance = app
+        .try_state::<AppState>()
+        .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.appearance.clone()))
+        .unwrap_or_else(|| "system".into());
     let _ = supporter_blur.set_checked(initial_selected_skin == BLUR_SKIN_ID);
     let _ = supporter_computer.set_checked(initial_selected_skin == COMPUTER_SKIN_ID);
     let _ = default_skin_choice.set_checked(initial_selected_skin == "default");
+    let _ = theme_system.set_checked(initial_appearance == "system");
+    let _ = theme_dark.set_checked(initial_appearance == "dark");
+    let _ = theme_light.set_checked(initial_appearance == "light");
     let enabled_skins = app
         .try_state::<AppState>()
         .and_then(|state| {
@@ -1251,6 +1309,9 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let theme_system_menu = theme_system.clone();
     let theme_dark_menu = theme_dark.clone();
     let theme_light_menu = theme_light.clone();
+    let theme_system_state = theme_system.clone();
+    let theme_dark_state = theme_dark.clone();
+    let theme_light_state = theme_light.clone();
     let supporter_skins_menu = supporter_skins.clone();
     let supporter_blur_menu = supporter_blur.clone();
     let supporter_computer_menu = supporter_computer.clone();
@@ -1469,10 +1530,23 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                             "theme-light" => "light".into(),
                             _ => "system".into(),
                         };
+                        // The three free appearance choices always render the
+                        // default skin. A supporter skin is selected only by
+                        // its own menu item, never as an extra prerequisite.
+                        prefs.selected_skin = "default".into();
                         let normalized = prefs.clone().normalized();
                         *prefs = normalized.clone();
-                        let _ = persist_preferences(&state.preferences_path, &normalized);
-                        let _ = app.emit_to("widget", "preferences-changed", normalized);
+                        if persist_preferences(&state.preferences_path, &normalized).is_ok() {
+                            let _ = default_skin_choice_menu.set_checked(true);
+                            let _ = supporter_blur_menu.set_checked(false);
+                            let _ = supporter_computer_menu.set_checked(false);
+                            let _ = theme_system_state.set_checked(normalized.appearance == "system");
+                            let _ = theme_dark_state.set_checked(normalized.appearance == "dark");
+                            let _ = theme_light_state.set_checked(normalized.appearance == "light");
+                            let _ = app.emit_to("widget", "preferences-changed", normalized.clone());
+                            let _ = app.emit_to("supporter", "preferences-changed", normalized.clone());
+                            let _ = app.emit("supporter-skin-changed", normalized.selected_skin);
+                        }
                     }
                 }
             }
@@ -1538,7 +1612,22 @@ pub fn run() {
         .setup(|app| {
             let data_dir = app.path().app_config_dir()?;
             let preferences_path = data_dir.join("preferences.json");
-            let preferences = load_preferences(&preferences_path);
+            let mut preferences = load_preferences(&preferences_path);
+            let has_supporter_license = device_request_code()
+                .ok()
+                .map(|request_code| supporter_status(&preferences, &request_code).active)
+                .unwrap_or(false);
+            let show_supporter_prompt = should_show_supporter_prompt(
+                &mut preferences,
+                Utc::now(),
+                has_supporter_license,
+            );
+            // Persist the first-use timestamp immediately; persist the shown
+            // marker before opening the window so a crash or restart cannot
+            // produce repeated prompts.
+            if preferences.supporter_prompt_first_seen_at.is_some() {
+                let _ = persist_preferences(&preferences_path, &preferences);
+            }
             let client = reqwest::Client::builder()
                 .timeout(Duration::from_secs(12))
                 .redirect(reqwest::redirect::Policy::none())
@@ -1584,6 +1673,16 @@ pub fn run() {
                     std::thread::sleep(Duration::from_millis(800));
                     if let Some(window) = handle.get_webview_window("widget") {
                         let _ = window.set_position(PhysicalPosition::new(120, 120));
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
+                });
+            }
+            if show_supporter_prompt {
+                let handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(900));
+                    if let Some(window) = handle.get_webview_window("supporter") {
                         let _ = window.show();
                         let _ = window.set_focus();
                     }

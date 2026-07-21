@@ -33,5 +33,9 @@ token.json
 /tools/license-cli/*.license.json
 /tools/license-cli/local-test/
 /tools/license-cli/target/
+/tools/maintainer-issuer/dist/
+/tools/maintainer-issuer/src-tauri/target/
+/tools/maintainer-issuer/src-tauri/gen/
+/tools/maintainer-issuer/issuance-ledger.csv
 .tauri-updater.key
 /效果/

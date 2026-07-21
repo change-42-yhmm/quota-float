@@ -47,4 +47,6 @@ export interface WidgetPreferences {
   unlockedSkin: Exclude<WidgetSkin, "default"> | null;
   unlockedSkins: Array<Exclude<WidgetSkin, "default">>;
   selectedSkin: WidgetSkin;
+  supporterPromptFirstSeenAt?: string | null;
+  supporterPromptShownAt?: string | null;
 }

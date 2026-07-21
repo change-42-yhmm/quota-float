@@ -46,3 +46,9 @@ npm.cmd run tauri dev
 ### Next task
 
 Adjust the Blur progress-bar colours. Relevant rules are `.blur-progress`, `.blur-progress i.is-available`, and `.blur-progress i.is-used` in `src/styles.css`.
+
+## 2026-07-21 v0.2.1 验收后交接
+
+- **支持者页首次弹出**：实机首次验证时仍出现了支持者页。产品决定当前保留，不再修改首次弹出逻辑；后续不得把它当作本轮回归缺陷。
+- **托盘默认皮肤菜单**：默认皮肤子菜单必须且只包含“跟随系统 / 浅色 / 深色”三个互斥状态。选择任一项会立即应用相应外观并恢复默认免费皮肤；不再显示单独的“使用默认皮肤”菜单项。
+- **桌面灰边 / 阴影**：展开深色卡和收起浅色球四周出现灰色，不是设计台与桌面 CSS 不一致的单一透明度问题。当前 `.quota-card, .loading-card` 有浅色外投影 `0 1px 8px rgba(90,108,132,.05)`，`.quota-card--theme-dark` 有深色外投影 `0 8px 28px rgba(0,0,0,.26)`；同时原生窗口为容纳投影保留 `4px` 安全边距。设计台外框设置 `box-shadow: none` 且背景不同，因此灰雾不显著。后续需单独确定“保留投影”或“移除外投影并重新处理安全边距”，未经实机验证不要再次仅把安全边距改为 0px。

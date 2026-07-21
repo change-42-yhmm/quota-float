@@ -1175,14 +1175,15 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let theme_system = CheckMenuItem::with_id(app, "theme-system", "Follow system", true, false, None::<&str>)?;
     let theme_dark = CheckMenuItem::with_id(app, "theme-dark", "Dark", true, false, None::<&str>)?;
     let theme_light = CheckMenuItem::with_id(app, "theme-light", "Light", true, false, None::<&str>)?;
-    let default_skin_choice = CheckMenuItem::with_id(app, "default-skin", "Use default skin", true, true, None::<&str>)?;
     // Keep every built-in supporter skin visible. Selecting one that is not
     // activated on this device opens the supporter window instead.
     let supporter_blur = CheckMenuItem::with_id(app, "supporter-skin-blur", "Blur", true, false, None::<&str>)?;
     let supporter_computer = CheckMenuItem::with_id(app, "supporter-skin-computer", "Computer", true, false, None::<&str>)?;
     let supporter_skins = Submenu::with_items(app, "Supporter skins / 支持者皮肤", true, &[&supporter_blur, &supporter_computer])?;
     let supporter_skins_top = MenuItem::with_id(app, "supporter-skins-top", "Support developer (skins) / 赞赏开发者（皮肤）", true, None::<&str>)?;
-    let default_skin = Submenu::with_items(app, "Default skin / 默认皮肤", true, &[&default_skin_choice, &theme_system, &theme_dark, &theme_light])?;
+    // The default skin has exactly three mutually exclusive appearance
+    // choices. Selecting any one also restores the free default skin.
+    let default_skin = Submenu::with_items(app, "Default skin / 默认皮肤", true, &[&theme_system, &theme_dark, &theme_light])?;
     let theme = Submenu::with_items(app, "Theme / 主题", true, &[&default_skin, &supporter_skins])?;
     let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
     let autostart = CheckMenuItem::with_id(
@@ -1229,7 +1230,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .unwrap_or_else(|| "system".into());
     let _ = supporter_blur.set_checked(initial_selected_skin == BLUR_SKIN_ID);
     let _ = supporter_computer.set_checked(initial_selected_skin == COMPUTER_SKIN_ID);
-    let _ = default_skin_choice.set_checked(initial_selected_skin == "default");
     let _ = theme_system.set_checked(initial_appearance == "system");
     let _ = theme_dark.set_checked(initial_appearance == "dark");
     let _ = theme_light.set_checked(initial_appearance == "light");
@@ -1253,7 +1253,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         let _ = language.set_text("Switch to English");
         let _ = theme.set_text("主题");
         let _ = default_skin.set_text("默认皮肤");
-        let _ = default_skin_choice.set_text("使用默认皮肤");
         let _ = theme_system.set_text("跟随系统");
         let _ = theme_dark.set_text("深色");
         let _ = theme_light.set_text("浅色");
@@ -1317,9 +1316,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let supporter_computer_menu = supporter_computer.clone();
     let supporter_blur_state = supporter_blur.clone();
     let supporter_computer_state = supporter_computer.clone();
-    let default_skin_choice_menu = default_skin_choice.clone();
-    let default_skin_state = default_skin_choice.clone();
-    let default_skin_listener = default_skin_choice.clone();
     let supporter_blur_access = supporter_blur.clone();
     let supporter_computer_access = supporter_computer.clone();
     let supporter_skins_top_menu = supporter_skins_top.clone();
@@ -1330,7 +1326,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         if let Ok(skin_id) = serde_json::from_str::<String>(event.payload()) {
             let _ = supporter_blur_state.set_checked(skin_id == BLUR_SKIN_ID);
             let _ = supporter_computer_state.set_checked(skin_id == COMPUTER_SKIN_ID);
-            let _ = default_skin_listener.set_checked(skin_id == "default");
         }
     });
     let _tray_skin_access_listener = app.listen("supporter-skins-changed", move |event| {
@@ -1390,7 +1385,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                                     let saved = preferences.clone();
                                     let _ = supporter_blur_menu.set_checked(requested_skin == BLUR_SKIN_ID);
                                     let _ = supporter_computer_menu.set_checked(requested_skin == COMPUTER_SKIN_ID);
-                                    let _ = default_skin_choice_menu.set_checked(false);
                                     let _ = app.emit_to("widget", "preferences-changed", saved.clone());
                                     let _ = app.emit_to("supporter", "preferences-changed", saved);
                                 }
@@ -1399,22 +1393,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                                 let _ = window.show();
                                 let _ = window.set_focus();
                             }
-                        }
-                    }
-                }
-            }
-            "default-skin" => {
-                if let Some(state) = app.try_state::<AppState>() {
-                    if let Ok(mut preferences) = state.preferences.lock() {
-                        preferences.selected_skin = "default".into();
-                        if persist_preferences(&state.preferences_path, &preferences).is_ok() {
-                            let saved = preferences.clone();
-                            let _ = default_skin_choice_menu.set_checked(true);
-                            let _ = supporter_blur_menu.set_checked(false);
-                            let _ = supporter_computer_menu.set_checked(false);
-                            let _ = app.emit_to("widget", "preferences-changed", saved.clone());
-                            let _ = app.emit_to("supporter", "preferences-changed", saved.clone());
-                            let _ = app.emit("supporter-skin-changed", saved.selected_skin);
                         }
                     }
                 }
@@ -1498,7 +1476,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         });
                         let _ = theme_menu.set_text(if english { "Theme" } else { "主题" });
                         let _ = default_skin_menu.set_text(if english { "Default skin" } else { "默认皮肤" });
-                        let _ = default_skin_state.set_text(if english { "Use default skin" } else { "使用默认皮肤" });
                         let _ = theme_system_menu.set_text(if english { "Follow system" } else { "跟随系统" });
                         let _ = theme_dark_menu.set_text(if english { "Dark" } else { "深色" });
                         let _ = theme_light_menu.set_text(if english { "Light" } else { "浅色" });
@@ -1537,7 +1514,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         let normalized = prefs.clone().normalized();
                         *prefs = normalized.clone();
                         if persist_preferences(&state.preferences_path, &normalized).is_ok() {
-                            let _ = default_skin_choice_menu.set_checked(true);
                             let _ = supporter_blur_menu.set_checked(false);
                             let _ = supporter_computer_menu.set_checked(false);
                             let _ = theme_system_state.set_checked(normalized.appearance == "system");

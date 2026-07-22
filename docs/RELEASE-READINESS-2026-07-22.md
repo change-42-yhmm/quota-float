@@ -10,6 +10,7 @@
 - Windows 与 macOS Universal GitHub Actions 均已成功。
 - 草稿产物 SHA-256、版本信息以及解包后的隐私/签发材料扫描均已通过。
 - `Designer @Change` 是允许出现在用户界面的公开设计师标识。
+- 用户已接受本版本不做 Windows Authenticode 签名和 Apple 公证；公开发布说明必须明确 SmartScreen/Gatekeeper 可能出现安全提示。
 
 ## 已完成的安全与隔离检查
 
@@ -26,9 +27,8 @@
 2. 确认 GitHub Secret 中使用的是正式公钥而不是历史本地测试公钥；工作流只能校验格式，不能辨别密钥身份。
 3. 在真实 Mac 上确认 Gatekeeper 提示、启动、托盘、透明窗口、展开/收起和两种支持者皮肤。
 4. 在 Windows 上确认 SmartScreen 提示、安装/卸载、托盘、自动启动、100%/125%/150% 缩放和两种支持者皮肤。
-5. 决定本次是否接受未做 Windows Authenticode 签名和 Apple 公证的发布方式；若接受，需要在 Release 说明中明确安装提示。
-6. 人工校对草稿 Release 的更新说明，避免把仅供维护者使用的签发器功能描述成用户包功能。
-7. 记录最终验收人、时间、Windows EXE/MSI 与 macOS DMG 的 SHA-256，再手动点击公开发布。
+5. 人工校对草稿 Release 的更新说明，加入 SmartScreen/Gatekeeper 安装提示，并避免把仅供维护者使用的签发器功能描述成用户包功能。
+6. 记录最终验收人、时间、Windows EXE/MSI 与 macOS DMG 的 SHA-256，再等待用户明确指示后手动公开发布。
 
 ## v0.2.4 草稿产物哈希
 

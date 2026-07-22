@@ -1,6 +1,6 @@
 # Quota Float
 
-Lightweight floating desktop widget for checking Codex quota from the local Codex Desktop login state.
+A lightweight Windows/macOS desktop widget that keeps your Codex quota visible from your local Codex Desktop session.
 
 ![Quota Float quota states](docs/images/quota-states.png)
 
@@ -33,7 +33,7 @@ Lightweight floating desktop widget for checking Codex quota from the local Code
 Suggested repository description:
 
 ```text
-Floating Windows/macOS desktop widget for checking Codex quota from the local Codex Desktop login state.
+A lightweight Windows/macOS desktop widget that keeps your Codex quota visible from your local Codex Desktop session.
 ```
 
 Suggested topics:

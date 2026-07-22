@@ -80,7 +80,7 @@ Blur and Computer are optional supporter skins. These previews use mock quota da
 
 | Blur | Computer |
 | --- | --- |
-| ![Blur supporter skin in a dark healthy-state preview](docs/images/skin-blur-dark-healthy.jpg) | ![Computer supporter skin in a dark healthy-state preview](docs/images/skin-computer-dark-healthy.jpg) |
+| <img src="docs/images/skin-blur-dark-healthy.jpg" alt="Blur supporter skin in a dark healthy-state preview" width="260"> | <img src="docs/images/skin-computer-dark-healthy.jpg" alt="Computer supporter skin in a dark healthy-state preview" width="260"> |
 
 ### Maintainer license issuer
 

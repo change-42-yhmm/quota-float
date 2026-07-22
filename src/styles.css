@@ -345,12 +345,12 @@ button { font: inherit; }
 .quota-card--skin-blur .weekly-metric strong,
 .quota-card--skin-blur .weekly-metric strong small { font-family: "Blur Nunito", "Arial Rounded MT Bold", "SF Pro Rounded", ui-rounded, sans-serif; font-weight: 500; }
 .quota-card--skin-blur .card-actions button,
-.quota-card--skin-blur .usage-indicator { border: 0; background: url("../assets/blur/按钮bg.png") center / 100% 100% no-repeat; box-shadow: none; backdrop-filter: none; }
+.quota-card--skin-blur .usage-indicator { border: 0; background: rgba(255,255,255,.75); box-shadow: none; backdrop-filter: none; }
 .quota-card--skin-blur .card-actions .pin-button,
 .quota-card--skin-blur .card-actions .expand-button { color: #798183; }
 .quota-card--skin-blur .card-actions button:hover { background-color: transparent; filter: brightness(.96); }
 .quota-card--skin-blur .card-actions .pin-button--active,
-.quota-card--skin-blur .card-actions .expand-button--active { border: 0; color: #1c3136; background: url("../assets/blur/按钮bg.png") center / 100% 100% no-repeat; box-shadow: inset 0 0 0 1px rgba(255,255,255,.75), 0 3px 10px rgba(77,145,150,.12); }
+.quota-card--skin-blur .card-actions .expand-button--active { border: 0; color: #1c3136; background: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.75), 0 3px 10px rgba(77,145,150,.12); }
 .quota-card--skin-blur .usage-indicator i { background: rgba(19,67,68,.55); box-shadow: none; }
 .blur-progress { height: 8px; display: grid; grid-template-columns: repeat(20, 1fr); align-items: center; gap: 5px; margin-top: 18px; }
 .blur-progress i { justify-self: center; display: block; background: rgba(87,154,151,.25); transition: transform .3s ease, background-color .3s ease; }

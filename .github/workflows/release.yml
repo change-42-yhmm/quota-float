@@ -47,6 +47,8 @@ jobs:
           releaseBody: |
             ## What's new
 
+            - Refreshes Blur state artwork and corrects its control-button fill states.
+            - Adds an offline maintainer issuance ledger with order details and clearly labeled local cancellation records.
             - Removes outer card shadows while retaining the transparent-window safety inset.
             - Adds a Chinese/English content switch to the design workbench, including widget preview copy.
             - Keeps showing weekly quota when the 5-hour window is temporarily unavailable, with a clear `W` badge.

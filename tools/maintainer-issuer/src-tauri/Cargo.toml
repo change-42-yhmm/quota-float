@@ -1,0 +1,19 @@
+[package]
+name = "quota-float-maintainer-issuer"
+version = "0.1.0"
+description = "Offline maintainer license issuer for Quota Float"
+edition = "2021"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+base64 = "0.22"
+chrono = { version = "0.4", features = ["clock"] }
+dirs = "6"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+uuid = { version = "1", features = ["v4"] }

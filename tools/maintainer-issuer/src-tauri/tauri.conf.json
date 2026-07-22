@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Quota Float Maintainer Issuer",
+  "version": "0.1.0",
+  "identifier": "app.quotafloat.maintainer-issuer",
+  "build": { "beforeDevCommand": "npm run dev", "devUrl": "http://localhost:1422", "beforeBuildCommand": "npm run build", "frontendDist": "../dist" },
+  "app": { "windows": [{ "title": "Quota Float Maintainer Issuer", "width": 1080, "height": 760, "minWidth": 880, "minHeight": 650, "resizable": true, "visible": true }], "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" } },
+  "bundle": { "active": true, "targets": "all", "category": "DeveloperTool", "shortDescription": "Offline license issuer for Quota Float maintainers", "longDescription": "A separate, offline-only utility for issuing Quota Float supporter licenses." }
+}

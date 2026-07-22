@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability for the offline maintainer issuer.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

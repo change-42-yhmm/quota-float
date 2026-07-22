@@ -28,6 +28,12 @@ A lightweight Windows/macOS desktop widget that keeps your Codex quota visible f
 | --- | --- |
 | ![Expanded weekly quota fallback](docs/images/quota-v0.1.4-weekly-fallback.png) | ![Weekly quota orb with W badge](docs/images/quota-v0.1.4-weekly-orb.png) |
 
+### Dark healthy state
+
+![Quota Float dark healthy-state preview](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.4/quota-v0.2.4-dark-healthy.png)
+
+The preview uses mock quota data only; it does not contain account, device, or license information.
+
 ## Repository Metadata
 
 Suggested repository description:
@@ -67,6 +73,14 @@ https://github.com/change-42-yhmm/quota-float/issues
 ## Supporter skins
 
 The standard installer includes the free default appearances and can unlock optional supporter skins with a signed, device-bound license. Licenses are verified locally; the app does not send device request codes or license text to a service.
+
+### Dark healthy-state previews
+
+Blur and Computer are optional supporter skins. These previews use mock quota data and do not reveal any account, device, or license information.
+
+| Blur | Computer |
+| --- | --- |
+| ![Blur supporter skin in a dark healthy-state preview](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.4/blur-dark-healthy-preview.png) | ![Computer supporter skin in a dark healthy-state preview](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.4/computer-dark-healthy-preview.png) |
 
 ### Maintainer license issuer
 

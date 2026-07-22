@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle, ClipboardText, Copy, FileArrowUp, Key, ShieldCheck, WarningCircle } from "@phosphor-icons/react";
 import { invoke } from "@tauri-apps/api/core";
+import "./copy-feedback.css";
+import "./copy-feedback.css";
 
 type Skin = "blur" | "computer";
 type View = "issue" | "ledger";
@@ -21,7 +23,9 @@ export function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const copyTimerRef = useRef<number | null>(null);
   const validCode = DEVICE_CODE.test(deviceCode.trim());
   const canIssue = validCode && privateKey.trim().length > 0 && buyerName.trim().length > 0 && orderNumber.trim().length > 0 && !busy;
   const preview = useMemo(() => deviceCode.trim().slice(0, 16) || "QF1-…", [deviceCode]);
@@ -30,10 +34,13 @@ export function App() {
     catch (reason) { setError(reason instanceof Error ? reason.message : "无法读取本地签发台账。"); }
   };
   useEffect(() => { if (view === "ledger") void loadLedger(); }, [view]);
+  useEffect(() => () => {
+    if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+  }, []);
 
   async function issue() {
     if (!canIssue) return;
-    setBusy(true); setError(null); setNotice(null);
+    setBusy(true); setError(null); setNotice(null); setCopied(false);
     try {
       const result = await invoke<IssuedLicense>("issue_license", { skinId, deviceHash: deviceCode.trim(), buyerName: buyerName.trim(), orderNumber: orderNumber.trim(), privateKey: privateKey.trim() });
       setIssued(result); setPrivateKey(""); setKeyName("");
@@ -41,6 +48,53 @@ export function App() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : "签发失败，请检查设备码和私钥。"); }
     finally { setBusy(false); }
   }
+
+  async function copyLicense() {
+    if (!issued) return;
+    try {
+      await navigator.clipboard.writeText(issued.license);
+      setError(null);
+      setNotice("许可证 JSON 已复制到剪贴板。");
+      setCopied(true);
+      if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = window.setTimeout(() => {
+        setCopied(false);
+        copyTimerRef.current = null;
+      }, 1800);
+    } catch {
+      setCopied(false);
+      setNotice(null);
+      setError("复制失败，请手动选择许可证 JSON 后复制。");
+    }
+  }
+
+  useEffect(() => {
+    if (!issued) return;
+    const button = document.querySelector<HTMLButtonElement>(".copy-button");
+    if (!button) return;
+    button.classList.toggle("is-copied", copied);
+    button.setAttribute("aria-label", copied ? "许可证 JSON 已复制" : "复制许可证 JSON");
+    const handleCopy = (event: MouseEvent) => {
+      event.stopPropagation();
+      void copyLicense();
+    };
+    button.addEventListener("click", handleCopy);
+    return () => button.removeEventListener("click", handleCopy);
+  }, [issued, copied]);
+
+  useEffect(() => {
+    if (!issued) return;
+    const button = document.querySelector<HTMLButtonElement>(".copy-button");
+    if (!button) return;
+    button.classList.toggle("is-copied", copied);
+    button.setAttribute("aria-label", copied ? "许可证 JSON 已复制" : "复制许可证 JSON");
+    const handleCopy = (event: MouseEvent) => {
+      event.stopPropagation();
+      void copyLicense();
+    };
+    button.addEventListener("click", handleCopy);
+    return () => button.removeEventListener("click", handleCopy);
+  }, [issued, copied]);
 
   async function cancel(record: LedgerRecord) {
     if (!window.confirm(`确认取消订单「${record.orderNumber}」的本地台账记录吗？这不会使已经激活的客户端许可证失效。`)) return;

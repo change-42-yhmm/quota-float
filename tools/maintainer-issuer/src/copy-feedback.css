@@ -1,0 +1,26 @@
+.copy-button {
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.copy-button:hover {
+  background: #eef8fd;
+}
+
+.copy-button:active {
+  transform: translateY(1px);
+}
+
+.copy-button.is-copied {
+  color: #08271d;
+  background: #8ee0b9;
+  font-size: 0;
+}
+
+.copy-button.is-copied svg {
+  display: none;
+}
+
+.copy-button.is-copied::after {
+  content: "✓ 已复制许可证 JSON";
+  font-size: 13px;
+}

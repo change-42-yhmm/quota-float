@@ -26,6 +26,31 @@ jobs:
           node-version: 22
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
+      - name: Validate release version
+        shell: pwsh
+        run: |
+          $package = Get-Content -Raw package.json | ConvertFrom-Json
+          $expectedTag = "v$($package.version)"
+          if ($env:GITHUB_REF_NAME -ne $expectedTag) {
+            throw "Release tag '$env:GITHUB_REF_NAME' does not match package version '$expectedTag'."
+          }
+      - name: Validate license verification key
+        shell: pwsh
+        env:
+          QUOTA_FLOAT_LICENSE_PUBLIC_KEY: ${{ secrets.QUOTA_FLOAT_LICENSE_PUBLIC_KEY }}
+        run: |
+          $encoded = $env:QUOTA_FLOAT_LICENSE_PUBLIC_KEY
+          if ([string]::IsNullOrWhiteSpace($encoded)) {
+            throw "QUOTA_FLOAT_LICENSE_PUBLIC_KEY is not configured."
+          }
+          try {
+            $key = [Convert]::FromBase64String($encoded.Trim())
+          } catch {
+            throw "QUOTA_FLOAT_LICENSE_PUBLIC_KEY is not valid Base64."
+          }
+          if ($key.Length -ne 32) {
+            throw "QUOTA_FLOAT_LICENSE_PUBLIC_KEY must decode to exactly 32 bytes."
+          }
       - name: Install macOS universal targets
         if: runner.os == 'macOS'
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin

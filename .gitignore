@@ -10,6 +10,7 @@
 /.chrome-qa2
 /.codex
 /.codex-update-check-state.json
+/.work-feedback/
 /.idea
 /.vscode
 *.log
@@ -37,5 +38,6 @@ token.json
 /tools/maintainer-issuer/src-tauri/target/
 /tools/maintainer-issuer/src-tauri/gen/
 /tools/maintainer-issuer/issuance-ledger.csv
+/tools/maintainer-issuer/issuance-ledger.json
 .tauri-updater.key
 /效果/

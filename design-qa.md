@@ -1,6 +1,6 @@
 # Supporter window visual QA
 
-- Source visual truth: `C:\Users\chen\AppData\Local\Temp\codex-clipboard-fbdaee9c-6fde-44d5-bb45-aef6160e66d0.jpg`
+- Source visual truth: a local temporary reference image (not committed)
 - Implementation target: `src/components/SupporterPanel.tsx`
 - Intended viewport: 520 × 640 px desktop window
 - State: Chinese, Blur option selected, no validation error

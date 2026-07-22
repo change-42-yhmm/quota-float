@@ -957,6 +957,23 @@ mod supporter_preference_tests {
         assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), true));
         assert!(preferences.supporter_prompt_shown_at.is_none());
     }
+
+    #[test]
+    fn verified_skin_set_removes_forged_supporter_flags() {
+        let mut preferences = WidgetPreferences {
+            unlocked_skin: Some(COMPUTER_SKIN_ID.into()),
+            unlocked_skins: vec![BLUR_SKIN_ID.into(), COMPUTER_SKIN_ID.into()],
+            selected_skin: COMPUTER_SKIN_ID.into(),
+            ..WidgetPreferences::default()
+        };
+        assert!(reconcile_supporter_fields(
+            &mut preferences,
+            vec![BLUR_SKIN_ID.into()]
+        ));
+        assert_eq!(preferences.unlocked_skin.as_deref(), Some(BLUR_SKIN_ID));
+        assert_eq!(preferences.unlocked_skins, vec![BLUR_SKIN_ID]);
+        assert_eq!(preferences.selected_skin, "default");
+    }
 }
 
 fn verified_supporter_documents(preferences: &WidgetPreferences, request_code: &str) -> Vec<license::LicenseDocument> {
@@ -977,17 +994,58 @@ fn verified_supporter_documents(preferences: &WidgetPreferences, request_code: &
     documents
 }
 
+fn reconcile_supporter_fields(
+    preferences: &mut WidgetPreferences,
+    mut verified_skins: Vec<String>,
+) -> bool {
+    verified_skins.sort();
+    verified_skins.dedup();
+    let selected_skin = if preferences.selected_skin == "default"
+        || verified_skins.iter().any(|skin| skin == &preferences.selected_skin)
+    {
+        preferences.selected_skin.clone()
+    } else {
+        "default".into()
+    };
+    let unlocked_skin = verified_skins.first().cloned();
+    let changed = preferences.unlocked_skin != unlocked_skin
+        || preferences.unlocked_skins != verified_skins
+        || preferences.selected_skin != selected_skin;
+    preferences.unlocked_skin = unlocked_skin;
+    preferences.unlocked_skins = verified_skins;
+    preferences.selected_skin = selected_skin;
+    changed
+}
+
+fn reconcile_verified_supporter_fields(
+    preferences: &mut WidgetPreferences,
+    request_code: &str,
+) -> bool {
+    let verified_skins = verified_supporter_documents(preferences, request_code)
+        .into_iter()
+        .map(|document| document.skin_id)
+        .collect();
+    reconcile_supporter_fields(preferences, verified_skins)
+}
+
 fn supporter_status(preferences: &WidgetPreferences, request_code: &str) -> SupporterStatus {
     let documents = verified_supporter_documents(preferences, request_code);
     if !documents.is_empty() {
         let unlocked_skins = documents.iter().map(|document| document.skin_id.clone()).collect::<Vec<_>>();
+        let selected_skin = if preferences.selected_skin == "default"
+            || unlocked_skins.iter().any(|skin| skin == &preferences.selected_skin)
+        {
+            preferences.selected_skin.clone()
+        } else {
+            "default".into()
+        };
         SupporterStatus {
             request_code: request_code.into(),
             active: true,
             message: "Supporter licenses are active.".into(),
             unlocked_skin: unlocked_skins.first().cloned(),
             unlocked_skins: unlocked_skins.clone(),
-            selected_skin: preferences.selected_skin.clone(),
+            selected_skin,
             available_skins: std::iter::once("default".into()).chain(unlocked_skins).collect(),
         }
     } else {
@@ -1007,14 +1065,13 @@ fn supporter_status(preferences: &WidgetPreferences, request_code: &str) -> Supp
 fn get_supporter_status(state: State<'_, AppState>) -> Result<SupporterStatus, String> {
     let request_code = device_request_code()?;
     let mut preferences = preferences_lock(&state);
+    let changed = reconcile_verified_supporter_fields(&mut preferences, &request_code);
     let status = supporter_status(&preferences, &request_code);
-    if !status.active && preferences.selected_skin != "default" {
-        preferences.selected_skin = "default".into();
-        preferences.unlocked_skin = None;
-        preferences.unlocked_skins.clear();
+    if changed {
         // Returning the request code must not depend on a best-effort cleanup
-        // of an obsolete skin selection. Otherwise a transient file-write
-        // failure hides the device code even though it was generated safely.
+        // of forged or obsolete supporter flags. Otherwise a transient
+        // file-write failure hides the device code even though it was
+        // generated safely.
         if persist_preferences(&state.preferences_path, &preferences).is_err() {
             eprintln!("failed to persist supporter skin cleanup");
         }
@@ -1589,10 +1646,16 @@ pub fn run() {
             let data_dir = app.path().app_config_dir()?;
             let preferences_path = data_dir.join("preferences.json");
             let mut preferences = load_preferences(&preferences_path);
-            let has_supporter_license = device_request_code()
-                .ok()
-                .map(|request_code| supporter_status(&preferences, &request_code).active)
-                .unwrap_or(false);
+            let has_supporter_license = match device_request_code() {
+                Ok(request_code) => {
+                    reconcile_verified_supporter_fields(&mut preferences, &request_code);
+                    supporter_status(&preferences, &request_code).active
+                }
+                Err(_) => {
+                    reconcile_supporter_fields(&mut preferences, Vec::new());
+                    false
+                }
+            };
             let show_supporter_prompt = should_show_supporter_prompt(
                 &mut preferences,
                 Utc::now(),

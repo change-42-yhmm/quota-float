@@ -69,10 +69,17 @@ fn payload(document: &LicenseDocument) -> String {
 }
 
 fn csv_cell(value: &str) -> String {
-    format!(
-        "\"{}\"",
-        value.replace('"', "\"\"").replace(['\r', '\n'], " ")
-    )
+    let value = value.replace('"', "\"\"").replace(['\r', '\n'], " ");
+    // Spreadsheet applications may evaluate values that start with a formula
+    // marker even when the value is quoted as a CSV cell. Order details come
+    // from outside the maintainer's trust boundary, so force such cells to
+    // remain plain text when the CSV ledger is opened in Excel or similar.
+    let value = if matches!(value.trim_start().chars().next(), Some('=' | '+' | '-' | '@')) {
+        format!("'{value}")
+    } else {
+        value
+    };
+    format!("\"{value}\"")
 }
 
 fn ledger_path() -> Result<PathBuf, String> {
@@ -167,10 +174,10 @@ fn issue_license(
         signature: String::new(),
     };
     document.signature = STANDARD.encode(key.sign(payload(&document).as_bytes()).to_bytes());
-    let (ledger_path, ledger_error) = match append_ledger(&document, buyer_name.trim(), order_number.trim()) {
-        Ok(path) => (Some(path), None),
-        Err(error) => (None, Some(error)),
-    };
+    // Do not release a valid offline license if its issuance cannot be
+    // recorded locally. Unlike an online entitlement, this license cannot be
+    // recalled later, so the ledger is the maintainer's only audit trail.
+    let ledger_path = append_ledger(&document, buyer_name.trim(), order_number.trim())?;
     let device_prefix = document.device_hash.chars().take(16).collect();
     let license_id = document.license_id.clone();
     let license =
@@ -180,8 +187,8 @@ fn issue_license(
         license_id,
         issued_at,
         device_prefix,
-        ledger_path,
-        ledger_error,
+        ledger_path: Some(ledger_path),
+        ledger_error: None,
     })
 }
 
@@ -238,5 +245,8 @@ mod tests {
     #[test]
     fn csv_cells_are_safe_for_excel() {
         assert_eq!(csv_cell("Buyer \"A\"\nOrder"), "\"Buyer \"\"A\"\" Order\"");
+        for formula in ["=1+1", "+1+1", "-1+1", "@SUM(A1)", "  =1+1"] {
+            assert!(csv_cell(formula).starts_with("\"'"));
+        }
     }
 }

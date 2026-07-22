@@ -82,12 +82,6 @@ Blur and Computer are optional supporter skins. These previews use mock quota da
 | --- | --- |
 | <img src="docs/images/skin-blur-dark-healthy.jpg" alt="Blur supporter skin in a dark healthy-state preview" width="260"> | <img src="docs/images/skin-computer-dark-healthy.jpg" alt="Computer supporter skin in a dark healthy-state preview" width="260"> |
 
-### Maintainer license issuer
-
-The shipped desktop app never contains a private-key signer. Maintenance signing is performed only with the offline [tools/license-cli](tools/license-cli/README.md) tool. Keep private keys and completed order ledgers outside the repository; never distribute either to end users. Release builds must set `QUOTA_FLOAT_LICENSE_PUBLIC_KEY` to the Base64 public key produced by that tool. Optionally set `VITE_SUPPORT_EMAIL` at build time to show a support email inside the Supporter skins panel.
-
-For the module map, license format, release setup, and future skin-change checklist, see [docs/SUPPORTER-STATUS.md](docs/SUPPORTER-STATUS.md).
-
 ## Privacy Boundary
 
 Quota Float is local-first and intentionally narrow:

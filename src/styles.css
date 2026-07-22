@@ -42,7 +42,7 @@ button { font: inherit; }
   border-radius: var(--card-radius, 38px);
   background: #edf3f8;
   background-clip: padding-box;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 0 1px rgba(255,255,255,.18), 0 1px 8px rgba(90,108,132,.05);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 0 1px rgba(255,255,255,.18);
   padding: 30px 30px 27px;
   isolation: isolate;
   user-select: none;
@@ -65,7 +65,7 @@ button { font: inherit; }
     radial-gradient(circle at var(--warm-position, 82% 82%), var(--warm, #0D0830) 0 14%, transparent var(--warm-fade, 34%)),
     radial-gradient(circle at 52% 12%, var(--cool, #213183) 0 22%, transparent 52%),
     linear-gradient(var(--gradient-angle, 145deg), var(--cool, #213183), var(--linear-mid, #181056) 47%, var(--linear-warm, var(--warm, #0D0830)) 83%, var(--linear-end, #0D0830));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,255,255,.04), 0 8px 28px rgba(0,0,0,.26);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,255,255,.04);
 }
 .quota-card--theme-dark .eyebrow,
 .quota-card--theme-dark .updated,
@@ -417,6 +417,11 @@ button { font: inherit; }
 .design-theme-switch button { min-height: 30px; padding: 0 12px; border: 0; border-radius: 8px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }
 .design-theme-switch button:hover { color: #202631; background: rgba(105,137,190,.1); }
 .design-theme-switch button.is-active { color: white; background: #315f9f; }
+.design-language-switch { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid rgba(99,108,128,.16); border-radius: 12px; background: rgba(255,255,255,.84); }
+.design-language-switch > span { margin: 0 5px 0 4px; color: #626a78; font-size: 11px; font-weight: 700; }
+.design-language-switch button { min-height: 30px; padding: 0 10px; border: 0; border-radius: 8px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }
+.design-language-switch button:hover { color: #202631; background: rgba(105,137,190,.1); }
+.design-language-switch button.is-active { color: #fff; background: #315f9f; }
 .design-controls { position: sticky; top: 0; height: 100vh; padding: 46px 36px; display: flex; flex-direction: column; gap: 25px; background: rgba(255,255,255,.94); border-left: 1px solid #dfe1e6; overflow-y: auto; }
 .design-kicker { margin: 0 0 9px; font-size: 11px; font-weight: 750; letter-spacing: .2em; color: #6c7280; }
 .design-controls h1 { margin: 0; font-size: 31px; letter-spacing: -.04em; font-weight: 620; }
@@ -445,14 +450,19 @@ button { font: inherit; }
 .design-workbench--dark .palette-heading { color: #91aef4; }
 .design-workbench--dark .palette-heading strong { color: #fff; background: #536AD2; }
 .design-workbench--dark .design-preview-switch,
-.design-workbench--dark .design-theme-switch { border-color: rgba(180,204,235,.14); background: rgba(29,42,61,.9); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+.design-workbench--dark .design-theme-switch,
+.design-workbench--dark .design-language-switch { border-color: rgba(180,204,235,.14); background: rgba(29,42,61,.9); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
 .design-workbench--dark .design-page-tabs { border-color: rgba(180,204,235,.14); background: rgba(29,42,61,.9); box-shadow: 0 8px 24px rgba(0,0,0,.2); }.design-workbench--dark .design-page-tabs button { color: #bdc9da; }.design-workbench--dark .design-page-tabs button:hover { color: #f4f8ff; background: rgba(127,178,255,.14); }.design-workbench--dark .design-page-tabs button.is-active { color: #fff; background: #3f7cc8; }
 .design-workbench--dark .design-preview-switch button,
-.design-workbench--dark .design-theme-switch button { color: #bdc9da; }
+.design-workbench--dark .design-theme-switch button,
+.design-workbench--dark .design-language-switch > span,
+.design-workbench--dark .design-language-switch button { color: #bdc9da; }
 .design-workbench--dark .design-preview-switch button:hover,
-.design-workbench--dark .design-theme-switch button:hover { color: #f4f8ff; background: rgba(127,178,255,.14); }
+.design-workbench--dark .design-theme-switch button:hover,
+.design-workbench--dark .design-language-switch button:hover { color: #f4f8ff; background: rgba(127,178,255,.14); }
 .design-workbench--dark .design-preview-switch button.is-active,
-.design-workbench--dark .design-theme-switch button.is-active { color: #fff; background: #3f7cc8; }
+.design-workbench--dark .design-theme-switch button.is-active,
+.design-workbench--dark .design-language-switch button.is-active { color: #fff; background: #3f7cc8; }
 .design-workbench--dark .color-control input,
 .design-workbench--dark .reset-design { border-color: #3a4a62; color: #e8effb; background: #1d2a3d; }
 .design-workbench--dark .color-control code { color: #dce8ff; }

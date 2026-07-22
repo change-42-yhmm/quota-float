@@ -30,7 +30,7 @@ A lightweight Windows/macOS desktop widget that keeps your Codex quota visible f
 
 ### Dark healthy state
 
-![Quota Float dark healthy-state preview](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.4/quota-v0.2.4-dark-healthy.png)
+![Quota Float dark healthy-state preview](docs/images/quota-v0.2.4-dark-healthy.jpg)
 
 The preview uses mock quota data only; it does not contain account, device, or license information.
 
@@ -80,7 +80,7 @@ Blur and Computer are optional supporter skins. These previews use mock quota da
 
 | Blur | Computer |
 | --- | --- |
-| ![Blur supporter skin in a dark healthy-state preview](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.4/blur-dark-healthy-preview.png) | ![Computer supporter skin in a dark healthy-state preview](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.4/computer-dark-healthy-preview.png) |
+| ![Blur supporter skin in a dark healthy-state preview](docs/images/skin-blur-dark-healthy.jpg) | ![Computer supporter skin in a dark healthy-state preview](docs/images/skin-computer-dark-healthy.jpg) |
 
 ### Maintainer license issuer
 

@@ -39,6 +39,21 @@ export default function App() {
   const hoverSequence = useRef(0);
   const language = normalizeLanguage(preferences.language);
   const t = copy[language];
+  const operation = language === "zh-CN" ? {
+    listenerFailed: "桌面事件监听启动失败。",
+    settingsFailed: "设置保存失败，已恢复之前的状态。",
+    alwaysOnTopFailed: "置顶状态切换失败。",
+    expandFailed: "组件展开失败。",
+    collapseFailed: "组件收起失败。",
+    releaseOpenFailed: "无法打开 GitHub Releases。",
+  } : {
+    listenerFailed: "Desktop event listener failed to start.",
+    settingsFailed: "Settings could not be saved. Previous state restored.",
+    alwaysOnTopFailed: "Always-on-top toggle failed.",
+    expandFailed: "Widget expand failed.",
+    collapseFailed: "Widget collapse failed.",
+    releaseOpenFailed: "Could not open GitHub Releases.",
+  };
   const theme: WidgetTheme = preferences.appearance === "system" ? (systemDark ? "dark" : "light") : preferences.appearance;
   const skin: WidgetSkin = preferences.unlockedSkins.includes(preferences.selectedSkin as Exclude<WidgetSkin, "default">)
     && (preferences.selectedSkin === "blur" || preferences.selectedSkin === "computer")
@@ -46,7 +61,10 @@ export default function App() {
     : "default";
 
   useEffect(() => {
-    void syncWidgetAppearance(theme).catch(() => setOperationError("Widget size sync failed."));
+    // This only reconciles the transparent-window safety inset after a theme
+    // change. A platform refusal is non-fatal: the current widget geometry is
+    // still usable and users should never see an internal resize error.
+    void syncWidgetAppearance(theme).catch(() => undefined);
   }, [theme]);
 
   useEffect(() => {
@@ -131,9 +149,9 @@ export default function App() {
     let cleanup: () => void = () => {};
     void listenDesktopEvents({ onPreferences: (value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) }), onRefresh: () => void refresh(true), onUpdate: () => checkUpdate(true) }).then((value) => {
       if (cancelled) value(); else cleanup = value;
-    }).catch(() => setOperationError("Desktop event listener failed to start."));
+    }).catch(() => setOperationError(operation.listenerFailed));
     return () => { cancelled = true; cleanup(); };
-  }, [checkUpdate, refresh]);
+  }, [checkUpdate, operation.listenerFailed, refresh]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => checkUpdate(false), 12_000);
@@ -185,8 +203,8 @@ export default function App() {
     const previous = preferences;
     setPreferences(next);
     setOperationError(null);
-    void updatePreferences(next).catch(() => { setPreferences(previous); setOperationError("Settings could not be saved. Previous state restored."); });
-  }, [preferences]);
+    void updatePreferences(next).catch(() => { setPreferences(previous); setOperationError(operation.settingsFailed); });
+  }, [operation.settingsFailed, preferences]);
 
   const handleHover = useCallback((value: boolean) => {
     if (collapseTimer.current !== null) {
@@ -202,7 +220,7 @@ export default function App() {
         .then(() => { if (hoverSequence.current === sequence) setCompact(false); })
         .catch(() => {
           setCompact(false);
-          setOperationError("Widget expand failed.");
+          setOperationError(operation.expandFailed);
         });
       return;
     }
@@ -210,16 +228,16 @@ export default function App() {
     collapseTimer.current = window.setTimeout(() => {
       if (hoverSequence.current !== sequence) return;
       setCompact(true);
-      void setWidgetExpanded(false).catch(() => setOperationError("Widget collapse failed."));
+      void setWidgetExpanded(false).catch(() => setOperationError(operation.collapseFailed));
     }, 180);
-  }, [preferences.stayExpanded, refresh]);
+  }, [operation.collapseFailed, operation.expandFailed, preferences.stayExpanded, refresh]);
 
   useEffect(() => {
     if (!preferences.stayExpanded) return;
     if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current);
     setCompact(false);
-    void setWidgetExpanded(true).catch(() => setOperationError("Widget expand failed."));
-  }, [preferences.stayExpanded]);
+    void setWidgetExpanded(true).catch(() => setOperationError(operation.expandFailed));
+  }, [operation.expandFailed, preferences.stayExpanded]);
 
   if (compact) {
     return <QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} theme={theme} skin={skin} style={cardStyle} />;
@@ -234,7 +252,7 @@ export default function App() {
       onNext={() => setActiveIndex((value) => (value + 1) % snapshots.length)}
       onTogglePin={() => savePreferences({ ...preferences, pinnedProvider: preferences.pinnedProvider ? null : current.provider })}
       onToggleStayExpanded={() => savePreferences({ ...preferences, stayExpanded: !preferences.stayExpanded })}
-      onLock={() => { setOperationError(null); void setAlwaysOnTop(!preferences.alwaysOnTop).then((value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) })).catch(() => setOperationError("Always-on-top toggle failed.")); }}
+      onLock={() => { setOperationError(null); void setAlwaysOnTop(!preferences.alwaysOnTop).then((value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) })).catch(() => setOperationError(operation.alwaysOnTopFailed)); }}
       onDrag={() => startDragging()}
       onHover={handleHover}
       onRefresh={() => refresh(true)}
@@ -242,7 +260,7 @@ export default function App() {
       theme={theme}
       skin={skin}
       style={cardStyle}
-      notice={showUpdateFallback && operationError ? <><span>{operationError}</span><button type="button" onMouseDown={(event) => event.stopPropagation()} onClick={() => void openReleasePage().catch(() => setOperationError("Could not open GitHub Releases."))}>GitHub Releases</button></> : operationError}
+      notice={showUpdateFallback && operationError ? <><span>{operationError}</span><button type="button" onMouseDown={(event) => event.stopPropagation()} onClick={() => void openReleasePage().catch(() => setOperationError(operation.releaseOpenFailed))}>GitHub Releases</button></> : operationError}
     />
   );
 }

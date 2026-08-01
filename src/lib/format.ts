@@ -12,6 +12,10 @@ export function quotaTier(percent: number | null): "unknown" | "healthy" | "caut
   return "critical";
 }
 
+export function stripProviderPrefix(plan: string): string {
+  return plan.replace(/^(codebuddy|workbuddy)/i, "").trimStart();
+}
+
 export function formatResetTime(value: string | null, now = new Date(), language: Language = "zh-CN"): string {
   const t = copy[normalizeLanguage(language)];
   if (!value) return t.resetTimeUnknown;

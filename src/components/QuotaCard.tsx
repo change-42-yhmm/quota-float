@@ -1,28 +1,23 @@
-import { ArrowClockwise, ArrowDown, ArrowUp, ArrowsInSimple, ArrowsOutSimple, ClockCounterClockwise, CloudSlash, Info, PushPin, PushPinSlash, SignIn, WarningCircle } from "@phosphor-icons/react";
-import { memo, type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { clampPercent, formatDateTime, formatResetDate, formatResetTime, quotaTier } from "../lib/format";
+import { ArrowClockwise, ArrowsInSimple, ArrowsOutSimple, ClockCounterClockwise, CloudSlash, PushPin, PushPinSlash, SignIn, WarningCircle } from "@phosphor-icons/react";
+import { memo, type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
+import { clampPercent, quotaTier, stripProviderPrefix } from "../lib/format";
 import { blurProgressSegments } from "../lib/blurSkin";
 import { copy, normalizeLanguage } from "../lib/i18n";
 import type { Language, ProviderSnapshot, WidgetPreferences, WidgetSkin, WidgetTheme } from "../types";
-import { ProviderMark } from "./ProviderMark";
-import computerGptLogoUrl from "../../assets/computer-gpt-logo.svg";
+import { CodexCardBody, codexErrorCopy, CodexOrbErrorSymbol, ComputerErrorArtwork } from "./CodexCard";
+import { formatPoints, WorkBuddyCardBody, workBuddyErrorCopy, WorkBuddySubtitle, workBuddyTotalPoints } from "./WorkBuddyCard";
 import computerOrbBaseUrl from "../../assets/computer-orb-base.svg";
 import computerOrbHealthyUrl from "../../assets/computer-orb-screen-healthy.svg";
 import computerOrbCautionUrl from "../../assets/computer-orb-screen-caution.svg";
 import computerOrbCriticalUrl from "../../assets/computer-orb-screen-critical.svg";
-import computerErrorUnavailableUrl from "../../assets/computer-error-unavailable.svg";
-import computerErrorStaleUrl from "../../assets/computer-error-stale.svg";
-import computerErrorSignedOutUrl from "../../assets/computer-error-signedout.svg";
 import computerOrbErrorScreenUrl from "../../assets/computer-orb-screen-error.svg";
-import computerOrbGptUrl from "../../assets/computer-orb-gpt.svg";
 
 interface Props {
   snapshot: ProviderSnapshot;
   preferences: WidgetPreferences;
-  providerCount: number;
-  onPrevious: () => void;
-  onNext: () => void;
-  onTogglePin: () => void;
+  canSwitch?: boolean;
+  onPrevious?: () => void;
+  onNext?: () => void;
   onLock: () => void;
   onToggleStayExpanded: () => void;
   onDrag: () => void;
@@ -43,20 +38,21 @@ function StatusIcon({ status, expired = false }: { status: ProviderSnapshot["sta
   return <WarningCircle weight="duotone" />;
 }
 
-function ComputerErrorArtwork({ status }: { status: ProviderSnapshot["status"] }) {
-  const src = status === "signed_out"
-    ? computerErrorSignedOutUrl
-    : status === "stale"
-      ? computerErrorStaleUrl
-      : computerErrorUnavailableUrl;
-  return <img className={`computer-error-artwork computer-error-artwork--${status}`} src={src} alt="" />;
+// Lucide chevron glyphs (ISC license) — minimal angular marks for provider
+// switching, mirroring the 《》 style the design requested.
+function ProviderChevron({ direction }: { direction: "left" | "right" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {direction === "left" ? <path d="m15 18-6-6 6-6" /> : <path d="m9 18 6-6-6-6" />}
+    </svg>
+  );
 }
 
-function localizedBackendMessage(message: string | null, language: Language): string | null {
+function localizedBackendMessage(message: string | null, language: Language, provider: ProviderSnapshot["provider"]): string | null {
   if (!message) return null;
   if (language === "en") return message;
   const normalized = message.toLowerCase();
-  if (normalized.includes("sign in") || normalized.includes("login")) return "Codex 登录已失效，请重新登录。";
+  if (normalized.includes("sign in") || normalized.includes("login")) return provider === "workbuddy" ? "WorkBuddy 登录已失效，请重新登录。" : "Codex 登录已失效，请重新登录。";
   if (normalized.includes("rate limited")) return "请求过于频繁，将稍后自动重试。";
   if (normalized.includes("network")) return "网络不可用，将自动重试。";
   if (normalized.includes("format")) return "额度响应格式已变化。";
@@ -90,10 +86,9 @@ function ComputerProgress({ percent, label }: { percent: number; label: string }
 export const QuotaCard = memo(function QuotaCard({
   snapshot,
   preferences,
-  providerCount,
+  canSwitch = false,
   onPrevious,
   onNext,
-  onTogglePin: _onTogglePin,
   onLock,
   onToggleStayExpanded,
   onDrag,
@@ -106,9 +101,10 @@ export const QuotaCard = memo(function QuotaCard({
   skin = "default",
   style,
 }: Props) {
-  const [showCreditTip, setShowCreditTip] = useState(initialShowCreditTip);
   const language = normalizeLanguage(preferences.language);
   const t = copy[language];
+  const workbuddy = snapshot.workbuddy ?? null;
+  const isWorkBuddy = workbuddy !== null;
   const primary = snapshot.shortWindow ? clampPercent(snapshot.shortWindow.remainingPercent) : null;
   const weekly = snapshot.weeklyWindow ? clampPercent(snapshot.weeklyWindow.remainingPercent) : null;
   const displayPercent = primary ?? weekly;
@@ -128,31 +124,47 @@ export const QuotaCard = memo(function QuotaCard({
         : snapshot.status === "signed_out"
           ? t.notSignedIn
           : t.unavailableStatus;
-  const message = localizedBackendMessage(snapshot.message, language);
-  const creditExpirations = useMemo(() => (snapshot.resetCreditExpiresAt ?? []).map((value, index) => {
-    return t.creditItem(index, formatDateTime(value, language));
-  }), [language, snapshot.resetCreditExpiresAt, t]);
+  const message = localizedBackendMessage(snapshot.message, language, snapshot.provider);
+  const primaryLabel = isWorkBuddy ? t.workbuddyMonthlyRemaining : displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent ?? 0) : t.availableLabel(displayPercent ?? 0);
+  const errorCopy = isWorkBuddy
+    ? workBuddyErrorCopy(t, snapshot.status, staleExpired, message)
+    : codexErrorCopy(t, snapshot.status, staleExpired, message);
+  const planLabel = snapshot.plan ? stripProviderPrefix(snapshot.plan) || t.accountFallback : t.accountFallback;
+
+  const progress = displayPercent === null ? null : skin === "blur"
+    ? <BlurProgress percent={displayPercent} label={primaryLabel} />
+    : skin === "computer"
+      ? <ComputerProgress percent={displayPercent} label={primaryLabel} />
+      : <div className="progress" role="progressbar" aria-label={primaryLabel} aria-valuemin={0} aria-valuemax={100} aria-valuenow={displayPercent}><span style={{ width: `${displayPercent}%` }} /></div>;
 
   return (
     <main
-      className={`quota-card quota-card--${snapshot.status} quota-card--${tier}${theme ? ` quota-card--theme-${theme}` : ""}${skin === "blur" ? " quota-card--skin-blur" : ""}${skin === "computer" ? " quota-card--skin-computer" : ""}`}
+      className={`quota-card quota-card--${snapshot.status} quota-card--${tier}${isWorkBuddy ? " quota-card--workbuddy" : ""}${theme ? ` quota-card--theme-${theme}` : ""}${skin === "blur" ? " quota-card--skin-blur" : ""}${skin === "computer" ? " quota-card--skin-computer" : ""}`}
       style={style}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       onMouseDown={(event) => { if (event.button === 0) void onDrag(); }}
     >
       <div className="aurora" aria-hidden="true" />
-      <span className="sr-only" aria-live="polite">{available && displayPercent !== null ? (displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent) : t.availableLabel(displayPercent)) : message}</span>
+      {!preferences.locked && canSwitch && onPrevious && onNext ? (
+        <>
+          <button type="button" className="provider-switch provider-switch--prev" onClick={onPrevious} onMouseDown={(event) => event.stopPropagation()} aria-label={t.servicePrevious} title={t.servicePrevious}>
+            <ProviderChevron direction="left" />
+          </button>
+          <button type="button" className="provider-switch provider-switch--next" onClick={onNext} onMouseDown={(event) => event.stopPropagation()} aria-label={t.serviceNext} title={t.serviceNext}>
+            <ProviderChevron direction="right" />
+          </button>
+        </>
+      ) : null}
+      <span className="sr-only" aria-live="polite">{available && displayPercent !== null ? (isWorkBuddy ? t.workbuddyTotalPoints(formatPoints(workBuddyTotalPoints(workbuddy))) : displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent) : t.availableLabel(displayPercent)) : message}</span>
       {notice ? <div className="operation-notice" role="status">{notice}</div> : null}
       <header className="card-header">
         <div>
-          <p className="eyebrow">{skin === "computer" ? "codex·plus" : `${snapshot.displayName} · ${snapshot.plan ?? t.accountFallback}`}</p>
-          {snapshot.status !== "stale" ? <p className="updated">{displayingWeeklyAsPrimary ? t.weeklyShortRemaining : t.shortRemaining}</p> : null}
+          <p className="eyebrow">{skin === "computer" && !isWorkBuddy ? "codex·plus" : `${snapshot.displayName} · ${planLabel}`}</p>
+          {snapshot.status !== "stale" ? <p className="updated">{isWorkBuddy ? <WorkBuddySubtitle t={t} /> : displayingWeeklyAsPrimary ? t.weeklyShortRemaining : t.shortRemaining}</p> : null}
         </div>
         {!preferences.locked ? (
           <nav className="card-actions" aria-label={t.controls} onMouseDown={(event) => event.stopPropagation()}>
-            {providerCount > 1 ? <button onClick={onPrevious} aria-label={t.servicePrevious}><ArrowUp /></button> : null}
-            {providerCount > 1 ? <button onClick={onNext} aria-label={t.serviceNext}><ArrowDown /></button> : null}
             <span className={`usage-indicator usage-indicator--${indicatorState}`} role="status" aria-label={indicatorLabel} title={indicatorLabel}><i /></span>
             <button className={preferences.stayExpanded ? "expand-button expand-button--active" : "expand-button"} onClick={onToggleStayExpanded} aria-pressed={preferences.stayExpanded} aria-label={preferences.stayExpanded ? t.keepExpandedOff : t.keepExpandedOn} title={preferences.stayExpanded ? t.keepExpandedOff : t.keepExpandedOn}>
               {preferences.stayExpanded ? <ArrowsInSimple weight="bold" /> : <ArrowsOutSimple />}
@@ -165,42 +177,18 @@ export const QuotaCard = memo(function QuotaCard({
       </header>
 
       {available && displayPercent !== null ? (
-        <>
-          <section className="primary-metric" aria-label={displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent) : t.availableLabel(displayPercent)}>
-            <span>{displayPercent}</span><small>%</small>
-          </section>
-          {skin === "blur"
-            ? <BlurProgress percent={displayPercent} label={displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent) : t.availableLabel(displayPercent)} />
-            : skin === "computer"
-              ? <ComputerProgress percent={displayPercent} label={displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent) : t.availableLabel(displayPercent)} />
-            : <div className="progress" role="progressbar" aria-label={displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent) : t.availableLabel(displayPercent)} aria-valuemin={0} aria-valuemax={100} aria-valuenow={displayPercent}><span style={{ width: `${displayPercent}%` }} /></div>}
-          <p className="reset-time">{formatResetTime(displayWindow?.resetsAt ?? null, new Date(), language)}{displayWindow?.resetsAt ? ` · ${formatDateTime(displayWindow.resetsAt, language)}` : ""}</p>
-          <footer className="card-footer">
-            <div className="weekly-metric">
-              {displayingWeeklyAsPrimary ? <p className="weekly-note"><Info weight="bold" aria-hidden="true" />{t.shortWindowUnavailable}</p> : <p>{t.weeklyUntil(formatResetDate(snapshot.weeklyWindow?.resetsAt ?? null, language))}</p>}
-              <strong className={displayingWeeklyAsPrimary ? "weekly-value--unavailable" : undefined}>{displayingWeeklyAsPrimary ? "--" : weekly ?? "--"}<small>{displayingWeeklyAsPrimary || weekly === null ? "" : "%"}</small></strong>
-              <div className="reset-credit-row" onMouseDown={(event) => event.stopPropagation()}>
-                <span>{snapshot.resetCredits === null ? t.resetCreditUnknown : t.resetCredits(snapshot.resetCredits)}</span>
-                {snapshot.resetCredits !== null && snapshot.resetCredits > 0 ? (
-                  <button type="button" className="reset-credit-button" onClick={() => setShowCreditTip((value) => !value)} aria-expanded={showCreditTip} aria-label={t.view}>{t.view}</button>
-                ) : null}
-              </div>
-              {showCreditTip ? (
-                <div className="reset-credit-tip" role="status" onMouseDown={(event) => event.stopPropagation()}>
-                  {creditExpirations.length > 0 ? creditExpirations.map((item) => <p key={item}>{item}</p>) : <p>{t.noCreditExpiration}</p>}
-                </div>
-              ) : null}
-            </div>
-            {skin === "blur" ? null : skin === "computer" ? <div className="computer-gpt-mark"><img src={computerGptLogoUrl} alt="GPT" /></div> : <ProviderMark />}
-          </footer>
-        </>
+        isWorkBuddy ? (
+          <WorkBuddyCardBody workbuddy={workbuddy} t={t} language={language} skin={skin} primaryLabel={primaryLabel} progress={progress} />
+        ) : (
+          <CodexCardBody snapshot={snapshot} t={t} language={language} skin={skin} displayPercent={displayPercent} weekly={weekly} displayingWeeklyAsPrimary={displayingWeeklyAsPrimary} displayWindow={displayWindow} primaryLabel={primaryLabel} progress={progress} initialShowCreditTip={initialShowCreditTip} />
+        )
       ) : (
         <section className="error-state" aria-live="polite">
-          {skin === "computer"
+          {skin === "computer" && !isWorkBuddy
             ? <div className="status-icon status-icon--computer" aria-hidden="true"><ComputerErrorArtwork status={snapshot.status} /></div>
             : <div className="status-icon" aria-hidden="true"><StatusIcon status={snapshot.status} expired={staleExpired} /></div>}
-          <strong>{snapshot.status === "signed_out" ? t.signedInRequired : staleExpired ? t.staleExpired : t.temporarilyUnavailable}</strong>
-          <p>{message ?? t.errorUnavailable}</p>
+          <strong>{errorCopy.title}</strong>
+          <p>{errorCopy.body}</p>
           {snapshot.status === "stale" ? (
             <button type="button" className="error-refresh-button" onMouseDown={(event) => event.stopPropagation()} onClick={onRefresh} disabled={!onRefresh} aria-label={t.refreshQuota}>
               <ArrowClockwise />
@@ -218,6 +206,8 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
   const idleTimer = useRef<number | null>(null);
   const activeLanguage = normalizeLanguage(language);
   const t = copy[activeLanguage];
+  const workbuddy = snapshot.workbuddy ?? null;
+  const isWorkBuddy = workbuddy !== null;
   const primary = snapshot.shortWindow ? clampPercent(snapshot.shortWindow.remainingPercent) : null;
   const weekly = snapshot.weeklyWindow ? clampPercent(snapshot.weeklyWindow.remainingPercent) : null;
   const displayPercent = primary ?? weekly;
@@ -229,11 +219,6 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
     : tier === "critical"
       ? computerOrbCriticalUrl
       : computerOrbHealthyUrl;
-  const computerOrbErrorSymbol = snapshot.status === "signed_out"
-    ? computerOrbGptUrl
-    : snapshot.status === "stale"
-      ? computerErrorStaleUrl
-      : computerErrorUnavailableUrl;
 
   useEffect(() => {
     idleTimer.current = window.setTimeout(() => setIdle(true), 2000);
@@ -250,12 +235,12 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
 
   return (
     <main
-      className={`quota-orb quota-card--${snapshot.status} quota-card--${tier}${theme ? ` quota-orb--theme-${theme}` : ""}${skin === "blur" ? " quota-orb--skin-blur" : ""}${skin === "computer" ? " quota-orb--skin-computer" : ""}${displayingWeeklyAsPrimary ? " quota-orb--weekly" : ""}${idle ? " quota-orb--idle" : ""}`}
+      className={`quota-orb quota-card--${snapshot.status} quota-card--${tier}${isWorkBuddy ? " quota-orb--workbuddy" : ""}${theme ? ` quota-orb--theme-${theme}` : ""}${skin === "blur" ? " quota-orb--skin-blur" : ""}${skin === "computer" ? " quota-orb--skin-computer" : ""}${displayingWeeklyAsPrimary ? " quota-orb--weekly" : ""}${idle ? " quota-orb--idle" : ""}`}
       style={style}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => onHover(false)}
       onMouseDown={(event) => { if (event.button === 0) void onDrag(); }}
-      aria-label={available ? (displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent!) : t.availableLabel(displayPercent!)) : localizedBackendMessage(snapshot.message, activeLanguage) ?? t.unavailableStatus}
+      aria-label={available ? (isWorkBuddy ? t.workbuddyTotalPoints(formatPoints(workBuddyTotalPoints(workbuddy))) : displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent!) : t.availableLabel(displayPercent!)) : localizedBackendMessage(snapshot.message, activeLanguage, snapshot.provider) ?? (isWorkBuddy ? t.workbuddyErrorUnavailable : t.unavailableStatus)}
     >
       <div className="aurora" aria-hidden="true" />
       {skin === "computer" ? <img className="computer-orb-base" src={computerOrbBaseUrl} alt="" aria-hidden="true" /> : null}
@@ -270,13 +255,13 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
       ) : null}
       {available ? (
         <section className="orb-metric">
-          <span>{displayPercent}</span>
-          {skin !== "computer" ? <small>%</small> : null}
+          <span>{isWorkBuddy ? formatPoints(workBuddyTotalPoints(workbuddy)) : displayPercent}</span>
+          {!isWorkBuddy && skin !== "computer" ? <small>%</small> : null}
         </section>
       ) : (
         <section className="orb-unavailable">
-          {skin === "computer"
-            ? <img className={`computer-orb-error-symbol computer-orb-error-symbol--${snapshot.status}`} src={computerOrbErrorSymbol} alt="" aria-hidden="true" />
+          {skin === "computer" && !isWorkBuddy
+            ? <CodexOrbErrorSymbol status={snapshot.status} />
             : <StatusIcon status={snapshot.status} />}
         </section>
       )}

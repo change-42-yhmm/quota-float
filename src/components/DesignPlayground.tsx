@@ -16,7 +16,15 @@ const base: ProviderSnapshot = {
   weeklyWindow: { remainingPercent: 42, resetsAt: new Date(Date.now() + 3.2 * 86_400_000).toISOString(), windowSeconds: 604_800 },
   resetCredits: 1, resetCreditExpiresAt: [], updatedAt: new Date().toISOString(), status: "ok", message: null,
 };
-const preferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: "codex", autoRotateSeconds: 12, language: "en", appearance: "system", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
+const workbuddyBase: ProviderSnapshot = {
+  provider: "workbuddy", displayName: "WORKBUDDY", plan: "CodeBuddy个人体验版",
+  shortWindow: { remainingPercent: 60, resetsAt: null, windowSeconds: 2_592_000 },
+  weeklyWindow: { remainingPercent: 70, resetsAt: "2026-08-04T23:54:00+08:00", windowSeconds: 0 },
+  resetCredits: null, resetCreditExpiresAt: [],
+  workbuddy: { monthlyRemaining: 300, monthlyTotal: 500, addonRemaining: 2086, addonTotal: 2086, expiringAddonRemaining: 186, expiringAddonExpiresAt: "2026-08-04T23:54:00+08:00" },
+  updatedAt: new Date().toISOString(), status: "ok", message: null,
+};
+const preferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: "codex", enabledProviders: ["codex", "workbuddy"], autoRotateSeconds: 12, language: "en", appearance: "system", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
 const defaults: Controls = { radius: 38, numberSize: 64, progressHeight: 6, brightness: 100, motion: 18 };
 const names: DesktopPaletteName[] = ["healthy", "caution", "critical", "unavailable", "stale", "signed_out"];
 const modes: Array<[Mode, string]> = [[74, "healthy"], [35, "caution"], [8, "critical"], ["weekly", "weekly"], ["healthy-orb", "healthyOrb"], ["caution-orb", "cautionOrb"], ["critical-orb", "criticalOrb"], ["weekly-orb", "weeklyOrb"], ["unavailable", "unavailable"], ["stale", "stale"], ["signed_out", "signedOut"], ["unavailable-orb", "unavailableOrb"], ["stale-orb", "staleOrb"], ["signed_out-orb", "signedOutOrb"]];
@@ -24,6 +32,7 @@ const fields = ["--cool", "--glow", "--warm", "--progress-start", "--progress-en
 const workbenchCopy = {
   "zh-CN": {
     widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", supporter: "支持者皮肤",
+    provider: "供应商",
     previewState: "预览状态", previewTheme: "预览主题", language: "内容语言", light: "浅色", dark: "深色",
     geometryPreview: "几何预览", description: "配色为只读，始终来自桌面组件。以下几何调整仅用于此预览，并会在刷新后恢复默认。",
     source: "桌面来源：", cornerRadius: "圆角", mainNumber: "主数字", progressHeight: "进度条高度", brightness: "亮度", motion: "动效", reset: "重置几何设置",
@@ -32,6 +41,7 @@ const workbenchCopy = {
   },
   en: {
     widget: "Widget", blur: "Blur skin", computer: "Computer skin", supporter: "Supporter skins",
+    provider: "Provider",
     previewState: "Preview state", previewTheme: "Preview theme", language: "Content language", light: "Light", dark: "Dark",
     geometryPreview: "Geometry preview", description: "The palette is read-only and always comes from the desktop widget. Geometry changes below exist only in this preview and reset on refresh.",
     source: "Desktop source:", cornerRadius: "Corner radius", mainNumber: "Main number", progressHeight: "Progress height", brightness: "Brightness", motion: "Motion", reset: "Reset geometry",
@@ -40,17 +50,17 @@ const workbenchCopy = {
   },
 } as const;
 
-function makeSnapshot(mode: Mode): ProviderSnapshot {
-  if (mode === "orb") return base;
-  if (mode === "weekly" || mode === "weekly-orb") return { ...base, shortWindow: null };
-  if (typeof mode === "number") return { ...base, shortWindow: { ...base.shortWindow!, remainingPercent: mode } };
-  if (mode === "healthy-orb") return base;
-  if (mode === "caution-orb") return { ...base, shortWindow: { ...base.shortWindow!, remainingPercent: 35 } };
-  if (mode === "critical-orb") return { ...base, shortWindow: { ...base.shortWindow!, remainingPercent: 8 } };
+function makeSnapshot(mode: Mode, source: ProviderSnapshot): ProviderSnapshot {
+  if (mode === "orb") return source;
+  if (mode === "weekly" || mode === "weekly-orb") return { ...source, shortWindow: null };
+  if (typeof mode === "number") return { ...source, shortWindow: source.shortWindow ? { ...source.shortWindow, remainingPercent: mode } : source.shortWindow };
+  if (mode === "healthy-orb") return source;
+  if (mode === "caution-orb") return { ...source, shortWindow: source.shortWindow ? { ...source.shortWindow, remainingPercent: 35 } : source.shortWindow };
+  if (mode === "critical-orb") return { ...source, shortWindow: source.shortWindow ? { ...source.shortWindow, remainingPercent: 8 } : source.shortWindow };
   const isErrorOrb = typeof mode === "string" && mode.endsWith("-orb");
   const status: ErrorMode = isErrorOrb ? mode.replace("-orb", "") as ErrorMode : mode as ErrorMode;
-  if (status === "stale") return { ...base, status: "stale", updatedAt: new Date(Date.now() - 7_200_000).toISOString(), message: "Refresh failed. Please try again later." };
-  return { ...base, status, shortWindow: null, weeklyWindow: null, resetCredits: null, message: status === "signed_out" ? "Codex sign-in expired. Please sign in again." : "Quota is temporarily unavailable." };
+  if (status === "stale") return { ...source, status: "stale", updatedAt: new Date(Date.now() - 7_200_000).toISOString(), message: "Refresh failed. Please try again later." };
+  return { ...source, status, shortWindow: null, weeklyWindow: null, resetCredits: null, message: status === "signed_out" ? (source.provider === "workbuddy" ? "WorkBuddy sign-in expired. Please sign in again." : "Codex sign-in expired. Please sign in again.") : "Quota is temporarily unavailable." };
 }
 
 function paletteName(snapshot: ProviderSnapshot): DesktopPaletteName {
@@ -70,8 +80,9 @@ export function DesignPlayground() {
   const [controls, setControls] = useState<Controls>(defaults);
   const [language, setLanguage] = useState<Language>(() => query.get("language") === "en" ? "en" : "zh-CN");
   const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "supporter">("widget");
+  const [provider, setProvider] = useState<ProviderSnapshot["provider"]>("codex");
   const [celebrationKey, setCelebrationKey] = useState(0);
-  const snapshot = useMemo(() => makeSnapshot(mode), [mode]);
+  const snapshot = useMemo(() => makeSnapshot(mode, provider === "codex" ? base : workbuddyBase), [mode, provider]);
   const active = paletteName(snapshot);
   const t = workbenchCopy[language];
   const isOrb = mode === "orb" || mode === "weekly-orb" || (typeof mode === "string" && mode.endsWith("-orb"));
@@ -81,13 +92,18 @@ export function DesignPlayground() {
   };
   const update = <K extends keyof Controls>(key: K, value: Controls[K]) => setControls((previous) => ({ ...previous, [key]: value }));
   const selectPalette = (nextTheme: WidgetTheme, name: DesktopPaletteName) => { setTheme(nextTheme); setMode(modeForPalette(name)); };
-  const render = (item: ProviderSnapshot, skin: WidgetSkin = "default") => isOrb
-    ? <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />
-    : <QuotaCard snapshot={item} preferences={{ ...preferences, language }} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLock={() => {}} onToggleStayExpanded={() => {}} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />;
+  const render = (item: ProviderSnapshot, requestedSkin: WidgetSkin = "default") => {
+    // WorkBuddy is not yet supported by the supporter skins; mirror the app
+    // behaviour by falling back to the default skin for its preview.
+    const skin = item.workbuddy !== null ? "default" : requestedSkin;
+    return isOrb
+      ? <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />
+      : <QuotaCard snapshot={item} preferences={{ ...preferences, language }} canSwitch onPrevious={() => {}} onNext={() => {}} onLock={() => {}} onToggleStayExpanded={() => {}} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />;
+  };
 
   return <main className={`design-workbench design-workbench--${theme}`}>
     <section className="design-stage" aria-label={t.widget}>
-      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
+      <div className="design-page-switches"><div className="design-provider-tabs" role="group" aria-label={t.provider}><button type="button" className={provider === "codex" ? "is-active" : ""} onClick={() => setProvider("codex")}>Codex</button><button type="button" className={provider === "workbuddy" ? "is-active" : ""} onClick={() => setProvider("workbuddy")}>WorkBuddy</button></div><div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div></div>
       {previewTab !== "supporter" ? <><div className="design-preview-switch" role="group" aria-label={t.previewState}>
         {modes.map(([value, label]) => <button key={label} className={mode === value ? "is-active" : ""} onClick={() => setMode(value)}>{t[label as keyof typeof t]}</button>)}
       </div>

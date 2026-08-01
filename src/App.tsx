@@ -8,7 +8,7 @@ import { mergeSnapshots } from "./lib/snapshots";
 import { DESKTOP_PALETTES } from "./lib/desktopPalette";
 import type { ProviderSnapshot, WidgetPreferences, WidgetSkin, WidgetTheme } from "./types";
 
-const DEFAULT_PREFS: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: "zh-CN", appearance: "light", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
+const DEFAULT_PREFS: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, enabledProviders: ["codex", "workbuddy"], autoRotateSeconds: 12, language: "zh-CN", appearance: "light", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
 const INITIAL_SNAPSHOT: ProviderSnapshot = {
   provider: "codex",
   displayName: "CODEX",
@@ -54,11 +54,22 @@ export default function App() {
     collapseFailed: "Widget collapse failed.",
     releaseOpenFailed: "Could not open GitHub Releases.",
   };
+  const enabledProviders = preferences.enabledProviders && preferences.enabledProviders.length > 0
+    ? preferences.enabledProviders
+    : ["codex", "workbuddy"];
+  const candidates = snapshots.filter((item) => enabledProviders.includes(item.provider));
+  const safeIndex = candidates.length > 0 ? activeIndex % candidates.length : 0;
+  const current = candidates[safeIndex] ?? snapshots[0] ?? INITIAL_SNAPSHOT;
+  const isWorkBuddy = current.workbuddy !== null;
   const theme: WidgetTheme = preferences.appearance === "system" ? (systemDark ? "dark" : "light") : preferences.appearance;
-  const skin: WidgetSkin = preferences.unlockedSkins.includes(preferences.selectedSkin as Exclude<WidgetSkin, "default">)
-    && (preferences.selectedSkin === "blur" || preferences.selectedSkin === "computer")
-    ? preferences.selectedSkin
-    : "default";
+  // WorkBuddy rendering is not yet supported by the supporter skins, so they
+  // fall back to the default skin while a WorkBuddy provider is displayed.
+  const skin: WidgetSkin = isWorkBuddy
+    ? "default"
+    : preferences.unlockedSkins.includes(preferences.selectedSkin as Exclude<WidgetSkin, "default">)
+      && (preferences.selectedSkin === "blur" || preferences.selectedSkin === "computer")
+      ? preferences.selectedSkin
+      : "default";
 
   useEffect(() => {
     // This only reconciles the transparent-window safety inset after a theme
@@ -179,16 +190,6 @@ export default function App() {
     };
   }, [refresh]);
 
-  useEffect(() => {
-    if (hovered || preferences.pinnedProvider || snapshots.length < 2) return;
-    const id = window.setInterval(() => setActiveIndex((value) => (value + 1) % snapshots.length), preferences.autoRotateSeconds * 1000);
-    return () => window.clearInterval(id);
-  }, [hovered, preferences.autoRotateSeconds, preferences.pinnedProvider, snapshots.length]);
-
-  const current = preferences.pinnedProvider
-    ? snapshots.find((item) => item.provider === preferences.pinnedProvider) ?? snapshots[0] ?? INITIAL_SNAPSHOT
-    : snapshots[activeIndex % Math.max(1, snapshots.length)] ?? INITIAL_SNAPSHOT;
-
   const primaryPercent = current?.shortWindow?.remainingPercent ?? current?.weeklyWindow?.remainingPercent ?? null;
   const tier = quotaTier(primaryPercent);
   const paletteName = current.status === "unavailable" || current.status === "stale" || current.status === "signed_out"
@@ -247,10 +248,9 @@ export default function App() {
     <QuotaCard
       snapshot={current}
       preferences={preferences}
-      providerCount={snapshots.length}
-      onPrevious={() => setActiveIndex((value) => (value - 1 + snapshots.length) % snapshots.length)}
-      onNext={() => setActiveIndex((value) => (value + 1) % snapshots.length)}
-      onTogglePin={() => savePreferences({ ...preferences, pinnedProvider: preferences.pinnedProvider ? null : current.provider })}
+      canSwitch={candidates.length > 1}
+      onPrevious={() => setActiveIndex((value) => (value - 1 + Math.max(1, candidates.length)) % Math.max(1, candidates.length))}
+      onNext={() => setActiveIndex((value) => (value + 1) % Math.max(1, candidates.length))}
       onToggleStayExpanded={() => savePreferences({ ...preferences, stayExpanded: !preferences.stayExpanded })}
       onLock={() => { setOperationError(null); void setAlwaysOnTop(!preferences.alwaysOnTop).then((value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) })).catch(() => setOperationError(operation.alwaysOnTopFailed)); }}
       onDrag={() => startDragging()}

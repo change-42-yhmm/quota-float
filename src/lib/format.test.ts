@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampPercent, formatResetDate, formatResetTime, needsFastRefresh, quotaTier } from "./format";
+import { clampPercent, formatResetDate, formatResetTime, needsFastRefresh, quotaTier, stripProviderPrefix } from "./format";
 
 describe("quota formatting", () => {
   it("clamps untrusted percentages", () => {
@@ -43,5 +43,14 @@ describe("quota formatting", () => {
     expect(formatResetDate(null)).toBe("日期未知");
     expect(formatResetDate(null, "zh-CN")).toBe("日期未知");
     expect(formatResetDate(null, "en")).toBe("Date unknown");
+  });
+
+  it("strips the codebuddy/workbuddy plan prefix case-insensitively", () => {
+    expect(stripProviderPrefix("CodeBuddy个人体验版")).toBe("个人体验版");
+    expect(stripProviderPrefix("workbuddy Pro")).toBe("Pro");
+    expect(stripProviderPrefix("CODEBUDDY PLUS")).toBe("PLUS");
+    expect(stripProviderPrefix("WorkBuddy")).toBe("");
+    expect(stripProviderPrefix("PRO")).toBe("PRO");
+    expect(stripProviderPrefix("My CodeBuddy Plan")).toBe("My CodeBuddy Plan");
   });
 });

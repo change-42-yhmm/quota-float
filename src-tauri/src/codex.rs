@@ -442,6 +442,7 @@ pub async fn fetch_snapshot(client: &reqwest::Client) -> ProviderSnapshot {
         weekly_window,
         reset_credits,
         reset_credit_expires_at,
+        workbuddy: None,
         updated_at: chrono::Utc::now().to_rfc3339(),
         status: "ok".into(),
         message: None,

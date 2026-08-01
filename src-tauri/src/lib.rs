@@ -1,6 +1,7 @@
 mod codex;
 mod license;
 mod models;
+mod workbuddy;
 
 use std::{
     fs,
@@ -146,7 +147,10 @@ fn apply_short_window_test_override(
 
 async fn fetch_snapshots_uncached(state: &State<'_, AppState>) -> Vec<ProviderSnapshot> {
     let _guard = state.fetch_lock.lock().await;
-    let values = vec![codex::fetch_snapshot(&state.client).await];
+    let values = vec![
+        codex::fetch_snapshot(&state.client).await,
+        workbuddy::fetch_snapshot(&state.client).await,
+    ];
     if let Ok(mut cache) = state.snapshot_cache.lock() {
         *cache = Some((Instant::now(), values.clone()));
     }
@@ -259,7 +263,10 @@ async fn get_snapshots(state: State<'_, AppState>) -> Result<Vec<ProviderSnapsho
             }
         }
     }
-    let values = vec![codex::fetch_snapshot(&state.client).await];
+    let values = vec![
+        codex::fetch_snapshot(&state.client).await,
+        workbuddy::fetch_snapshot(&state.client).await,
+    ];
     if let Ok(mut cache) = state.snapshot_cache.lock() {
         *cache = Some((Instant::now(), values.clone()));
     }
@@ -1221,7 +1228,9 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let refresh = MenuItem::with_id(app, "refresh", "Refresh now", true, None::<&str>)?;
     let update = MenuItem::with_id(app, "update", "Check for updates", true, None::<&str>)?;
     let unlock = MenuItem::with_id(app, "unlock", "Unlock widget", true, None::<&str>)?;
-    let pin = MenuItem::with_id(app, "pin", "Pin / Unpin Codex", true, None::<&str>)?;
+    let source_codex = CheckMenuItem::with_id(app, "source-codex", "Codex", true, true, None::<&str>)?;
+    let source_workbuddy = CheckMenuItem::with_id(app, "source-workbuddy", "WorkBuddy", true, false, None::<&str>)?;
+    let source = Submenu::with_items(app, "Providers / 供应商", true, &[&source_codex, &source_workbuddy])?;
     let language = MenuItem::with_id(
         app,
         "language",
@@ -1265,7 +1274,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         app,
         "Settings / 设置",
         true,
-        &[&unlock, &pin, &language, &autostart],
+        &[&unlock, &language, &autostart],
     )?;
     let initial_language = app
         .try_state::<AppState>()
@@ -1285,6 +1294,12 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .try_state::<AppState>()
         .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.appearance.clone()))
         .unwrap_or_else(|| "system".into());
+    let initial_enabled_providers = app
+        .try_state::<AppState>()
+        .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.enabled_providers.clone()))
+        .unwrap_or_else(|| vec!["codex".into(), "workbuddy".into()]);
+    let _ = source_codex.set_checked(initial_enabled_providers.iter().any(|provider| provider == "codex"));
+    let _ = source_workbuddy.set_checked(initial_enabled_providers.iter().any(|provider| provider == "workbuddy"));
     let _ = supporter_blur.set_checked(initial_selected_skin == BLUR_SKIN_ID);
     let _ = supporter_computer.set_checked(initial_selected_skin == COMPUTER_SKIN_ID);
     let _ = theme_system.set_checked(initial_appearance == "system");
@@ -1306,7 +1321,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         let _ = refresh.set_text("立即刷新");
         let _ = update.set_text(update_menu_label(&initial_language, false));
         let _ = unlock.set_text("解锁悬浮窗");
-        let _ = pin.set_text("固定 / 取消固定 Codex");
+        let _ = source.set_text("供应商");
         let _ = language.set_text("Switch to English");
         let _ = theme.set_text("主题");
         let _ = default_skin.set_text("默认皮肤");
@@ -1319,6 +1334,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         let _ = quit.set_text("退出");
     }
     if initial_language == "en" {
+        let _ = source.set_text("Providers");
         let _ = theme.set_text("Theme");
         let _ = default_skin.set_text("Default skin");
         let _ = theme_system.set_text("Follow system");
@@ -1333,6 +1349,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         &[
             &show,
             &refresh,
+            &source,
             &update,
             &settings,
             &theme,
@@ -1344,7 +1361,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     #[cfg(not(debug_assertions))]
     let menu = Menu::with_items(
         app,
-        &[&show, &refresh, &update, &settings, &theme, &supporter_skins_top, &quit],
+        &[&show, &refresh, &source, &update, &settings, &theme, &supporter_skins_top, &quit],
     )?;
     let mut builder = TrayIconBuilder::with_id("main")
         .menu(&menu)
@@ -1358,7 +1375,9 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let update_menu = update.clone();
     let update_indicator = update.clone();
     let unlock_menu = unlock.clone();
-    let pin_menu = pin.clone();
+    let source_menu = source.clone();
+    let source_codex_menu = source_codex.clone();
+    let source_workbuddy_menu = source_workbuddy.clone();
     let language_menu = language.clone();
     let theme_menu = theme.clone();
     let default_skin_menu = default_skin.clone();
@@ -1408,6 +1427,33 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
             }
             "update" => {
                 let _ = app.emit_to("widget", "update-check-requested", ());
+            }
+            "source-codex" | "source-workbuddy" => {
+                let provider = if event.id.as_ref() == "source-workbuddy" { "workbuddy" } else { "codex" };
+                if let Some(state) = app.try_state::<AppState>() {
+                    if let Ok(mut prefs) = state.preferences.lock() {
+                        let checked = prefs.enabled_providers.iter().any(|value| value == provider);
+                        if checked && prefs.enabled_providers.len() <= 1 {
+                            // Keep at least one provider selectable in the card.
+                            let _ = if event.id.as_ref() == "source-workbuddy" {
+                                source_workbuddy_menu.set_checked(true)
+                            } else {
+                                source_codex_menu.set_checked(true)
+                            };
+                        } else if checked {
+                            prefs.enabled_providers.retain(|value| value != provider);
+                        } else {
+                            prefs.enabled_providers.push(provider.into());
+                        }
+                        let normalized = prefs.clone().normalized();
+                        *prefs = normalized.clone();
+                        if persist_preferences(&state.preferences_path, &normalized).is_ok() {
+                            let _ = source_codex_menu.set_checked(normalized.enabled_providers.iter().any(|value| value == "codex"));
+                            let _ = source_workbuddy_menu.set_checked(normalized.enabled_providers.iter().any(|value| value == "workbuddy"));
+                            let _ = app.emit_to("widget", "preferences-changed", normalized);
+                        }
+                    }
+                }
             }
             "supporter-skins-top" => {
                 if let Some(window) = app.get_webview_window("supporter") {
@@ -1475,19 +1521,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                     }
                 }
             }
-            "pin" => {
-                if let Some(state) = app.try_state::<AppState>() {
-                    if let Ok(mut prefs) = state.preferences.lock() {
-                        prefs.pinned_provider = if prefs.pinned_provider.is_some() {
-                            None
-                        } else {
-                            Some("codex".into())
-                        };
-                        let _ = persist_preferences(&state.preferences_path, &prefs);
-                        let _ = app.emit_to("widget", "preferences-changed", prefs.clone());
-                    }
-                }
-            }
             "language" => {
                 if let Some(state) = app.try_state::<AppState>() {
                     if let Ok(mut prefs) = state.preferences.lock() {
@@ -1521,11 +1554,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         } else {
                             "解锁悬浮窗"
                         });
-                        let _ = pin_menu.set_text(if english {
-                            "Pin / Unpin Codex"
-                        } else {
-                            "固定 / 取消固定 Codex"
-                        });
+                        let _ = source_menu.set_text(if english { "Providers" } else { "供应商" });
                         let _ = language_menu.set_text(if english {
                             "切换到中文"
                         } else {

@@ -53,6 +53,14 @@ export const copy = {
     view: "查看",
     weeklyRemaining: "本周剩余",
     weeklyUntil: (date: string) => `本周剩余 · 至 ${date}`,
+    workbuddyAddonPoints: "附加积分",
+    workbuddyErrorUnavailable: "WorkBuddy 积分暂时不可用，将自动重试。",
+    workbuddyExpires: (points: string, date: string) => `${points} 积分将于 ${date} 过期`,
+    workbuddyMonthlyRemaining: "月度积分",
+    workbuddyMonthlyReset: "每月1号重置",
+    workbuddyNoExpiringAddon: "附加积分暂无已知到期时间",
+    workbuddySignInRequired: "请先登录 WorkBuddy",
+    workbuddyTotalPoints: (points: string) => `WorkBuddy 积分剩余 ${points}`,
   },
   en: {
     accountFallback: "ACCOUNT",
@@ -104,8 +112,18 @@ export const copy = {
     view: "View",
     weeklyRemaining: "Weekly remaining",
     weeklyUntil: (date: string) => `Weekly remaining · until ${date}`,
+    workbuddyAddonPoints: "Add-on points",
+    workbuddyErrorUnavailable: "WorkBuddy points are temporarily unavailable. It will retry automatically.",
+    workbuddyExpires: (points: string, date: string) => `${points} points expire on ${date}`,
+    workbuddyMonthlyRemaining: "Monthly points",
+    workbuddyMonthlyReset: "Resets on the 1st of each month",
+    workbuddyNoExpiringAddon: "No add-on expiration is available",
+    workbuddySignInRequired: "Sign in to WorkBuddy",
+    workbuddyTotalPoints: (points: string) => `WorkBuddy points remaining ${points}`,
   },
 } as const;
+
+export type Copy = (typeof copy)[Language];
 
 export function normalizeLanguage(value: unknown): Language {
   return value === "en" ? "en" : DEFAULT_LANGUAGE;

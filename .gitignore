@@ -41,3 +41,4 @@ token.json
 /tools/maintainer-issuer/issuance-ledger.json
 .tauri-updater.key
 /效果/
+.workbuddy/

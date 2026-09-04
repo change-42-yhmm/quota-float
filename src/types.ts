@@ -1,4 +1,4 @@
-export type ProviderId = "codex" | "claude";
+export type ProviderId = "codex" | "claude" | "openai_api" | "claude_api";
 export type SnapshotStatus = "ok" | "stale" | "loading" | "unavailable" | "signed_out";
 export type Language = "zh-CN" | "en";
 export type WidgetTheme = "light" | "dark";
@@ -32,6 +32,14 @@ export interface ProviderSnapshot {
   updatedAt: string;
   status: SnapshotStatus;
   message: string | null;
+  /** Present only for the API-cost card variant. Cost sources never expose quota percentages. */
+  monthCost?: Money;
+  dayCost?: Money;
+}
+
+export interface Money {
+  amount: number;
+  currency: string;
 }
 
 export interface WidgetPreferences {

@@ -1,6 +1,7 @@
 @font-face { font-family: "Quota Sans"; src: local("SF Pro Display"), local("Segoe UI Variable Display"); font-display: swap; }
 @font-face { font-family: "Blur Nunito"; src: url("../assets/fonts/Nunito-Variable.ttf") format("truetype"); font-weight: 200 1000; font-style: normal; font-display: swap; }
 @font-face { font-family: "Computer Bitcount"; src: url("../assets/fonts/BitcountSingle-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Glass Saira"; src: url("../assets/fonts/Saira-VariableFont_wdth,wght.ttf") format("truetype"); font-weight: 100 900; font-stretch: 50% 125%; font-style: normal; font-display: swap; }
 
 :root {
   font-family: "Quota Sans", "Segoe UI", system-ui, sans-serif;
@@ -175,7 +176,7 @@ button { font: inherit; }
 .error-state p { margin: 13px 0 0; color: #524c4c; font-size: 12px; line-height: 1.55; }
 .quota-card--stale .error-state strong { margin-right: 6px; }
 .quota-card--stale .error-state p { margin-right: -6px; }
-.error-refresh-button { margin-top: 30px; min-height: 27px; display: inline-flex; align-items: center; gap: 5px; padding: 0 12px; border: 1px solid rgba(35,73,119,.16); border-radius: 999px; color: #234977; background: rgba(255,255,255,.46); box-shadow: 0 10px 24px rgba(35,48,73,.1); font-size: 11px; font-weight: 650; cursor: pointer; backdrop-filter: blur(12px); }
+.error-refresh-button { margin-top: 14px; min-height: 27px; display: inline-flex; align-items: center; gap: 5px; padding: 0 12px; border: 1px solid rgba(35,73,119,.16); border-radius: 999px; color: #234977; background: rgba(255,255,255,.46); box-shadow: 0 10px 24px rgba(35,48,73,.1); font-size: 11px; font-weight: 650; cursor: pointer; backdrop-filter: blur(12px); }
 .error-refresh-button:hover { background: rgba(255,255,255,.72); }
 .error-refresh-button:active { transform: scale(.97); }
 .error-refresh-button:disabled { opacity: .55; cursor: default; }
@@ -331,6 +332,10 @@ button { font: inherit; }
 .quota-card--skin-blur.quota-card--stale { background: url("../assets/blur/blur-unavailable.png") center / 100% 100% no-repeat; }
 .quota-card--skin-blur.quota-card--unavailable { background: url("../assets/blur/blur-unavailable.png") center / 100% 100% no-repeat; }
 .quota-card--skin-blur.quota-card--signed_out { background: url("../assets/blur/blur-signedout.png") center / 100% 100% no-repeat; }
+.quota-card--skin-blur.provider--claude.quota-card--healthy { background-image: url("../assets/blur/claude-healthy.png"); }
+.quota-card--skin-blur.provider--claude.quota-card--caution { background-image: url("../assets/blur/claude-caution.png"); }
+.quota-card--skin-blur.provider--claude.quota-card--critical { background-image: url("../assets/blur/claude-critical.png"); }
+.quota-card--skin-blur.provider--claude.quota-card--unavailable { background-image: url("../assets/blur/claude-unavailable.png"); }
 .quota-card--skin-blur.quota-card--healthy .aurora,
 .quota-card--skin-blur.quota-card--caution .aurora,
 .quota-card--skin-blur.quota-card--critical .aurora,
@@ -377,6 +382,10 @@ button { font: inherit; }
 .quota-orb--skin-blur.quota-card--stale { background-image: url("../assets/blur/blur-unavailable.png"); }
 .quota-orb--skin-blur.quota-card--unavailable { background-image: url("../assets/blur/blur-unavailable.png"); }
 .quota-orb--skin-blur.quota-card--signed_out { background-image: url("../assets/blur/blur-signedout.png"); }
+.quota-orb--skin-blur.provider--claude.quota-card--healthy { background-image: url("../assets/blur/claude-healthy.png"); }
+.quota-orb--skin-blur.provider--claude.quota-card--caution { background-image: url("../assets/blur/claude-caution.png"); }
+.quota-orb--skin-blur.provider--claude.quota-card--critical { background-image: url("../assets/blur/claude-critical.png"); }
+.quota-orb--skin-blur.provider--claude.quota-card--unavailable { background-image: url("../assets/blur/claude-unavailable.png"); }
 .quota-orb--skin-blur.quota-card--healthy .aurora,
 .quota-orb--skin-blur.quota-card--caution .aurora,
 .quota-orb--skin-blur.quota-card--critical .aurora,
@@ -408,9 +417,105 @@ button { font: inherit; }
 .design-workbench { width: 100vw; min-height: 100vh; display: grid; grid-template-columns: minmax(480px, 1fr) 390px; color: #17191f; background: #f3f4f6; overflow: auto; }
 .screenshot-stage { width: 100vw; height: 100vh; display: grid; place-content: center; background: #f6f7fb; overflow: hidden; }
 .screenshot-stage--states { grid-template-columns: repeat(3, 320px); gap: 28px; align-content: center; justify-content: center; }
-.design-stage { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 60px; background-image: linear-gradient(45deg, #e6e8ec 25%, transparent 25%), linear-gradient(-45deg, #e6e8ec 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e6e8ec 75%), linear-gradient(-45deg, transparent 75%, #e6e8ec 75%); background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+.design-stage { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 60px 60px 360px; background-image: linear-gradient(45deg, #e6e8ec 25%, transparent 25%), linear-gradient(-45deg, #e6e8ec 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e6e8ec 75%), linear-gradient(-45deg, transparent 75%, #e6e8ec 75%); background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+.design-stage--background-background-1 { background: url("../assets/design-background-1.png") center / cover no-repeat; }
 .design-card-frame { width: 314px; height: 314px; box-shadow: none; border-radius: var(--card-radius); }
 .design-orb-frame { width: 80px; height: 80px; box-shadow: none; border-radius: 24px; }
+.design-preview-options { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.api-cost-card { min-height: 0; }.api-cost-metric { margin-top: 6px; }.api-cost-metric .api-cost-currency { margin: 0 5px 5px 0; font-family: inherit; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }
+.weekly-metric strong.api-cost-weekly-value { white-space: nowrap; }
+.weekly-metric strong.api-cost-weekly-value small { margin-left: 0; margin-right: 2px; }
+.quota-card--skin-computer .api-cost-metric span { letter-spacing: -1px; }
+.quota-orb--skin-computer .orb-metric .orb-cost-value { letter-spacing: -1px; transform: translate(1px, 2px); }
+/* Design-workbench-only typography. The card artwork remains shared with the
+   desktop widget so provider-specific assets are previewed faithfully. */
+.design-stage--blur .quota-card--skin-blur .primary-metric span,
+.design-stage--blur .quota-card--skin-blur .primary-metric small,
+.design-stage--blur .quota-card--skin-blur .weekly-metric strong,
+.design-stage--blur .quota-card--skin-blur .weekly-metric strong small { font-family: "Blur Nunito", "Arial Rounded MT Bold", "SF Pro Rounded", ui-rounded, sans-serif; font-synthesis: none; }
+.design-stage--computer .quota-card--skin-computer .primary-metric span,
+.design-stage--computer .quota-card--skin-computer .primary-metric small,
+.design-stage--computer .quota-card--skin-computer .weekly-metric strong,
+.design-stage--computer .quota-card--skin-computer .weekly-metric strong small { font-family: "Computer Bitcount", monospace; font-synthesis: none; }
+.design-stage--glass .quota-card,
+.design-stage--glass .quota-orb {
+  border: 0 solid rgba(255,255,255,.2);
+  background: rgba(250,250,250,.14);
+  box-shadow: 4px 6px 20px 0 rgba(24,31,49,.30), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35);
+  backdrop-filter: blur(2px) saturate(64%);
+  -webkit-backdrop-filter: blur(2px) saturate(64%);
+}
+.design-stage--glass .quota-card--caution,
+.design-stage--glass .quota-orb.quota-card--caution {
+  box-shadow: 4px 6px 20px 0 rgba(65,39,21,.16), inset 0 0 50px rgba(234,143,83,.2), inset 0 0 4px 2px rgba(255,255,255,.35);
+}
+.design-stage--glass .quota-card--critical,
+.design-stage--glass .quota-orb.quota-card--critical {
+  box-shadow: 4px 6px 20px 0 rgba(51,51,51,.16), inset 0 0 50px rgba(234,93,83,.3), inset 0 0 4px 2px rgba(255,255,255,.35);
+}
+.design-stage--glass .quota-card::before,
+.design-stage--glass .quota-orb::before,
+.design-stage--glass .quota-card::after,
+.design-stage--glass .quota-orb::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none; }
+.design-stage--glass .quota-card::before,
+.design-stage--glass .quota-orb::before { background: linear-gradient(to left top, rgba(255,255,255,.225) 0%, rgba(255,255,255,0) 50%); }
+.design-stage--glass .quota-card::after,
+.design-stage--glass .quota-orb::after { background: linear-gradient(to bottom, rgba(255,255,255,.135) 0%, rgba(255,255,255,0) 100%); }
+.design-stage--glass .quota-card .aurora,
+.design-stage--glass .quota-orb .aurora { display: none; }
+.design-stage--glass .quota-card .card-header,
+.design-stage--glass .quota-card .card-footer,
+.design-stage--glass .quota-card .primary-metric,
+.design-stage--glass .quota-card .progress,
+.design-stage--glass .quota-card .reset-time,
+.design-stage--glass .quota-card .error-state { position: relative; z-index: 2; }
+.design-stage--glass .quota-orb .orb-metric,
+.design-stage--glass .quota-orb .orb-unavailable { position: relative; z-index: 2; }
+.design-stage--glass .quota-orb .orb-weekly-badge { z-index: 2; }
+.design-stage--glass .quota-orb .orb-metric,
+.design-stage--glass .quota-orb .orb-metric span,
+.design-stage--glass .quota-orb .orb-metric small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; }
+.design-stage--glass .quota-card--unavailable .status-icon,
+.design-stage--glass .quota-card--stale .status-icon,
+.design-stage--glass .quota-card--signed_out .status-icon { width: 58px; height: 56px; margin-bottom: 12px; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; }
+.design-stage--glass .quota-card--unavailable .status-icon { background: url("../assets/glass-unavailable-icon.svg") center / contain no-repeat; }
+.design-stage--glass .quota-card--stale .status-icon { background: url("../assets/glass-stale-icon.svg") center / contain no-repeat; }
+.design-stage--glass .quota-card--signed_out .status-icon { background: url("../assets/glass-signedout-icon.svg") center / contain no-repeat; }
+.design-stage--glass .quota-card--unavailable .status-icon svg,
+.design-stage--glass .quota-card--stale .status-icon svg,
+.design-stage--glass .quota-card--signed_out .status-icon svg { display: none; }
+.design-stage--glass .quota-card .progress { height: var(--progress-height, 10px); margin-top: 12px; }
+.design-stage--glass .quota-card .progress span { border: 0 solid rgba(255,255,255,.2); background: linear-gradient(90deg, color-mix(in srgb, var(--glass-progress-base-start) var(--glass-progress-transparency), transparent), color-mix(in srgb, var(--glass-progress-base-end) var(--glass-progress-transparency), transparent)); box-shadow: var(--glass-progress-shadow-x) var(--glass-progress-shadow-y) var(--glass-progress-shadow-blur) 0 rgb(var(--glass-progress-shadow-color) / var(--glass-progress-shadow-transparency)), inset 0 0 var(--glass-progress-glow-size) rgb(var(--glass-progress-glow-color) / var(--glass-progress-glow-transparency)), inset 0 0 4px 2px rgb(255 255 255 / var(--glass-progress-highlight)); backdrop-filter: blur(var(--glass-progress-blur)) saturate(64%); -webkit-backdrop-filter: blur(var(--glass-progress-blur)) saturate(64%); }
+.design-stage--glass .quota-orb.quota-card--unavailable .orb-unavailable,
+.design-stage--glass .quota-orb.quota-card--stale .orb-unavailable,
+.design-stage--glass .quota-orb.quota-card--signed_out .orb-unavailable { border: 0; border-radius: 0; background-color: transparent; box-shadow: none; backdrop-filter: none; }
+.design-stage--glass .quota-orb.quota-card--unavailable .orb-unavailable { background: url("../assets/glass-unavailable-icon.svg") center / contain no-repeat; }
+.design-stage--glass .quota-orb.quota-card--stale .orb-unavailable { background: url("../assets/glass-stale-icon.svg") center / contain no-repeat; }
+.design-stage--glass .quota-orb.quota-card--signed_out .orb-unavailable { background: url("../assets/glass-signedout-icon.svg") center / contain no-repeat; }
+.design-stage--glass .quota-orb.quota-card--unavailable .orb-unavailable svg,
+.design-stage--glass .quota-orb.quota-card--stale .orb-unavailable svg,
+.design-stage--glass .quota-orb.quota-card--signed_out .orb-unavailable svg { display: none; }
+.design-stage--glass .quota-card .card-footer { position: absolute; }
+.design-stage--glass .quota-card .primary-metric > span,
+.design-stage--glass .quota-card .primary-metric > small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start), var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.design-stage--glass .quota-card--ok .eyebrow { color: #ffffff; font-weight: 700; }
+.design-stage--glass .quota-card--ok .updated { color: #ffffff; font-weight: 700; }
+.design-stage--glass .quota-card--ok .weekly-metric > p { color: #ffffff; font-weight: 500; }
+.design-stage--glass .quota-card--ok .reset-time { margin-top: 5px; color: #f7f7f7; font-size: 14px; font-weight: 500; }
+.design-stage--glass .quota-card--ok .reset-credit-row > span { color: #f7f7f7; }
+.design-stage--glass .quota-card--ok .reset-credit-button { color: #5e738d; }
+.design-stage--glass .quota-card--ok .weekly-metric strong,
+.design-stage--glass .quota-card--ok .weekly-metric strong small { color: #fff; }
+.design-stage--glass .quota-card--ok .eyebrow,
+.design-stage--glass .quota-card--ok .updated,
+.design-stage--glass .quota-card--ok .weekly-metric,
+.design-stage--glass .quota-card--ok .reset-time { text-shadow: 0 1px 2px rgba(60,70,96,.30); }
+.design-stage--glass .quota-card .weekly-metric strong,
+.design-stage--glass .quota-card .weekly-metric strong small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; }
+.design-stage--glass .provider-mark--glass { width: 40px; height: 40px; padding: 0; }
+.design-stage--glass .quota-orb { box-shadow: 1px 2px 4px 0 rgba(24,31,49,.08), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35); }
+.design-stage--glass .quota-orb.quota-card--caution { box-shadow: 1px 2px 4px 0 rgba(65,39,21,.08), inset 0 0 50px rgba(234,143,83,.2), inset 0 0 4px 2px rgba(255,255,255,.35); }
+.design-stage--glass .quota-orb.quota-card--critical { box-shadow: 1px 2px 4px 0 rgba(51,51,51,.08), inset 0 0 50px rgba(234,93,83,.3), inset 0 0 4px 2px rgba(255,255,255,.35); }
 .design-preview-switch { max-width: 520px; display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; padding: 5px; border: 1px solid rgba(99,108,128,.16); border-radius: 14px; background: rgba(255,255,255,.84); box-shadow: 0 8px 24px rgba(36,42,60,.08); }
 .design-page-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid rgba(99,108,128,.16); border-radius: 12px; background: rgba(255,255,255,.84); box-shadow: 0 8px 24px rgba(36,42,60,.08); }.design-page-tabs button { min-height: 30px; padding: 0 12px; border: 0; border-radius: 8px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }.design-page-tabs button:hover { color: #202631; background: rgba(105,137,190,.1); }.design-page-tabs button.is-active { color: #fff; background: #315f9f; }.design-supporter-frame { width: 520px; height: 680px; overflow: hidden; box-shadow: 0 18px 48px rgba(51,83,100,.2); }.design-supporter-frame .supporter-panel { width: 520px; min-height: 680px; height: 680px; }
 .design-preview-switch button { min-height: 34px; padding: 0 13px; border: 0; border-radius: 10px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 650; }
@@ -430,6 +535,15 @@ button { font: inherit; }
 .design-kicker { margin: 0 0 9px; font-size: 11px; font-weight: 750; letter-spacing: .2em; color: #6c7280; }
 .design-controls h1 { margin: 0; font-size: 31px; letter-spacing: -.04em; font-weight: 620; }
 .design-description { margin: 10px 0 0; max-width: 30ch; font-size: 13px; line-height: 1.55; color: #737986; }
+.glass-progress-controls { display: grid; gap: 12px; padding-top: 18px; border-top: 1px solid rgba(99,108,128,.16); }
+.glass-progress-controls > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.glass-progress-controls h2 { margin: 0; color: #315f9f; font-size: 13px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.glass-progress-controls > header > div { display: inline-flex; padding: 3px; border: 1px solid rgba(99,108,128,.16); border-radius: 8px; background: rgba(255,255,255,.76); }
+.glass-progress-controls > header button { min-height: 24px; padding: 0 7px; border: 0; border-radius: 5px; color: #626a78; background: transparent; font-size: 10px; font-weight: 700; cursor: pointer; }
+.glass-progress-controls > header button.is-active { color: #fff; background: #315f9f; }
+.color-control--glass { justify-items: start; }
+.color-control--glass span { font-size: 13px; font-weight: 600; }
+.color-control--glass input { max-width: 120px; }
 .range-control { display: grid; gap: 10px; }
 .range-control > span { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
 .range-control output { color: #737986; font-variant-numeric: tabular-nums; font-weight: 450; }

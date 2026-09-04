@@ -3,8 +3,9 @@ import { memo, type CSSProperties, type ReactNode, useEffect, useMemo, useRef, u
 import { clampPercent, formatDateTime, formatResetDate, formatResetTime, quotaTier } from "../lib/format";
 import { blurProgressSegments } from "../lib/blurSkin";
 import { copy, normalizeLanguage } from "../lib/i18n";
-import type { Language, ProviderSnapshot, WidgetPreferences, WidgetSkin, WidgetTheme } from "../types";
+import type { Language, Money, ProviderSnapshot, WidgetPreferences, WidgetSkin, WidgetTheme } from "../types";
 import { ProviderMark } from "./ProviderMark";
+import computerClaudeLogoUrl from "../../assets/computer-claude-logo.svg";
 import computerGptLogoUrl from "../../assets/computer-gpt-logo.svg";
 import computerOrbBaseUrl from "../../assets/computer-orb-base.svg";
 import computerOrbHealthyUrl from "../../assets/computer-orb-screen-healthy.svg";
@@ -33,6 +34,7 @@ interface Props {
   initialShowCreditTip?: boolean;
   theme?: WidgetTheme;
   skin?: WidgetSkin;
+  providerMarkVariant?: "default" | "glass";
   style?: CSSProperties;
 }
 
@@ -52,17 +54,46 @@ function ComputerErrorArtwork({ status }: { status: ProviderSnapshot["status"] }
   return <img className={`computer-error-artwork computer-error-artwork--${status}`} src={src} alt="" />;
 }
 
-function localizedBackendMessage(message: string | null, language: Language): string | null {
+function providerName(snapshot: ProviderSnapshot): string {
+  if (snapshot.provider === "claude" || snapshot.provider === "claude_api") return "Claude";
+  if (snapshot.provider === "openai_api") return "OpenAI";
+  return "Codex";
+}
+
+function localizedBackendMessage(message: string | null, language: Language, provider: string): string | null {
   if (!message) return null;
   if (language === "en") return message;
   const normalized = message.toLowerCase();
-  if (normalized.includes("sign in") || normalized.includes("login")) return "Codex 登录已失效，请重新登录。";
+  if (normalized.includes("sign in") || normalized.includes("login")) return `${provider} 登录已失效，请重新登录。`;
   if (normalized.includes("rate limited")) return "请求过于频繁，将稍后自动重试。";
   if (normalized.includes("network")) return "网络不可用，将自动重试。";
   if (normalized.includes("format")) return "额度响应格式已变化。";
   if (normalized.includes("missing the 5h")) return "额度响应缺少 5 小时窗口。";
   if (normalized.includes("refresh is already running")) return "额度正在刷新，请稍候。";
   return message;
+}
+
+function MoneyValue({ value, language, main = false }: { value: Money; language: Language; main?: boolean }) {
+  try {
+    const parts = new Intl.NumberFormat(language, { style: "currency", currency: value.currency, currencyDisplay: "narrowSymbol", maximumFractionDigits: 2 }).formatToParts(value.amount);
+    const currency = parts.filter((part) => part.type === "currency").map((part) => part.value).join("");
+    const number = parts.filter((part) => part.type !== "currency" && part.type !== "literal").map((part) => part.value).join("");
+    return main
+      ? <><small className="api-cost-currency">{currency}</small><span>{number}</span></>
+      : <><small>{currency}</small>{number}</>;
+  } catch {
+    return main
+      ? <><small className="api-cost-currency">{value.currency}</small><span>{value.amount.toFixed(2)}</span></>
+      : <><small>{value.currency}</small>{value.amount.toFixed(2)}</>;
+  }
+}
+
+function compactAmount(value: Money, language: Language): string {
+  try {
+    return new Intl.NumberFormat(language, { maximumFractionDigits: 2 }).format(value.amount);
+  } catch {
+    return value.amount.toFixed(2);
+  }
 }
 
 function BlurProgress({ percent, label }: { percent: number; label: string }) {
@@ -104,11 +135,14 @@ export const QuotaCard = memo(function QuotaCard({
   initialShowCreditTip = false,
   theme,
   skin = "default",
+  providerMarkVariant = "default",
   style,
 }: Props) {
   const [showCreditTip, setShowCreditTip] = useState(initialShowCreditTip);
   const language = normalizeLanguage(preferences.language);
   const t = copy[language];
+  const provider = providerName(snapshot);
+  const isCostCard = Boolean(snapshot.monthCost && snapshot.dayCost);
   const primary = snapshot.shortWindow ? clampPercent(snapshot.shortWindow.remainingPercent) : null;
   const weekly = snapshot.weeklyWindow ? clampPercent(snapshot.weeklyWindow.remainingPercent) : null;
   const displayPercent = primary ?? weekly;
@@ -128,14 +162,19 @@ export const QuotaCard = memo(function QuotaCard({
         : snapshot.status === "signed_out"
           ? t.notSignedIn
           : t.unavailableStatus;
-  const message = localizedBackendMessage(snapshot.message, language);
+  const message = localizedBackendMessage(snapshot.message, language, provider);
+  const headerTitle = isCostCard ? snapshot.displayName.replace(/\s+/g, "·") : skin === "computer" ? "codex·plus" : `${snapshot.displayName} · ${snapshot.plan ?? t.accountFallback}`;
+  const headerSubtitle = isCostCard ? t.todayApiCostLabel : displayingWeeklyAsPrimary ? t.weeklyShortRemaining : t.shortRemaining;
   const creditExpirations = useMemo(() => (snapshot.resetCreditExpiresAt ?? []).map((value, index) => {
     return t.creditItem(index, formatDateTime(value, language));
   }), [language, snapshot.resetCreditExpiresAt, t]);
+  const providerClass = snapshot.provider === "claude" || snapshot.provider === "claude_api" ? " provider--claude" : "";
+  const computerProviderLogoUrl = providerClass ? computerClaudeLogoUrl : computerGptLogoUrl;
+  const computerProviderLogoAlt = providerClass ? "Claude" : "GPT";
 
   return (
     <main
-      className={`quota-card quota-card--${snapshot.status} quota-card--${tier}${theme ? ` quota-card--theme-${theme}` : ""}${skin === "blur" ? " quota-card--skin-blur" : ""}${skin === "computer" ? " quota-card--skin-computer" : ""}`}
+      className={`quota-card quota-card--${snapshot.status} quota-card--${tier}${providerClass}${theme ? ` quota-card--theme-${theme}` : ""}${skin === "blur" ? " quota-card--skin-blur" : ""}${skin === "computer" ? " quota-card--skin-computer" : ""}`}
       style={style}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
@@ -146,8 +185,8 @@ export const QuotaCard = memo(function QuotaCard({
       {notice ? <div className="operation-notice" role="status">{notice}</div> : null}
       <header className="card-header">
         <div>
-          <p className="eyebrow">{skin === "computer" ? "codex·plus" : `${snapshot.displayName} · ${snapshot.plan ?? t.accountFallback}`}</p>
-          {snapshot.status !== "stale" ? <p className="updated">{displayingWeeklyAsPrimary ? t.weeklyShortRemaining : t.shortRemaining}</p> : null}
+          <p className="eyebrow">{headerTitle}</p>
+          {snapshot.status !== "stale" ? <p className="updated">{headerSubtitle}</p> : null}
         </div>
         {!preferences.locked ? (
           <nav className="card-actions" aria-label={t.controls} onMouseDown={(event) => event.stopPropagation()}>
@@ -164,7 +203,19 @@ export const QuotaCard = memo(function QuotaCard({
         ) : null}
       </header>
 
-      {available && displayPercent !== null ? (
+      {isCostCard && snapshot.status === "ok" ? (
+        <section className="api-cost-card" aria-label={t.monthApiCost}>
+          <section className="primary-metric api-cost-metric"><MoneyValue value={snapshot.dayCost!} language={language} main /></section>
+          <footer className="card-footer">
+            <div className="weekly-metric">
+              <p>{t.monthApiCost}</p>
+              <strong className="api-cost-weekly-value"><MoneyValue value={snapshot.monthCost!} language={language} /></strong>
+              <div className="reset-credit-row"><span>{t.syncedAt(formatDateTime(snapshot.updatedAt, language))}</span></div>
+            </div>
+            {skin === "blur" ? null : skin === "computer" ? <div className="computer-gpt-mark"><img src={computerProviderLogoUrl} alt={computerProviderLogoAlt} /></div> : <ProviderMark provider={snapshot.provider} variant={providerMarkVariant} />}
+          </footer>
+        </section>
+      ) : available && displayPercent !== null ? (
         <>
           <section className="primary-metric" aria-label={displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent) : t.availableLabel(displayPercent)}>
             <span>{displayPercent}</span><small>%</small>
@@ -191,7 +242,7 @@ export const QuotaCard = memo(function QuotaCard({
                 </div>
               ) : null}
             </div>
-            {skin === "blur" ? null : skin === "computer" ? <div className="computer-gpt-mark"><img src={computerGptLogoUrl} alt="GPT" /></div> : <ProviderMark />}
+            {skin === "blur" ? null : skin === "computer" ? <div className="computer-gpt-mark"><img src={computerProviderLogoUrl} alt={computerProviderLogoAlt} /></div> : <ProviderMark provider={snapshot.provider} variant={providerMarkVariant} />}
           </footer>
         </>
       ) : (
@@ -199,7 +250,7 @@ export const QuotaCard = memo(function QuotaCard({
           {skin === "computer"
             ? <div className="status-icon status-icon--computer" aria-hidden="true"><ComputerErrorArtwork status={snapshot.status} /></div>
             : <div className="status-icon" aria-hidden="true"><StatusIcon status={snapshot.status} expired={staleExpired} /></div>}
-          <strong>{snapshot.status === "signed_out" ? t.signedInRequired : staleExpired ? t.staleExpired : t.temporarilyUnavailable}</strong>
+          <strong>{snapshot.status === "signed_out" ? t.signedInRequired(provider) : staleExpired ? t.staleExpired : t.temporarilyUnavailable}</strong>
           <p>{message ?? t.errorUnavailable}</p>
           {snapshot.status === "stale" ? (
             <button type="button" className="error-refresh-button" onMouseDown={(event) => event.stopPropagation()} onClick={onRefresh} disabled={!onRefresh} aria-label={t.refreshQuota}>
@@ -221,9 +272,10 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
   const primary = snapshot.shortWindow ? clampPercent(snapshot.shortWindow.remainingPercent) : null;
   const weekly = snapshot.weeklyWindow ? clampPercent(snapshot.weeklyWindow.remainingPercent) : null;
   const displayPercent = primary ?? weekly;
+  const isCostCard = Boolean(snapshot.monthCost && snapshot.dayCost);
   const displayingWeeklyAsPrimary = primary === null && weekly !== null;
   const tier = quotaTier(displayPercent);
-  const available = snapshot.status === "ok" && displayPercent !== null;
+  const available = snapshot.status === "ok" && (isCostCard || displayPercent !== null);
   const computerScreen = tier === "caution"
     ? computerOrbCautionUrl
     : tier === "critical"
@@ -234,6 +286,7 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
     : snapshot.status === "stale"
       ? computerErrorStaleUrl
       : computerErrorUnavailableUrl;
+  const providerClass = snapshot.provider === "claude" || snapshot.provider === "claude_api" ? " provider--claude" : "";
 
   useEffect(() => {
     idleTimer.current = window.setTimeout(() => setIdle(true), 2000);
@@ -250,12 +303,12 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
 
   return (
     <main
-      className={`quota-orb quota-card--${snapshot.status} quota-card--${tier}${theme ? ` quota-orb--theme-${theme}` : ""}${skin === "blur" ? " quota-orb--skin-blur" : ""}${skin === "computer" ? " quota-orb--skin-computer" : ""}${displayingWeeklyAsPrimary ? " quota-orb--weekly" : ""}${idle ? " quota-orb--idle" : ""}`}
+      className={`quota-orb quota-card--${snapshot.status} quota-card--${tier}${providerClass}${theme ? ` quota-orb--theme-${theme}` : ""}${skin === "blur" ? " quota-orb--skin-blur" : ""}${skin === "computer" ? " quota-orb--skin-computer" : ""}${displayingWeeklyAsPrimary ? " quota-orb--weekly" : ""}${idle ? " quota-orb--idle" : ""}`}
       style={style}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => onHover(false)}
       onMouseDown={(event) => { if (event.button === 0) void onDrag(); }}
-      aria-label={available ? (displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent!) : t.availableLabel(displayPercent!)) : localizedBackendMessage(snapshot.message, activeLanguage) ?? t.unavailableStatus}
+      aria-label={available ? (isCostCard ? t.todayApiCost(compactAmount(snapshot.dayCost!, activeLanguage)) : displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent!) : t.availableLabel(displayPercent!)) : localizedBackendMessage(snapshot.message, activeLanguage, providerName(snapshot)) ?? t.unavailableStatus}
     >
       <div className="aurora" aria-hidden="true" />
       {skin === "computer" ? <img className="computer-orb-base" src={computerOrbBaseUrl} alt="" aria-hidden="true" /> : null}
@@ -270,8 +323,7 @@ export const QuotaOrb = memo(function QuotaOrb({ snapshot, onDrag, onHover, lang
       ) : null}
       {available ? (
         <section className="orb-metric">
-          <span>{displayPercent}</span>
-          {skin !== "computer" ? <small>%</small> : null}
+          {isCostCard ? <span className="orb-cost-value">{compactAmount(snapshot.dayCost!, activeLanguage)}</span> : <><span>{displayPercent}</span>{skin !== "computer" ? <small>%</small> : null}</>}
         </section>
       ) : (
         <section className="orb-unavailable">

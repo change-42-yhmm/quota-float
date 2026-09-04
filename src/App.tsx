@@ -179,12 +179,6 @@ export default function App() {
     };
   }, [refresh]);
 
-  useEffect(() => {
-    if (hovered || preferences.pinnedProvider || snapshots.length < 2) return;
-    const id = window.setInterval(() => setActiveIndex((value) => (value + 1) % snapshots.length), preferences.autoRotateSeconds * 1000);
-    return () => window.clearInterval(id);
-  }, [hovered, preferences.autoRotateSeconds, preferences.pinnedProvider, snapshots.length]);
-
   const current = preferences.pinnedProvider
     ? snapshots.find((item) => item.provider === preferences.pinnedProvider) ?? snapshots[0] ?? INITIAL_SNAPSHOT
     : snapshots[activeIndex % Math.max(1, snapshots.length)] ?? INITIAL_SNAPSHOT;
@@ -248,8 +242,18 @@ export default function App() {
       snapshot={current}
       preferences={preferences}
       providerCount={snapshots.length}
-      onPrevious={() => setActiveIndex((value) => (value - 1 + snapshots.length) % snapshots.length)}
-      onNext={() => setActiveIndex((value) => (value + 1) % snapshots.length)}
+      onPrevious={() => {
+        const nextIndex = (activeIndex - 1 + snapshots.length) % snapshots.length;
+        setActiveIndex(nextIndex);
+        const next = snapshots[nextIndex];
+        if (next) savePreferences({ ...preferences, pinnedProvider: next.provider });
+      }}
+      onNext={() => {
+        const nextIndex = (activeIndex + 1) % snapshots.length;
+        setActiveIndex(nextIndex);
+        const next = snapshots[nextIndex];
+        if (next) savePreferences({ ...preferences, pinnedProvider: next.provider });
+      }}
       onTogglePin={() => savePreferences({ ...preferences, pinnedProvider: preferences.pinnedProvider ? null : current.provider })}
       onToggleStayExpanded={() => savePreferences({ ...preferences, stayExpanded: !preferences.stayExpanded })}
       onLock={() => { setOperationError(null); void setAlwaysOnTop(!preferences.alwaysOnTop).then((value) => setPreferences({ ...DEFAULT_PREFS, ...value, language: normalizeLanguage(value.language) })).catch(() => setOperationError(operation.alwaysOnTopFailed)); }}

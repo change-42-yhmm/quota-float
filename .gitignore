@@ -40,4 +40,5 @@ token.json
 /tools/maintainer-issuer/issuance-ledger.csv
 /tools/maintainer-issuer/issuance-ledger.json
 .tauri-updater.key
+/private-notes/
 /效果/

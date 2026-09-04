@@ -1,0 +1,47 @@
+<svg viewBox="0 0 163 113" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="163.000000" height="113.000000" fill="none" customFrame="#000000">
+	<defs>
+		<g id="pixso_custom_effect_1">
+			<effect visibility="visible" effectType="backgroundBlur" saturation="0" stdDeviation="4" />
+			<effect x="-1.000000" y="-1.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.25" effectType="innerShadow" stdDeviation="3" radius="0" />
+			<effect x="1.000000" y="1.000000" visibility="visible" fill="rgb(255,255,255)" fill-opacity="0.850000024" effectType="innerShadow" stdDeviation="3" radius="0" />
+			<effect x="0.000000" y="2.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.100000001" effectType="dropShadow" stdDeviation="4" radius="0" />
+		</g>
+		<filter id="filter_1" width="163.000000" height="113.000000" x="0.000000" y="0.000000" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_1)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feColorMatrix result="hardAlpha" in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8.33333 0 " />
+			<feOffset dx="0.000000" dy="2.000000" in="hardAlpha" />
+			<feGaussianBlur stdDeviation="1.33333337" />
+			<feComposite k2="-1" k3="1" in2="hardAlpha" operator="out" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0 " />
+			<feBlend result="effect_dropShadow_1" in2="BackgroundImageFix" mode="normal" />
+			<feBlend result="shape" in="SourceGraphic" in2="effect_dropShadow_1" mode="normal" />
+			<feColorMatrix result="hardAlpha" in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8.33333 0 " />
+			<feOffset dx="-1.000000" dy="-1.000000" in="hardAlpha" />
+			<feGaussianBlur stdDeviation="1" />
+			<feComposite k2="-1" k3="1" in2="hardAlpha" operator="arithmetic" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0 " />
+			<feBlend result="effect_innerShadow_2" in2="shape" mode="normal" />
+			<feColorMatrix result="hardAlpha" in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8.33333 0 " />
+			<feOffset dx="1.000000" dy="1.000000" in="hardAlpha" />
+			<feGaussianBlur stdDeviation="1" />
+			<feComposite k2="-1" k3="1" in2="hardAlpha" operator="arithmetic" />
+			<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.85 0 " />
+			<feBlend result="effect_innerShadow_3" in2="effect_innerShadow_2" mode="normal" />
+		</filter>
+		<clipPath id="outline_mask_1" transform="matrix(1,0,0,1,-0,-0)">
+			<path d="M93.2994 2L116.569 2L159 107L135.731 107L93.2994 2L93.2994 2ZM46.4248 2L70.7533 2L113.185 107L89.4567 107L80.7831 84.9487L36.4015 84.9487L27.7215 106.994L4 106.994L46.4313 2.01274L46.4248 2ZM73.1106 65.4524L58.5923 28.5495L44.074 65.4587L73.1042 65.4587L73.1106 65.4524Z" fill="rgb(255,255,255)" fill-rule="evenodd" />
+		</clipPath>
+		<linearGradient id="paint_linear_1" x1="43.637413" x2="103.395828" y1="14.5349121" y2="117.579636" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(255,255,255)" offset="0" stop-opacity="0.300000012" />
+			<stop stop-color="rgb(255,255,255)" offset="1" stop-opacity="0.120000005" />
+		</linearGradient>
+	</defs>
+	<g data-pixso-skip-parse="true">
+		<foreignObject width="163.000000" height="113.000000" x="0.000000" y="0.000000">
+			<div xmlns="http://www.w3.org/1999/xhtml" style="clip-path:url(#outline_mask_1);height:100%;backdrop-filter:blur(2.000000px);width:100%;-webkit-backdrop-filter:blur(2.000000px);" />
+		</foreignObject>
+	</g>
+	<g filter="url(#filter_1)">
+		<path id="矢量 192" d="M93.2994 2L116.569 2L159 107L135.731 107L93.2994 2L93.2994 2ZM46.4248 2L70.7533 2L113.185 107L89.4567 107L80.7831 84.9487L36.4015 84.9487L27.7215 106.994L4 106.994L46.4313 2.01274L46.4248 2ZM73.1106 65.4524L58.5923 28.5495L44.074 65.4587L73.1042 65.4587L73.1106 65.4524Z" fill="url(#paint_linear_1)" fill-rule="evenodd" />
+	</g>
+</svg>

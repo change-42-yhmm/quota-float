@@ -21,6 +21,17 @@ pub struct ProviderSnapshot {
     pub updated_at: String,
     pub status: String,
     pub message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub month_cost: Option<Money>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub day_cost: Option<Money>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Money {
+    pub amount: f64,
+    pub currency: String,
 }
 
 impl ProviderSnapshot {
@@ -36,6 +47,8 @@ impl ProviderSnapshot {
             updated_at: chrono::Utc::now().to_rfc3339(),
             status: status.into(),
             message: Some(message.into()),
+            month_cost: None,
+            day_cost: None,
         }
     }
 }
@@ -107,7 +120,7 @@ impl Default for WidgetPreferences {
 impl WidgetPreferences {
     pub fn normalized(mut self) -> Self {
         self.auto_rotate_seconds = self.auto_rotate_seconds.clamp(5, 300);
-        if self.pinned_provider.as_deref() != Some("codex") {
+        if !matches!(self.pinned_provider.as_deref(), Some("codex" | "claude")) {
             self.pinned_provider = None;
         }
         if self.language != "en" && self.language != "zh-CN" {

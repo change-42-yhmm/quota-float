@@ -445,6 +445,8 @@ pub async fn fetch_snapshot(client: &reqwest::Client) -> ProviderSnapshot {
         updated_at: chrono::Utc::now().to_rfc3339(),
         status: "ok".into(),
         message: None,
+        month_cost: None,
+        day_cost: None,
     }
 }
 

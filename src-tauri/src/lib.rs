@@ -153,6 +153,40 @@ async fn fetch_snapshots_uncached(state: &State<'_, AppState>) -> Vec<ProviderSn
     apply_short_window_test_override(state.inner(), values)
 }
 
+#[cfg(target_os = "macos")]
+fn sync_macos_menu_bar_metric(app: &AppHandle, state: &AppState, snapshots: &[ProviderSnapshot]) {
+    let preferences = preferences_lock(state).clone();
+    let pinned = preferences.pinned_provider;
+    let current = pinned
+        .as_deref()
+        .and_then(|provider| snapshots.iter().find(|item| item.provider == provider))
+        .or_else(|| snapshots.first());
+    let title = current.and_then(|snapshot| {
+        if snapshot.status != "ok" {
+            return None;
+        }
+        if let Some(cost) = &snapshot.day_cost {
+            let label = if preferences.language == "en" { "API today" } else { "今日API" };
+            return Some(format!("{} {:.2}", label, cost.amount));
+        }
+        if let Some(window) = &snapshot.short_window {
+            let label = if preferences.language == "en" { "5h" } else { "5小时剩余" };
+            return Some(format!("{} {:.0}%", label, window.remaining_percent));
+        }
+        if let Some(window) = &snapshot.weekly_window {
+            let label = if preferences.language == "en" { "Week" } else { "周剩余" };
+            return Some(format!("{} {:.0}%", label, window.remaining_percent));
+        }
+        None
+    });
+    if let Some(tray) = app.tray_by_id("main") {
+        let _ = tray.set_title(title);
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn sync_macos_menu_bar_metric(_app: &AppHandle, _state: &AppState, _snapshots: &[ProviderSnapshot]) {}
+
 fn load_preferences(path: &PathBuf) -> WidgetPreferences {
     let parse = |candidate: &PathBuf| {
         fs::read_to_string(candidate)
@@ -229,12 +263,14 @@ fn should_show_supporter_prompt(
 }
 
 #[tauri::command]
-async fn get_snapshots(state: State<'_, AppState>) -> Result<Vec<ProviderSnapshot>, String> {
+async fn get_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec<ProviderSnapshot>, String> {
     const CACHE_TTL: Duration = Duration::from_secs(30);
     if let Ok(cache) = state.snapshot_cache.lock() {
         if let Some((time, values)) = &*cache {
             if time.elapsed() < CACHE_TTL {
-                return Ok(apply_short_window_test_override(&state, values.clone()));
+                let values = apply_short_window_test_override(&state, values.clone());
+                sync_macos_menu_bar_metric(&app, state.inner(), &values);
+                return Ok(values);
             }
         }
     }
@@ -243,19 +279,25 @@ async fn get_snapshots(state: State<'_, AppState>) -> Result<Vec<ProviderSnapsho
         Err(_) => {
             if let Ok(cache) = state.snapshot_cache.lock() {
                 if let Some((_, values)) = &*cache {
-                    return Ok(apply_short_window_test_override(&state, values.clone()));
+                    let values = apply_short_window_test_override(&state, values.clone());
+                    sync_macos_menu_bar_metric(&app, state.inner(), &values);
+                    return Ok(values);
                 }
             }
-            return Ok(vec![ProviderSnapshot::failure(
+            let values = vec![ProviderSnapshot::failure(
                 "unavailable",
                 "Quota refresh is already running.",
-            )]);
+            )];
+            sync_macos_menu_bar_metric(&app, state.inner(), &values);
+            return Ok(values);
         }
     };
     if let Ok(cache) = state.snapshot_cache.lock() {
         if let Some((time, values)) = &*cache {
             if time.elapsed() < CACHE_TTL {
-                return Ok(apply_short_window_test_override(&state, values.clone()));
+                let values = apply_short_window_test_override(&state, values.clone());
+                sync_macos_menu_bar_metric(&app, state.inner(), &values);
+                return Ok(values);
             }
         }
     }
@@ -263,12 +305,16 @@ async fn get_snapshots(state: State<'_, AppState>) -> Result<Vec<ProviderSnapsho
     if let Ok(mut cache) = state.snapshot_cache.lock() {
         *cache = Some((Instant::now(), values.clone()));
     }
-    Ok(apply_short_window_test_override(&state, values))
+    let values = apply_short_window_test_override(&state, values);
+    sync_macos_menu_bar_metric(&app, state.inner(), &values);
+    Ok(values)
 }
 
 #[tauri::command]
-async fn refresh_snapshots(state: State<'_, AppState>) -> Result<Vec<ProviderSnapshot>, String> {
-    Ok(fetch_snapshots_uncached(&state).await)
+async fn refresh_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec<ProviderSnapshot>, String> {
+    let values = fetch_snapshots_uncached(&state).await;
+    sync_macos_menu_bar_metric(&app, state.inner(), &values);
+    Ok(values)
 }
 
 fn clamp_position_to_monitor(

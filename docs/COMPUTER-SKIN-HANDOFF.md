@@ -53,3 +53,16 @@ Before handing off a visual change:
 2. Verify one-, two-, and three-digit quota values, plus every error orb.
 3. Keep the Computer orb transparent outside its supplied artwork.
 4. Run `npm.cmd run build`.
+
+## API-cost card reminder
+
+The Computer skin also renders API-cost sources. Treat these as a separate card
+variant, not as a quota state: show the provider mark, a currency amount, the
+month-cost label, the day-cost row, and the sync time only. Hide the live-number
+percent sign, progress stripe, weekly percentage, reset countdown, and reset
+credits. Do not reuse healthy/caution/critical colour semantics for money.
+
+Keep the amount aligned on the Bitcount baseline at one-, two-, and three-digit
+values (including decimals and currency symbol). Verify the full set in both
+light and dark themes; no error-screen asset may be used merely because the
+source is a cost card.

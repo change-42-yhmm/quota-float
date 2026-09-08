@@ -16,6 +16,9 @@ import computerErrorStaleUrl from "../../assets/computer-error-stale.svg";
 import computerErrorSignedOutUrl from "../../assets/computer-error-signedout.svg";
 import computerOrbErrorScreenUrl from "../../assets/computer-orb-screen-error.svg";
 import computerOrbGptUrl from "../../assets/computer-orb-gpt.svg";
+import nexusUnavailableUrl from "../../assets/Nexus-icon-unavailable.svg";
+import nexusDataExpiredUrl from "../../assets/Nexus-icon-dataexpired.svg";
+import nexusLoginUrl from "../../assets/Nexus-icon-login.svg";
 
 interface Props {
   snapshot: ProviderSnapshot;
@@ -35,6 +38,7 @@ interface Props {
   theme?: WidgetTheme;
   skin?: WidgetSkin;
   providerMarkVariant?: "default" | "glass";
+  nexusPreview?: boolean;
   style?: CSSProperties;
 }
 
@@ -52,6 +56,18 @@ function ComputerErrorArtwork({ status }: { status: ProviderSnapshot["status"] }
       ? computerErrorStaleUrl
       : computerErrorUnavailableUrl;
   return <img className={`computer-error-artwork computer-error-artwork--${status}`} src={src} alt="" />;
+}
+
+function NexusErrorArtwork({ status }: { status: ProviderSnapshot["status"] }) {
+  const src = status === "signed_out"
+    ? nexusLoginUrl
+    : status === "stale"
+      ? nexusDataExpiredUrl
+      : nexusUnavailableUrl;
+  return <div className={`nexus-error-decoration nexus-error-decoration--${status}`} aria-hidden="true">
+    <span className="nexus-error-lettering">{status === "signed_out" ? "LOG IN" : status === "stale" ? <><span>DATA</span><span>EXPIRED</span></> : "UNAVAILABLE"}</span>
+    <img className="nexus-error-artwork" src={src} alt="" />
+  </div>;
 }
 
 function providerName(snapshot: ProviderSnapshot): string {
@@ -136,6 +152,7 @@ export const QuotaCard = memo(function QuotaCard({
   theme,
   skin = "default",
   providerMarkVariant = "default",
+  nexusPreview = false,
   style,
 }: Props) {
   const [showCreditTip, setShowCreditTip] = useState(initialShowCreditTip);
@@ -181,12 +198,13 @@ export const QuotaCard = memo(function QuotaCard({
       onMouseDown={(event) => { if (event.button === 0) void onDrag(); }}
     >
       <div className="aurora" aria-hidden="true" />
+      {nexusPreview && available ? <div className="nexus-quota-float" aria-hidden="true" /> : null}
       <span className="sr-only" aria-live="polite">{available && displayPercent !== null ? (displayingWeeklyAsPrimary ? t.weeklyAvailableLabel(displayPercent) : t.availableLabel(displayPercent)) : message}</span>
       {notice ? <div className="operation-notice" role="status">{notice}</div> : null}
       <header className="card-header">
         <div>
           <p className="eyebrow">{headerTitle}</p>
-          {snapshot.status !== "stale" ? <p className="updated">{headerSubtitle}</p> : null}
+          {snapshot.status !== "stale" && (!nexusPreview || available) ? <p className="updated">{headerSubtitle}</p> : null}
         </div>
         {!preferences.locked ? (
           <nav className="card-actions" aria-label={t.controls} onMouseDown={(event) => event.stopPropagation()}>
@@ -212,7 +230,7 @@ export const QuotaCard = memo(function QuotaCard({
               <strong className="api-cost-weekly-value"><MoneyValue value={snapshot.monthCost!} language={language} /></strong>
               <div className="reset-credit-row"><span>{t.syncedAt(formatDateTime(snapshot.updatedAt, language))}</span></div>
             </div>
-            {skin === "blur" ? null : skin === "computer" ? <div className="computer-gpt-mark"><img src={computerProviderLogoUrl} alt={computerProviderLogoAlt} /></div> : <ProviderMark provider={snapshot.provider} variant={providerMarkVariant} />}
+            {skin === "blur" ? null : skin === "computer" ? <div className="computer-gpt-mark"><img src={computerProviderLogoUrl} alt={computerProviderLogoAlt} /></div> : <ProviderMark provider={snapshot.provider} variant={providerMarkVariant} nexusPercent={nexusPreview ? null : undefined} />}
           </footer>
         </section>
       ) : available && displayPercent !== null ? (
@@ -242,17 +260,17 @@ export const QuotaCard = memo(function QuotaCard({
                 </div>
               ) : null}
             </div>
-            {skin === "blur" ? null : skin === "computer" ? <div className="computer-gpt-mark"><img src={computerProviderLogoUrl} alt={computerProviderLogoAlt} /></div> : <ProviderMark provider={snapshot.provider} variant={providerMarkVariant} />}
+            {skin === "blur" ? null : skin === "computer" ? <div className="computer-gpt-mark"><img src={computerProviderLogoUrl} alt={computerProviderLogoAlt} /></div> : <ProviderMark provider={snapshot.provider} variant={providerMarkVariant} nexusPercent={nexusPreview ? displayPercent : undefined} />}
           </footer>
         </>
       ) : (
         <section className="error-state" aria-live="polite">
-          {skin === "computer"
+          {nexusPreview ? <NexusErrorArtwork status={snapshot.status} /> : skin === "computer"
             ? <div className="status-icon status-icon--computer" aria-hidden="true"><ComputerErrorArtwork status={snapshot.status} /></div>
             : <div className="status-icon" aria-hidden="true"><StatusIcon status={snapshot.status} expired={staleExpired} /></div>}
           <strong>{snapshot.status === "signed_out" ? t.signedInRequired(provider) : staleExpired ? t.staleExpired : t.temporarilyUnavailable}</strong>
-          <p>{message ?? t.errorUnavailable}</p>
-          {snapshot.status === "stale" ? (
+          {nexusPreview ? null : <p>{message ?? t.errorUnavailable}</p>}
+          {snapshot.status === "stale" && !nexusPreview ? (
             <button type="button" className="error-refresh-button" onMouseDown={(event) => event.stopPropagation()} onClick={onRefresh} disabled={!onRefresh} aria-label={t.refreshQuota}>
               <ArrowClockwise />
               <span>{t.refresh}</span>

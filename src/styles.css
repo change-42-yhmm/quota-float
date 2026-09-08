@@ -417,8 +417,10 @@ button { font: inherit; }
 .design-workbench { width: 100vw; min-height: 100vh; display: grid; grid-template-columns: minmax(480px, 1fr) 390px; color: #17191f; background: #f3f4f6; overflow: auto; }
 .screenshot-stage { width: 100vw; height: 100vh; display: grid; place-content: center; background: #f6f7fb; overflow: hidden; }
 .screenshot-stage--states { grid-template-columns: repeat(3, 320px); gap: 28px; align-content: center; justify-content: center; }
-.design-stage { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 60px 60px 360px; background-image: linear-gradient(45deg, #e6e8ec 25%, transparent 25%), linear-gradient(-45deg, #e6e8ec 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e6e8ec 75%), linear-gradient(-45deg, transparent 75%, #e6e8ec 75%); background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+.design-stage { position: relative; min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 60px 60px 360px; background-image: linear-gradient(45deg, #e6e8ec 25%, transparent 25%), linear-gradient(-45deg, #e6e8ec 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e6e8ec 75%), linear-gradient(-45deg, transparent 75%, #e6e8ec 75%); background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
 .design-stage--background-background-1 { background: url("../assets/design-background-1.png") center / cover no-repeat; }
+.design-stage--background-liquid { background: url("../assets/design-background-liquid.png") center / cover no-repeat; }
+.design-stage--background-city { background: url("../assets/design-background-interstellar.jpg") center / cover no-repeat; }
 .design-card-frame { width: 314px; height: 314px; box-shadow: none; border-radius: var(--card-radius); }
 .design-orb-frame { width: 80px; height: 80px; box-shadow: none; border-radius: 24px; }
 .design-preview-options { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -516,7 +518,113 @@ button { font: inherit; }
 .design-stage--glass .quota-orb { box-shadow: 1px 2px 4px 0 rgba(24,31,49,.08), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35); }
 .design-stage--glass .quota-orb.quota-card--caution { box-shadow: 1px 2px 4px 0 rgba(65,39,21,.08), inset 0 0 50px rgba(234,143,83,.2), inset 0 0 4px 2px rgba(255,255,255,.35); }
 .design-stage--glass .quota-orb.quota-card--critical { box-shadow: 1px 2px 4px 0 rgba(51,51,51,.08), inset 0 0 50px rgba(234,93,83,.3), inset 0 0 4px 2px rgba(255,255,255,.35); }
+.nexus-glass-filter { position: absolute; }
+.design-stage--nexus .quota-card { border: 0; border-radius: 0; background: transparent; box-shadow: none; clip-path: url(#nexus-card-shape); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.design-stage--nexus .quota-card::before,
+.design-stage--nexus .quota-card::after { content: ""; position: absolute; inset: 0 0 0 4px; border-radius: 0; clip-path: path("M0.566073 17.4186L16.9105 0.605952C17.2871 0.2186 17.8043 0 18.3445 0H289.172C289.702 0 290.211 0.210714 290.586 0.585787L297.414 7.41421C297.789 7.78929 298 8.29799 298 8.82843V183.77C298 184.241 297.833 184.698 297.53 185.058L282.47 202.942C282.167 203.302 282 203.758 282 204.23V261.144C282 261.616 282.167 262.072 282.47 262.433L297.53 280.317C297.833 280.677 298 281.133 298 281.605V304C298 305.105 297.105 306 296 306H10.8282C10.2977 306 9.78901 305.789 9.41393 305.414L0.585768 296.586C0.210706 296.211 0 295.702 0 295.172L0.000113964 18.8127C0.000113964 18.292 0.20315 17.7919 0.566073 17.4186Z"); pointer-events: none; }
+/* Apply frost to the card itself; SVG backdrop URL filters suppress blur in this renderer. */
+.design-stage--nexus .quota-card::before { inset: 0; z-index: 1; background: linear-gradient(to bottom right, rgba(47,44,59,.8), rgba(17,18,40,.8)); box-shadow: 0 0 0 -50px rgba(0,0,0,.3), inset 0 0 0 -50px rgba(0,0,0,.7); }
+.design-stage--nexus .quota-card::after { display: none; }
+.design-stage--nexus .quota-card.quota-card--caution::before { background: linear-gradient(to bottom right, rgb(59 53 44 / .8), rgb(40 29 17 / .8)); }
+.design-stage--nexus .quota-card.quota-card--critical::before { background: linear-gradient(to bottom right, rgb(59 49 44 / .8), rgb(40 17 18 / .8)); }
+.design-stage--nexus .quota-card .card-header,
+.design-stage--nexus .quota-card .primary-metric,
+.design-stage--nexus .quota-card .reset-time,
+.design-stage--nexus .quota-card .error-state,
+.design-stage--nexus .quota-card .api-cost-card { position: relative; z-index: 2; }
+.design-stage--nexus .quota-card .card-footer { z-index: 2; }
+.design-stage--nexus .quota-card .aurora,
+.design-stage--nexus .quota-card .progress { display: none; }
+
+@font-face { font-family: "Nexus Orbitron"; src: url("../assets/fonts/Orbitron-Variable.ttf") format("truetype"); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: "Nexus Title"; src: url("../assets/fonts/PlayfairDisplaySC-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+.design-stage--nexus .quota-orb.quota-card--ok { height: auto; aspect-ratio: 110 / 100.287; margin: calc((80px - var(--orb-visible-size) * 100.287 / 110) / 2) var(--edge-safe-inset); border: 0; border-radius: 0; background: url("../assets/Nexus-ball-healthy.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; opacity: 1; }
+.design-stage--nexus .quota-orb.quota-card--ok.quota-card--caution { background-image: url("../assets/Nexus-ball-caution.svg"); }
+.design-stage--nexus .quota-orb.quota-card--ok.quota-card--critical { background-image: url("../assets/Nexus-ball-critical.svg"); }
+.design-stage--nexus .quota-orb.quota-card--ok.quota-orb--weekly { background-image: url("../assets/Nexus-ball-healthy.svg"); }
+.design-stage--nexus .quota-orb.quota-card--ok .aurora,
+.design-stage--nexus .quota-orb.quota-card--ok .orb-metric small { display: none; }
+.design-stage--nexus .quota-orb.quota-card--ok .orb-metric { color: #F0EEFF; font-family: "Nexus Orbitron", sans-serif; font-weight: 600; text-shadow: 0 2px 2px #0005; }
+.design-stage--nexus .quota-orb.quota-card--ok .orb-metric span { font-size: 28px; font-weight: 600; line-height: 1; letter-spacing: 2px; }
+.design-stage--nexus .quota-orb.quota-card--ok.quota-card--caution .orb-metric { color: #FFF6EE; }
+.design-stage--nexus .quota-orb.quota-card--ok.quota-card--critical .orb-metric { color: #FFF1EE; }
+.design-stage--nexus .quota-orb.quota-card--ok .orb-metric .orb-cost-value { font-size: 20px; }
+.design-stage--nexus .quota-orb .orb-weekly-badge { top: 3%; left: auto; right: 2.7%; width: 17.273%; height: auto; aspect-ratio: 19 / 11; transform: none; background: url("../assets/nexus-week.svg") center / contain no-repeat; }
+.design-stage--nexus .quota-orb .orb-weekly-badge svg,
+.design-stage--nexus .quota-orb .orb-weekly-badge b { display: none; }
+.design-stage--nexus .quota-orb:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) { height: auto; aspect-ratio: 110 / 100; margin: calc((80px - var(--orb-visible-size) * 100 / 110) / 2) var(--edge-safe-inset); border: 0; border-radius: 0; background: url("../assets/nexus-ball-notion.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; opacity: 1; }
+.design-stage--nexus .quota-orb:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) .aurora,
+.design-stage--nexus .quota-orb .orb-unavailable svg { display: none; }
+.design-stage--nexus .quota-orb .orb-unavailable { width: 64%; height: 64%; margin-left: 5%; border: 0; border-radius: 0; background: url("../assets/Nexus-icon-unavailable.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; transform: translateY(-2px); }
+.design-stage--nexus .quota-orb.quota-card--stale .orb-unavailable { width: 39%; height: 45%; background-image: url("../assets/Nexus-icon-dataexpired.svg"); }
+.design-stage--nexus .quota-orb.quota-card--signed_out .orb-unavailable { width: 66%; height: 73%; background-image: url("../assets/Nexus-icon-login.svg"); transform: translateY(-2px) rotate(45deg); }
+.design-stage--nexus .quota-card { position: relative; top: -3px; left: -4px; overflow: visible; clip-path: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 26px 22px; color: #eeebff; animation: none; }
+.design-stage--nexus .quota-card::before { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.nexus-quota-float { position: absolute; z-index: 2; left: -8px; right: 9px; top: 58px; height: 124px; background: url("../assets/nexus-health.png") center / 100% 100% no-repeat; pointer-events: none; }
+.quota-card--caution .nexus-quota-float { background-image: url("../assets/nexus-caution.png"); }
+.quota-card--critical .nexus-quota-float { background-image: url("../assets/nexus-critical.png"); }
+.design-stage--nexus .quota-card .card-header { position: static; min-height: 0; }
+.design-stage--nexus .eyebrow { position: relative; z-index: 2; max-width: 174px; color: rgb(255 255 255 / .7); font-family: "Nexus Title", "Times New Roman", serif; font-size: 18px; line-height: 1.15; font-weight: 400; letter-spacing: 0; text-transform: uppercase; }
+.design-stage--nexus .card-header::before { content: ""; position: absolute; z-index: 2; left: 20px; top: 13px; width: 157px; height: 5px; border-top: 1px solid #ffffff30; border-left: 1px solid #efedf3; transform: skewX(-45deg); }
+.design-stage--nexus .card-actions { position: absolute; z-index: 2; right: 22px; top: 20px; gap: 5px; }
+.design-stage--nexus .card-actions button,
+.design-stage--nexus .card-actions .usage-indicator { width: 25px; height: 25px; border: 0; border-radius: 0; background: url("../assets/nexus-action-frame.svg") center / 100% 100% no-repeat; box-shadow: none; backdrop-filter: none; }
+.design-stage--nexus .card-actions button:hover { background-color: #ffffff12; }
+.design-stage--nexus .usage-indicator i { width: 10.485px; height: 2px; border-radius: 1px; rotate: -45deg; }
+.design-stage--nexus .card-actions button[aria-pressed="true"] { color: #111228; background: url("../assets/Nexus-button-choice.svg") center / 100% 100% no-repeat; filter: none; }
+.design-stage--nexus .updated { position: absolute; z-index: 3; top: 72px; left: 22px; margin: 0; color: #F0EEFF; font-size: 12px; letter-spacing: 0; }
+.design-stage--nexus .quota-card .primary-metric { position: absolute; top: 101px; left: 22px; margin: 0; padding: 0; color: #F0EEFF; font-family: "Nexus Orbitron", sans-serif; line-height: 1; letter-spacing: -.035em; text-shadow: 0 3px 4px #0005; }
+.design-stage--nexus .primary-metric span { position: relative; top: -4px; font-size: 48px; font-weight: 600; letter-spacing: 4px; }
+.design-stage--nexus .primary-metric small { position: relative; top: -3px; font-family: inherit; font-size: 22px; font-weight: 600; margin-bottom: 3px; }
+.design-stage--nexus .quota-card .reset-time { position: absolute; top: 154px; left: 22px; right: 22px; margin: 0; color: #ffffff80; font-size: 10px; line-height: 1.35; letter-spacing: 0; }
+.design-stage--nexus .quota-card .card-footer { left: 20px; right: 31px; bottom: 22px; color: #c6c3ce; }
+.design-stage--nexus .weekly-metric { width: 100%; }
+.design-stage--nexus .weekly-metric p { position: relative; top: -4px; color: rgb(255 255 255 / .5); font-size: 11px; letter-spacing: 0; }
+.design-stage--nexus .weekly-metric strong { position: relative; width: fit-content; min-width: 102.354px; margin: 7px 0; padding-bottom: 5px; border-bottom: 0; color: transparent; -webkit-text-stroke: 1px #949494; font-family: "Nexus Orbitron", sans-serif; font-size: 30px; font-weight: 700; letter-spacing: 2px; }
+.design-stage--nexus .weekly-metric strong::after { content: ""; position: absolute; left: 0; bottom: 0; width: min(100%, 172px); height: 6.854px; background: url("../assets/划线.svg") center / 100% 100% no-repeat; pointer-events: none; }
+.design-stage--nexus .weekly-metric strong.api-cost-weekly-value { max-width: 172px; padding-right: 8px; }
+.design-stage--nexus .weekly-metric strong small { color: #949494; -webkit-text-stroke: 0; font-family: inherit; font-weight: inherit; letter-spacing: 0; }
+.design-stage--nexus .weekly-metric span { color: #c6c3ce; font-family: "Nexus Orbitron", "Segoe UI", sans-serif; font-size: 10px; }
+.design-stage--nexus .reset-credit-button { color: #d6cfff; }
+.design-stage--nexus .reset-credit-row,
+.design-stage--nexus .reset-credit-row span,
+.design-stage--nexus .reset-credit-row button { -webkit-text-stroke: 0; text-shadow: none; }
+.design-stage--nexus .card-footer .provider-mark { position: absolute; right: 0; bottom: 146px; width: 36px; height: 36px; padding: 0; opacity: 1; }
+.provider-mark--nexus img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.provider-mark--nexus .nexus-provider-fill { transition: clip-path .3s ease; }
+.design-stage--nexus .card-footer .provider-mark--nexus-claude { height: 24.686px; bottom: 151.657px; }
+.provider-mark--nexus-claude img { object-fit: contain; }
+@media (prefers-reduced-motion: reduce) { .provider-mark--nexus .nexus-provider-fill { transition: none; } }
+.design-stage--nexus .quota-card .api-cost-card { position: static; }
+.design-stage--nexus .api-cost-metric span { font-size: 38px; }
+.design-stage--nexus .api-cost-metric span { top: -1px; }
+.design-stage--nexus .api-cost-metric .api-cost-currency { font-size: 20px; }
+.design-stage--nexus .quota-card .error-state { position: absolute; z-index: 2; top: 96px; left: 16px; right: 24px; display: grid; justify-items: center; margin: 0; color: #eeebff; text-align: center; }
+.nexus-error-decoration { position: relative; width: 100%; height: 92px; display: grid; place-items: center; }
+.nexus-error-lettering { position: relative; z-index: 0; color: rgb(255 255 255 / .2); font-family: "Nexus Title", "Times New Roman", serif; font-size: 32px; line-height: 1; white-space: nowrap; }
+.nexus-error-artwork { position: absolute; z-index: 1; width: 106.163px; height: 89.162px; object-fit: contain; }
+.nexus-error-decoration--stale .nexus-error-lettering { display: flex; gap: 50px; font-size: 31px; }
+.nexus-error-decoration--stale .nexus-error-artwork { left: 82px; width: 45.486px; height: 47.967px; }
+.nexus-error-decoration--signed_out .nexus-error-lettering { margin-left: 84px; }
+.nexus-error-decoration--signed_out .nexus-error-artwork { left: 12px; width: 124.596px; height: 124.596px; }
+.design-stage--nexus .error-state strong { margin: 22px 0 0; color: rgb(255 255 255 / .7); font-family: "Quota Sans", "Segoe UI", system-ui, sans-serif; font-size: 17px; font-weight: 400; letter-spacing: 0; line-height: 1.35; }
+.design-stage--nexus .error-state p { color: #d1c9e4; }
+.design-stage--nexus .nexus-error-decoration--unavailable .nexus-error-lettering { margin-right: -28px; }
+.design-stage--nexus .nexus-error-decoration--unavailable .nexus-error-artwork { margin-right: -30px; }
+.design-stage--nexus .quota-card--unavailable .error-state strong,
+.design-stage--nexus .quota-card--signed_out .error-state strong { margin-right: -24px; }
+.design-stage--nexus .nexus-error-decoration--stale .nexus-error-artwork { margin-bottom: -4px; margin-left: -2px; }
+.design-stage--nexus .nexus-error-decoration--stale .nexus-error-lettering > span:nth-child(2) { margin-left: 8px; }
+.design-stage--nexus .reset-credit-tip { z-index: 4; border: 0 solid #fff; border-radius: 2px; color: #eeeafa; background: #292637; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.design-stage--nexus .quota-card--caution .primary-metric,
+.design-stage--nexus .quota-card--caution .updated { color: #FFF6EE; }
+.design-stage--nexus .quota-card--critical .primary-metric,
+.design-stage--nexus .quota-card--critical .updated { color: #FFF1EE; }
 .design-preview-switch { max-width: 520px; display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; padding: 5px; border: 1px solid rgba(99,108,128,.16); border-radius: 14px; background: rgba(255,255,255,.84); box-shadow: 0 8px 24px rgba(36,42,60,.08); }
+.design-presentation-toggle { position: absolute; top: 18px; right: 18px; z-index: 3; min-height: 32px; padding: 0 12px; border: 1px solid rgb(255 255 255 / .42); border-radius: 8px; color: #fff; background: rgb(17 18 40 / .56); box-shadow: 0 4px 14px rgb(0 0 0 / .22); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; backdrop-filter: blur(8px); }
+.design-stage--presentation { padding-bottom: 60px; }
+.design-stage--presentation .design-selection-controls,
+.design-stage--presentation .design-preview-options { display: none; }
 .design-page-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid rgba(99,108,128,.16); border-radius: 12px; background: rgba(255,255,255,.84); box-shadow: 0 8px 24px rgba(36,42,60,.08); }.design-page-tabs button { min-height: 30px; padding: 0 12px; border: 0; border-radius: 8px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }.design-page-tabs button:hover { color: #202631; background: rgba(105,137,190,.1); }.design-page-tabs button.is-active { color: #fff; background: #315f9f; }.design-supporter-frame { width: 520px; height: 680px; overflow: hidden; box-shadow: 0 18px 48px rgba(51,83,100,.2); }.design-supporter-frame .supporter-panel { width: 520px; min-height: 680px; height: 680px; }
 .design-preview-switch button { min-height: 34px; padding: 0 13px; border: 0; border-radius: 10px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 650; }
 .design-preview-switch button span { margin-left: 3px; font-size: 10px; font-weight: 500; }
@@ -591,7 +699,7 @@ button { font: inherit; }
 
 /* The workbench is intentionally a read-only mirror of desktop appearance
    values. The matrix makes every state inspectable without changing the app. */
-.design-workbench { grid-template-columns: minmax(460px, 1fr) 390px minmax(430px, 510px); min-height: 100dvh; }
+.design-workbench { grid-template-columns: minmax(480px, 1fr) 390px; min-height: 100dvh; }
 .design-stage { min-height: 100dvh; }
 .design-controls { z-index: 1; }
 .palette-matrix { min-height: 100dvh; padding: 42px 26px 56px; color: #263044; background: #edf1f6; border-left: 1px solid #dbe1e9; overflow-y: auto; }

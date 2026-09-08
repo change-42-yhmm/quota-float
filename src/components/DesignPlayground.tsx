@@ -7,7 +7,7 @@ import { SupporterPanel } from "./SupporterPanel";
 
 type ErrorMode = "unavailable" | "stale" | "signed_out";
 type PreviewProvider = "codex" | "claude";
-type PreviewBackground = "transparent" | "background-1";
+type PreviewBackground = "transparent" | "background-1" | "liquid" | "city";
 type QuotaOrbMode = "healthy-orb" | "caution-orb" | "critical-orb";
 type Mode = 74 | 35 | 8 | "cost" | "cost-orb" | "orb" | "weekly" | "weekly-orb" | ErrorMode | QuotaOrbMode | `${ErrorMode}-orb`;
 type GlassProgressState = "healthy" | "caution" | "critical";
@@ -29,8 +29,8 @@ const modes: Array<[Mode, string]> = [[74, "healthy"], [35, "caution"], [8, "cri
 const fields = ["--cool", "--glow", "--warm", "--progress-start", "--progress-end"] as const;
 const workbenchCopy = {
   "zh-CN": {
-    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", supporter: "支持者皮肤",
-    previewState: "预览状态", previewTheme: "预览主题", previewBackground: "预览背景", transparent: "透明", backgroundOne: "背景 1", language: "内容语言", light: "浅色", dark: "深色",
+    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", supporter: "支持者皮肤",
+    previewState: "预览状态", previewTheme: "预览主题", previewBackground: "预览背景", transparent: "透明", backgroundOne: "背景 1", backgroundLiquid: "液态玻璃", backgroundCity: "星际霓虹", language: "内容语言", light: "浅色", dark: "深色", presentation: "展示模式", edit: "编辑模式",
     previewProvider: "预览来源", codex: "Codex", claude: "Claude",
     geometryPreview: "几何预览", description: "配色为只读，始终来自桌面组件。以下几何调整仅用于此预览，并会在刷新后恢复默认。",
     source: "桌面来源：", cornerRadius: "圆角", mainNumber: "主数字", progressHeight: "进度条高度", brightness: "亮度", motion: "动效", reset: "重置几何设置", numberGradient: "主数字 · 渐变", gradientStart: "渐变起点", gradientEnd: "渐变终点", gradientAngle: "渐变角度", progressMaterial: "动态条 · 玻璃材质", progressBlur: "Blur", progressTransparency: "Transparency", progressBaseColor: "Base Color", progressShadowX: "Shadow X", progressShadowY: "Shadow Y", progressShadowBlur: "Shadow Blur", progressShadowColor: "Shadow Color", progressShadowTransparency: "Shadow Transparency", progressHighlight: "Highlight", progressGlowSize: "Glow Size", progressGlowColor: "Glow Color", progressGlowTransparency: "Glow Transparency",
@@ -38,8 +38,8 @@ const workbenchCopy = {
     healthy: "健康", caution: "注意", critical: "紧急", apiCost: "API 成本", apiCostOrb: "API 成本圆形", weekly: "每周", unavailable: "不可用", stale: "数据过期", signedOut: "未登录", healthyOrb: "健康圆形", cautionOrb: "注意圆形", criticalOrb: "紧急圆形", weeklyOrb: "每周圆形", unavailableOrb: "不可用圆形", staleOrb: "数据过期圆形", signedOutOrb: "未登录圆形",
   },
   en: {
-    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", supporter: "Supporter skins",
-    previewState: "Preview state", previewTheme: "Preview theme", previewBackground: "Preview background", transparent: "Transparent", backgroundOne: "Background 1", language: "Content language", light: "Light", dark: "Dark",
+    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", supporter: "Supporter skins",
+    previewState: "Preview state", previewTheme: "Preview theme", previewBackground: "Preview background", transparent: "Transparent", backgroundOne: "Background 1", backgroundLiquid: "Liquid glass", backgroundCity: "Interstellar neon", language: "Content language", light: "Light", dark: "Dark", presentation: "Present", edit: "Edit",
     previewProvider: "Preview source", codex: "Codex", claude: "Claude",
     geometryPreview: "Geometry preview", description: "The palette is read-only and always comes from the desktop widget. Geometry changes below exist only in this preview and reset on refresh.",
     source: "Desktop source:", cornerRadius: "Corner radius", mainNumber: "Main number", progressHeight: "Progress height", brightness: "Brightness", motion: "Motion", reset: "Reset geometry", numberGradient: "Main number · Gradient", gradientStart: "Gradient start", gradientEnd: "Gradient end", gradientAngle: "Gradient angle", progressMaterial: "Dynamic bar · Glass material", progressBlur: "Blur", progressTransparency: "Transparency", progressBaseColor: "Base Color", progressShadowX: "Shadow X", progressShadowY: "Shadow Y", progressShadowBlur: "Shadow Blur", progressShadowColor: "Shadow Color", progressShadowTransparency: "Shadow Transparency", progressHighlight: "Highlight", progressGlowSize: "Glow Size", progressGlowColor: "Glow Color", progressGlowTransparency: "Glow Transparency",
@@ -93,10 +93,12 @@ export function DesignPlayground() {
   const [mode, setMode] = useState<Mode>(() => (query.get("mode") as Mode) || 74);
   const [controls, setControls] = useState<Controls>(defaults);
   const [language, setLanguage] = useState<Language>(() => query.get("language") === "en" ? "en" : "zh-CN");
-  const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "supporter">("widget");
+  const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "supporter">("widget");
   const [previewProvider, setPreviewProvider] = useState<PreviewProvider>("codex");
   const [previewBackground, setPreviewBackground] = useState<PreviewBackground>("transparent");
   const [celebrationKey, setCelebrationKey] = useState(0);
+  const [nexusButtons, setNexusButtons] = useState({ alwaysOnTop: preferences.alwaysOnTop, stayExpanded: preferences.stayExpanded });
+  const [presentationMode, setPresentationMode] = useState(false);
   const snapshot = useMemo(() => makeSnapshot(mode, previewProvider), [mode, previewProvider]);
   const active = paletteName(snapshot);
   const t = workbenchCopy[language];
@@ -128,22 +130,26 @@ export function DesignPlayground() {
   };
   const render = (item: ProviderSnapshot, skin: WidgetSkin = "default") => isOrb
     ? <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />
-    : <QuotaCard snapshot={item} preferences={{ ...preferences, language }} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLock={() => {}} onToggleStayExpanded={() => {}} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} providerMarkVariant={previewTab === "glass" ? "glass" : "default"} style={style(item)} />;
+    : <QuotaCard snapshot={item} preferences={{ ...preferences, ...(previewTab === "nexus" ? nexusButtons : {}), language }} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLock={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, alwaysOnTop: !previous.alwaysOnTop })); }} onToggleStayExpanded={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, stayExpanded: !previous.stayExpanded })); }} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} nexusPreview={previewTab === "nexus"} providerMarkVariant={previewTab === "glass" || previewTab === "nexus" ? "glass" : "default"} style={style(item)} />;
 
   return <main className={`design-workbench design-workbench--${theme}`}>
-    <section className={`design-stage design-stage--${previewTab} design-stage--background-${previewBackground}`} aria-label={t.widget}>
-      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
-      {previewTab !== "supporter" ? <><div className="design-preview-switch" role="group" aria-label={t.previewState}>
-        {modes.map(([value, label]) => <button key={label} className={mode === value ? "is-active" : ""} onClick={() => selectMode(value)}>{t[label as keyof typeof t]}</button>)}
+    <section className={`design-stage design-stage--${previewTab} design-stage--background-${previewBackground}${presentationMode ? " design-stage--presentation" : ""}`} aria-label={t.widget}>
+<svg className="nexus-glass-filter" width="0" height="0" aria-hidden="true"><defs><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.001" numOctaves={2} seed={92} result="noise" /><feGaussianBlur in="noise" stdDeviation={2} result="blurred" /><feDisplacementMap in="SourceGraphic" in2="blurred" scale={50} xChannelSelector="R" yChannelSelector="G" /></filter><clipPath id="nexus-card-shape" clipPathUnits="userSpaceOnUse"><path d="M0.566073 17.4186L16.9105 0.605952C17.2871 0.2186 17.8043 0 18.3445 0H289.172C289.702 0 290.211 0.210714 290.586 0.585787L297.414 7.41421C297.789 7.78929 298 8.29799 298 8.82843V183.77C298 184.241 297.833 184.698 297.53 185.058L282.47 202.942C282.167 203.302 282 203.758 282 204.23V261.144C282 261.616 282.167 262.072 282.47 262.433L297.53 280.317C297.833 280.677 298 281.133 298 281.605V304C298 305.105 297.105 306 296 306H10.8282C10.2977 306 9.78901 305.789 9.41393 305.414L0.585768 296.586C0.210706 296.211 0 295.702 0 295.172L0.000113964 18.8127C0.000113964 18.292 0.20315 17.7919 0.566073 17.4186Z" /></clipPath></defs></svg>
+      <button className="design-presentation-toggle" type="button" aria-pressed={presentationMode} onClick={() => setPresentationMode((value) => !value)}>{presentationMode ? t.edit : t.presentation}</button>
+      <div className="design-selection-controls">
+      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "nexus"} className={previewTab === "nexus" ? "is-active" : ""} onClick={() => setPreviewTab("nexus")}>{t.nexus}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
       </div>
+      {previewTab !== "supporter" ? <><div className="design-selection-controls"><div className="design-preview-switch" role="group" aria-label={t.previewState}>
+        {modes.map(([value, label]) => <button key={label} className={mode === value ? "is-active" : ""} onClick={() => selectMode(value)}>{t[label as keyof typeof t]}</button>)}
+      </div></div>
       <div className="design-preview-options">
         <div className="design-theme-switch" role="group" aria-label={t.previewTheme}>
           {(["light", "dark"] as const).map((value) => <button key={value} className={theme === value ? "is-active" : ""} onClick={() => setTheme(value)}>{value === "light" ? t.light : t.dark}</button>)}
         </div>
         <div className="design-theme-switch" role="group" aria-label={t.previewBackground}>
-          {(["transparent", "background-1"] as const).map((value) => <button key={value} className={previewBackground === value ? "is-active" : ""} onClick={() => setPreviewBackground(value)}>{value === "transparent" ? t.transparent : t.backgroundOne}</button>)}
+          {(["transparent", "background-1", "liquid", "city"] as const).map((value) => <button key={value} className={previewBackground === value ? "is-active" : ""} onClick={() => setPreviewBackground(value)}>{value === "transparent" ? t.transparent : value === "background-1" ? t.backgroundOne : value === "liquid" ? t.backgroundLiquid : t.backgroundCity}</button>)}
         </div>
-        {previewTab === "blur" || previewTab === "computer" || previewTab === "glass" ? <div className="design-theme-switch" role="group" aria-label={t.previewProvider}>
+        {previewTab === "blur" || previewTab === "computer" || previewTab === "glass" || previewTab === "nexus" ? <div className="design-theme-switch" role="group" aria-label={t.previewProvider}>
           {(["codex", "claude"] as const).map((value) => <button key={value} className={previewProvider === value ? "is-active" : ""} onClick={() => setPreviewProvider(value)}>{t[value]}</button>)}
         </div> : null}
       </div>
@@ -155,7 +161,7 @@ export function DesignPlayground() {
       <p className="design-source-note">{t.source} <code>DESKTOP_PALETTES.{theme}.{active}</code></p>
       <Range label={t.cornerRadius} value={controls.radius} min={18} max={64} unit="px" onChange={(value) => update("radius", value)} />
       <Range label={t.mainNumber} value={controls.numberSize} min={48} max={88} unit="px" onChange={(value) => update("numberSize", value)} />
-      <Range label={t.progressHeight} value={controls.progressHeight} min={4} max={12} unit="px" onChange={(value) => update("progressHeight", value)} />
+      {previewTab !== "nexus" ? <Range label={t.progressHeight} value={controls.progressHeight} min={4} max={12} unit="px" onChange={(value) => update("progressHeight", value)} /> : null}
       <Range label={t.brightness} value={controls.brightness} min={70} max={125} unit="%" onChange={(value) => update("brightness", value)} />
       <Range label={t.motion} value={controls.motion} min={0} max={40} unit="s" onChange={(value) => update("motion", value)} />
       {previewTab === "glass" && !isOrb && snapshot.status === "ok" && !snapshot.monthCost ? <section className="glass-progress-controls glass-number-gradient-controls" aria-label={t.numberGradient}>
@@ -182,7 +188,7 @@ export function DesignPlayground() {
       </section> : null}
       <button className="reset-design" onClick={() => setControls(defaults)}>{t.reset}</button>
     </aside>
-    <section className="palette-matrix" aria-labelledby="palette-matrix-title">
+    <section className="palette-matrix" aria-labelledby="palette-matrix-title" hidden>
       <header className="palette-matrix__header"><p className="design-kicker">{t.sourceValues}</p><h2 id="palette-matrix-title">{t.paletteMatrix}</h2><p>{t.paletteDescription} <code>src/lib/desktopPalette.ts</code>{language === "zh-CN" ? "。" : "."}</p></header>
       <div className="palette-matrix__themes">{(["light", "dark"] as const).map((matrixTheme) => <section className={`palette-theme palette-theme--${matrixTheme}`} key={matrixTheme} aria-label={`${matrixTheme} ${t.paletteMatrix}`}><h3>{matrixTheme === "light" ? t.light : t.dark}</h3>{names.map((name) => <PaletteCard key={name} theme={matrixTheme} name={name} label={t[name === "signed_out" ? "signedOut" : name]} previewLabel={t.preview} selected={theme === matrixTheme && active === name} onSelect={() => selectPalette(matrixTheme, name)} />)}</section>)}</div>
     </section>

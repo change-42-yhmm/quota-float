@@ -1,0 +1,28 @@
+<svg viewBox="0 0 110 100.287" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="110.000000" height="100.287109" fill="none" customFrame="#000000">
+	<defs>
+		<linearGradient id="paint_linear_4" x1="110.000008" x2="-8.8879776" y1="100.287048" y2="88.2781601" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(32,21,10)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(68,43,19)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<radialGradient id="paint_radial_4" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0,-29.4445,71.4815,0,38.5185,0.28709)">
+			<stop stop-color="rgb(179,119,9)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(179,119,9)" offset="1" stop-opacity="0" />
+		</radialGradient>
+		<radialGradient id="paint_radial_5" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-71.6667,0,0,-25,38.3333,100.287)">
+			<stop stop-color="rgb(179,119,9)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(179,119,9)" offset="1" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="paint_linear_5" x1="4" x2="4" y1="0.287109375" y2="100.287109" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(226,199,65)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(177,88,2)" offset="1" stop-opacity="1" />
+		</linearGradient>
+	</defs>
+	<g id="组合 397">
+		<path id="矩形 513" d="M0 0.287109L0 100.287L55 100.287L58 96.2871L85.5 96.2871L88.5 100.287L110 100.287L110 6.28711L104 0.287109L78 0.287109L52 0.287109L0 0.287109Z" fill="url(#paint_linear_4)" fill-opacity="0.899999976" fill-rule="evenodd" />
+		<path id="矩形 513" d="M0 0.287109L0 100.287L55 100.287L58 96.2871L85.5 96.2871L88.5 100.287L110 100.287L110 6.28711L104 0.287109L78 0.287109L52 0.287109L0 0.287109Z" fill="url(#paint_radial_4)" fill-opacity="0.400000006" fill-rule="evenodd" />
+		<path id="矩形 513" d="M0 0.287109L0 100.287L55 100.287L58 96.2871L85.5 96.2871L88.5 100.287L110 100.287L110 6.28711L104 0.287109L78 0.287109L52 0.287109L0 0.287109Z" fill="url(#paint_radial_5)" fill-opacity="0.400000006" fill-rule="evenodd" />
+		<rect id="矩形 514" width="8.000000" height="100.000000" x="0.000000" y="0.287109" fill="url(#paint_linear_5)" />
+		<path id="矢量 211" d="M59 94.2871L66 84.2871L110 84.2871" opacity="0.199999988" stroke="rgb(255,255,255)" stroke-width="1.000000" />
+		<path id="矢量 212" d="M0 10L7 0L51 0" opacity="0.199999988" stroke="rgb(255,255,255)" stroke-width="1.000000" transform="matrix(-1,0,0,-1,59,10.2871)" />
+	</g>
+</svg>

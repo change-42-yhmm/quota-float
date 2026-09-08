@@ -1,0 +1,52 @@
+<svg viewBox="0 0 106.163 89.1621" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="106.163086" height="89.162109" fill="none" customFrame="#000000">
+	<defs>
+		<g id="pixso_custom_effect_0">
+			<effect x="0.000000" y="2.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.200000003" effectType="dropShadow" stdDeviation="2" radius="0" />
+		</g>
+		<filter id="filter_0" width="29.455078" height="29.455078" x="39.273438" y="31.271484" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_0)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feOffset dx="0.000000" dy="2.000000" in="SourceAlpha" />
+			<feGaussianBlur stdDeviation="0.666666687" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0 " />
+			<feBlend result="effect_dropShadow_1" in2="BackgroundImageFix" mode="normal" />
+			<feBlend result="shape" in="SourceGraphic" in2="effect_dropShadow_1" mode="normal" />
+		</filter>
+		<g id="pixso_custom_effect_1">
+			<effect x="0.000000" y="2.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.200000003" effectType="dropShadow" stdDeviation="2" radius="0" />
+		</g>
+		<filter id="filter_1" width="15.662109" height="15.662109" x="53.063477" y="31.267578" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_1)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feOffset dx="0.000000" dy="2.000000" in="SourceAlpha" />
+			<feGaussianBlur stdDeviation="0.666666687" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0 " />
+			<feBlend result="effect_dropShadow_1" in2="BackgroundImageFix" mode="normal" />
+			<feBlend result="shape" in="SourceGraphic" in2="effect_dropShadow_1" mode="normal" />
+		</filter>
+		<g id="pixso_custom_effect_2">
+			<effect x="0.000000" y="2.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.200000003" effectType="dropShadow" stdDeviation="2" radius="0" />
+		</g>
+		<filter id="filter_2" width="15.666992" height="15.666016" x="39.272461" y="45.060547" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_2)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feOffset dx="0.000000" dy="2.000000" in="SourceAlpha" />
+			<feGaussianBlur stdDeviation="0.666666687" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0 " />
+			<feBlend result="effect_dropShadow_1" in2="BackgroundImageFix" mode="normal" />
+			<feBlend result="shape" in="SourceGraphic" in2="effect_dropShadow_1" mode="normal" />
+		</filter>
+	</defs>
+	<g id="组合 383">
+		<path id="矩形 506" d="M40.001 0L66.001 0L69.001 3.5L69.001 5L37.001 5L37.001 3.5L40.001 0Z" fill="rgb(246,226,226)" fill-opacity="0.5" fill-rule="evenodd" />
+		<path id="矩形 507" d="M3 0L29 0L32 3.5L32 5L0 5L0 3.5L3 0Z" fill="rgb(246,226,226)" fill-opacity="0.5" fill-rule="evenodd" transform="matrix(-0.707107,-0.707107,0.707107,-0.707107,22.6279,89.1621)" />
+		<path id="矩形 508" d="M3 0L29 0L32 3.5L32 5L0 5L0 3.5L3 0Z" fill="rgb(246,226,226)" fill-opacity="0.5" fill-rule="evenodd" transform="matrix(0.707107,-0.707107,-0.707107,-0.707107,83.5361,89.1621)" />
+		<path id="多边形 2" d="M78.5263 87.0005L28.3368 87.0004L28.3368 86.0004L78.5263 86.0005L78.5263 87.0005ZM70.5853 6.45898L102.352 61.4805L101.486 61.9805L69.7193 6.95898L70.5853 6.45898ZM3.64804 61.4807L35.4147 6.45922L36.2807 6.95922L4.51407 61.9807L3.64804 61.4807Z" fill="rgb(246,226,226)" fill-opacity="0.200000003" fill-rule="nonzero" />
+		<g filter="url(#filter_0)">
+			<rect id="矩形 509" width="30.000000" height="6.000000" x="0.000000" y="0.000000" fill="rgb(218,34,62)" transform="matrix(0.707107,0.707107,-0.707107,0.707107,45.5166,31.2715)" />
+		</g>
+		<g filter="url(#filter_1)">
+			<rect id="矩形 510" width="10.493162" height="6.000000" x="0.000000" y="0.000000" fill="rgb(218,34,62)" transform="matrix(0.707107,-0.707107,0.707107,0.707107,55.0635,38.6875)" />
+		</g>
+		<g filter="url(#filter_2)">
+			<rect id="矩形 511" width="10.500000" height="6.000000" x="0.000000" y="0.000000" fill="rgb(218,34,62)" transform="matrix(0.707107,-0.707107,0.707107,0.707107,41.2725,52.4844)" />
+		</g>
+	</g>
+</svg>

@@ -1,0 +1,68 @@
+<svg viewBox="0 0 45.4863 47.9668" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="45.486328" height="47.966797" fill="none" customFrame="#000000">
+	<defs>
+		<g id="pixso_custom_effect_3">
+			<effect x="0.000000" y="2.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.200000003" effectType="dropShadow" stdDeviation="2" radius="0" />
+		</g>
+		<filter id="filter_3" width="20.972656" height="20.966797" x="12.513672" y="0.000000" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_3)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feOffset dx="0.000000" dy="2.000000" in="SourceAlpha" />
+			<feGaussianBlur stdDeviation="0.666666687" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0 " />
+			<feBlend result="effect_dropShadow_1" in2="BackgroundImageFix" mode="normal" />
+			<feBlend result="shape" in="SourceGraphic" in2="effect_dropShadow_1" mode="normal" />
+		</filter>
+		<g id="pixso_custom_effect_4">
+			<effect x="0.000000" y="2.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.200000003" effectType="dropShadow" stdDeviation="2" radius="0" />
+		</g>
+		<filter id="filter_4" width="20.972656" height="20.966797" x="0.000000" y="13.000000" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_4)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feColorMatrix result="hardAlpha" in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.25 0 " />
+			<feOffset dx="0.000000" dy="2.000000" in="hardAlpha" />
+			<feGaussianBlur stdDeviation="0.666666687" />
+			<feComposite k2="-1" k3="1" in2="hardAlpha" operator="out" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0 " />
+			<feBlend result="effect_dropShadow_1" in2="BackgroundImageFix" mode="normal" />
+			<feBlend result="shape" in="SourceGraphic" in2="effect_dropShadow_1" mode="normal" />
+		</filter>
+		<g id="pixso_custom_effect_5">
+			<effect x="0.000000" y="2.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.200000003" effectType="dropShadow" stdDeviation="2" radius="0" />
+		</g>
+		<filter id="filter_5" width="20.972656" height="20.966797" x="24.513672" y="13.000000" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_5)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feColorMatrix result="hardAlpha" in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 0 " />
+			<feOffset dx="0.000000" dy="2.000000" in="hardAlpha" />
+			<feGaussianBlur stdDeviation="0.666666687" />
+			<feComposite k2="-1" k3="1" in2="hardAlpha" operator="out" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0 " />
+			<feBlend result="effect_dropShadow_1" in2="BackgroundImageFix" mode="normal" />
+			<feBlend result="shape" in="SourceGraphic" in2="effect_dropShadow_1" mode="normal" />
+		</filter>
+		<g id="pixso_custom_effect_6">
+			<effect x="0.000000" y="2.000000" visibility="visible" fill="rgb(0,0,0)" fill-opacity="0.200000003" effectType="dropShadow" stdDeviation="2" radius="0" />
+		</g>
+		<filter id="filter_6" width="20.972656" height="20.966797" x="12.513672" y="27.000000" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_6)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feColorMatrix result="hardAlpha" in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 " />
+			<feOffset dx="0.000000" dy="2.000000" in="hardAlpha" />
+			<feGaussianBlur stdDeviation="0.666666687" />
+			<feComposite k2="-1" k3="1" in2="hardAlpha" operator="out" />
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0 " />
+			<feBlend result="effect_dropShadow_1" in2="BackgroundImageFix" mode="normal" />
+			<feBlend result="shape" in="SourceGraphic" in2="effect_dropShadow_1" mode="normal" />
+		</filter>
+	</defs>
+	<g id="组合 383">
+		<g filter="url(#filter_3)">
+			<rect id="矩形 509" width="12.000000" height="12.000000" x="0.000000" y="0.000000" fill="rgb(255,255,255)" transform="matrix(0.70723,0.706984,-0.70723,0.706984,23,0)" />
+		</g>
+		<g opacity="0.799999952" filter="url(#filter_4)">
+			<rect id="矩形 510" width="12.000000" height="12.000000" x="0.000000" y="0.000000" fill="rgb(255,255,255)" transform="matrix(0.70723,0.706984,-0.70723,0.706984,10.4863,13)" />
+		</g>
+		<g opacity="0.199999988" filter="url(#filter_5)">
+			<rect id="矩形 512" width="12.000000" height="12.000000" x="0.000000" y="0.000000" fill="rgb(255,255,255)" transform="matrix(0.70723,0.706984,-0.70723,0.706984,35,13)" />
+		</g>
+		<g opacity="0.5" filter="url(#filter_6)">
+			<rect id="矩形 511" width="12.000000" height="12.000000" x="0.000000" y="0.000000" fill="rgb(255,255,255)" transform="matrix(0.70723,0.706984,-0.70723,0.706984,23,27)" />
+		</g>
+	</g>
+</svg>

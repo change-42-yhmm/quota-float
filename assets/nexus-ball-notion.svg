@@ -1,0 +1,33 @@
+<svg viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="110.000000" height="100.000000" fill="none" customFrame="#000000">
+	<defs>
+		<g id="pixso_custom_effect_2">
+			<effect visibility="visible" effectType="backgroundBlur" saturation="0" stdDeviation="26.2285709" />
+		</g>
+		<filter id="filter_2" width="110.000000" height="100.000000" x="0.000000" y="0.000000" filterUnits="userSpaceOnUse" customEffect="url(#pixso_custom_effect_2)" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix" />
+			<feBlend result="shape" in="SourceGraphic" in2="BackgroundImageFix" mode="normal" />
+		</filter>
+		<clipPath id="outline_mask_2" transform="matrix(1,0,0,1,-0,-0)">
+			<path d="M0 0L0 100L55 100L58 96L85.5 96L88.5 100L110 100L110 6L104 0L78 0L52 0L0 0Z" fill="rgb(255,255,255)" fill-rule="evenodd" />
+		</clipPath>
+		<linearGradient id="paint_linear_8" x1="5.30357742" x2="90.7380371" y1="2.8571434" y2="101.893936" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(47,44,59)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(17,18,40)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<linearGradient id="paint_linear_9" x1="4" x2="4" y1="0" y2="100" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(83,79,91)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(37,34,60)" offset="1" stop-opacity="1" />
+		</linearGradient>
+	</defs>
+	<g id="组合 400">
+		<g data-pixso-skip-parse="true">
+			<foreignObject width="110.000000" height="100.000000" x="0.000000" y="0.000000">
+				<div xmlns="http://www.w3.org/1999/xhtml" style="clip-path:url(#outline_mask_2);height:100%;backdrop-filter:blur(13.114285px);width:100%;-webkit-backdrop-filter:blur(13.114285px);" />
+			</foreignObject>
+		</g>
+		<g filter="url(#filter_2)">
+			<path id="矩形 513" d="M0 0L0 100L55 100L58 96L85.5 96L88.5 100L110 100L110 6L104 0L78 0L52 0L0 0Z" fill="url(#paint_linear_8)" fill-opacity="0.899999976" fill-rule="evenodd" />
+		</g>
+		<rect id="矩形 514" width="8.000000" height="100.000000" x="0.000000" y="0.000000" fill="url(#paint_linear_9)" />
+	</g>
+</svg>

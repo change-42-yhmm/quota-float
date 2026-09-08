@@ -158,7 +158,7 @@ export function DesignPlayground() {
           {(["codex", "claude"] as const).map((value) => <button key={value} className={previewProvider === value ? "is-active" : ""} onClick={() => setPreviewProvider(value)}>{t[value]}</button>)}
         </div> : null}
       </div>
-      <div className="design-preview-pair"><div className="design-card-frame">{renderCard(snapshot)}</div><div className="design-orb-frame">{renderOrb(snapshot)}</div></div></> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
+      <div className="design-preview-pair"><div className="design-orb-frame">{renderOrb(snapshot)}</div><div className="design-card-frame">{renderCard(snapshot)}</div></div></> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
     </section>
     <aside className="design-controls">
       <header><p className="design-kicker">QUOTA FLOAT · PREVIEW</p><h1>{t.geometryPreview}</h1><p className="design-description">{t.description}</p></header>

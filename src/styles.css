@@ -423,7 +423,8 @@ button { font: inherit; }
 .design-stage--background-city { background: url("../assets/design-background-interstellar.jpg") center / cover no-repeat; }
 .design-card-frame { width: 314px; height: 314px; box-shadow: none; border-radius: var(--card-radius); }
 .design-orb-frame { width: 80px; height: 80px; box-shadow: none; border-radius: 24px; }
-.design-preview-pair { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.design-preview-pair { display: flex; align-items: flex-start; justify-content: center; gap: 20px; }
+.design-stage--nexus .design-preview-pair .design-orb-frame .quota-orb { margin-top: 1px; }
 .design-preview-options { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .api-cost-card { min-height: 0; }.api-cost-metric { margin-top: 6px; }.api-cost-metric .api-cost-currency { margin: 0 5px 5px 0; font-family: inherit; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }
 .weekly-metric strong.api-cost-weekly-value { white-space: nowrap; }

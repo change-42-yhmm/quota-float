@@ -25,7 +25,7 @@ const preferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayE
 const healthyGlassProgress: GlassProgressMaterial = { blur: 4, transparency: 14, baseStart: "#fafafa", baseEnd: "#fafafa", shadowX: -6, shadowY: 12, shadowBlur: 20, shadowColor: "#333333", shadowTransparency: 30, highlight: 45, glowSize: 70, glowColor: "#ea8f53", glowTransparency: 0 };
 const defaults: Controls = { radius: 38, numberSize: 64, progressHeight: 6, brightness: 100, motion: 18, glassProgressState: "healthy", glassProgress: { healthy: healthyGlassProgress, caution: { ...healthyGlassProgress, transparency: 31, baseStart: "#e5d094", baseEnd: "#e38e16" }, critical: { ...healthyGlassProgress, transparency: 60, baseStart: "#e8b0b0", baseEnd: "#ea0606" } }, glassNumberGradient: { healthy: { start: "#5b92ec", end: "#abccf7", angle: 135 }, caution: { start: "#e59b34", end: "#f3cf6d", angle: 135 }, critical: { start: "#eb6075", end: "#fba2a2", angle: 135 } } };
 const names: DesktopPaletteName[] = ["healthy", "caution", "critical", "unavailable", "stale", "signed_out"];
-const modes: Array<[Mode, string]> = [[74, "healthy"], [35, "caution"], [8, "critical"], ["cost", "apiCost"], ["weekly", "weekly"], ["healthy-orb", "healthyOrb"], ["caution-orb", "cautionOrb"], ["critical-orb", "criticalOrb"], ["cost-orb", "apiCostOrb"], ["weekly-orb", "weeklyOrb"], ["unavailable", "unavailable"], ["stale", "stale"], ["signed_out", "signedOut"], ["unavailable-orb", "unavailableOrb"], ["stale-orb", "staleOrb"], ["signed_out-orb", "signedOutOrb"]];
+const modes: Array<[Mode, string]> = [[74, "healthy"], [35, "caution"], [8, "critical"], ["cost", "apiCost"], ["weekly", "weekly"], ["unavailable", "unavailable"], ["stale", "stale"], ["signed_out", "signedOut"]];
 const fields = ["--cool", "--glow", "--warm", "--progress-start", "--progress-end"] as const;
 const workbenchCopy = {
   "zh-CN": {
@@ -75,7 +75,13 @@ function modeForPalette(name: DesktopPaletteName): Mode {
 }
 
 function glassProgressStateForMode(mode: Mode): GlassProgressState | null {
-  return mode === 74 ? "healthy" : mode === 35 ? "caution" : mode === 8 ? "critical" : null;
+  return mode === 74 || mode === "healthy-orb" || mode === "cost" || mode === "cost-orb"
+    ? "healthy"
+    : mode === 35 || mode === "caution-orb" || mode === "weekly" || mode === "weekly-orb"
+      ? "caution"
+      : mode === 8 || mode === "critical-orb"
+        ? "critical"
+        : null;
 }
 
 function modeForGlassProgressState(state: GlassProgressState): Mode {
@@ -102,7 +108,6 @@ export function DesignPlayground() {
   const snapshot = useMemo(() => makeSnapshot(mode, previewProvider), [mode, previewProvider]);
   const active = paletteName(snapshot);
   const t = workbenchCopy[language];
-  const isOrb = mode === "orb" || mode === "weekly-orb" || (typeof mode === "string" && mode.endsWith("-orb"));
   const glassProgress = controls.glassProgress[controls.glassProgressState];
   const glassNumberGradient = controls.glassNumberGradient[controls.glassProgressState];
   const style = (item: ProviderSnapshot) => {
@@ -128,9 +133,9 @@ export function DesignPlayground() {
     const nextGlassProgressState = glassProgressStateForMode(nextMode);
     if (nextGlassProgressState) setControls((previous) => ({ ...previous, glassProgressState: nextGlassProgressState }));
   };
-  const render = (item: ProviderSnapshot, skin: WidgetSkin = "default") => isOrb
-    ? <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />
-    : <QuotaCard snapshot={item} preferences={{ ...preferences, ...(previewTab === "nexus" ? nexusButtons : {}), language }} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLock={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, alwaysOnTop: !previous.alwaysOnTop })); }} onToggleStayExpanded={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, stayExpanded: !previous.stayExpanded })); }} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} nexusPreview={previewTab === "nexus"} providerMarkVariant={previewTab === "glass" || previewTab === "nexus" ? "glass" : "default"} style={style(item)} />;
+  const skin: WidgetSkin = previewTab === "blur" ? "blur" : previewTab === "computer" ? "computer" : "default";
+  const renderCard = (item: ProviderSnapshot) => <QuotaCard snapshot={item} preferences={{ ...preferences, ...(previewTab === "nexus" ? nexusButtons : {}), language }} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLock={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, alwaysOnTop: !previous.alwaysOnTop })); }} onToggleStayExpanded={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, stayExpanded: !previous.stayExpanded })); }} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} nexusPreview={previewTab === "nexus"} providerMarkVariant={previewTab === "glass" || previewTab === "nexus" ? "glass" : "default"} style={style(item)} />;
+  const renderOrb = (item: ProviderSnapshot) => <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />;
 
   return <main className={`design-workbench design-workbench--${theme}`}>
     <section className={`design-stage design-stage--${previewTab} design-stage--background-${previewBackground}${presentationMode ? " design-stage--presentation" : ""}`} aria-label={t.widget}>
@@ -153,7 +158,7 @@ export function DesignPlayground() {
           {(["codex", "claude"] as const).map((value) => <button key={value} className={previewProvider === value ? "is-active" : ""} onClick={() => setPreviewProvider(value)}>{t[value]}</button>)}
         </div> : null}
       </div>
-      <div className={isOrb ? "design-orb-frame" : "design-card-frame"}>{render(snapshot, previewTab === "blur" ? "blur" : previewTab === "computer" ? "computer" : "default")}</div></> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
+      <div className="design-preview-pair"><div className="design-card-frame">{renderCard(snapshot)}</div><div className="design-orb-frame">{renderOrb(snapshot)}</div></div></> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
     </section>
     <aside className="design-controls">
       <header><p className="design-kicker">QUOTA FLOAT · PREVIEW</p><h1>{t.geometryPreview}</h1><p className="design-description">{t.description}</p></header>
@@ -164,13 +169,13 @@ export function DesignPlayground() {
       {previewTab !== "nexus" ? <Range label={t.progressHeight} value={controls.progressHeight} min={4} max={12} unit="px" onChange={(value) => update("progressHeight", value)} /> : null}
       <Range label={t.brightness} value={controls.brightness} min={70} max={125} unit="%" onChange={(value) => update("brightness", value)} />
       <Range label={t.motion} value={controls.motion} min={0} max={40} unit="s" onChange={(value) => update("motion", value)} />
-      {previewTab === "glass" && !isOrb && snapshot.status === "ok" && !snapshot.monthCost ? <section className="glass-progress-controls glass-number-gradient-controls" aria-label={t.numberGradient}>
+      {previewTab === "glass" && snapshot.status === "ok" && !snapshot.monthCost ? <section className="glass-progress-controls glass-number-gradient-controls" aria-label={t.numberGradient}>
         <header><h2>{t.numberGradient}</h2></header>
         <Color label={t.gradientStart} value={glassNumberGradient.start} onChange={(value) => updateGlassNumberGradient("start", value)} />
         <Color label={t.gradientEnd} value={glassNumberGradient.end} onChange={(value) => updateGlassNumberGradient("end", value)} />
         <Range label={t.gradientAngle} value={glassNumberGradient.angle} min={0} max={360} unit="°" onChange={(value) => updateGlassNumberGradient("angle", value)} />
       </section> : null}
-      {previewTab === "glass" && !isOrb && snapshot.status === "ok" && !snapshot.monthCost ? <section className="glass-progress-controls" aria-label={t.progressMaterial}>
+      {previewTab === "glass" && snapshot.status === "ok" && !snapshot.monthCost ? <section className="glass-progress-controls" aria-label={t.progressMaterial}>
         <header><h2>{t.progressMaterial}</h2><div role="group" aria-label={t.progressMaterial}>{(["healthy", "caution", "critical"] as const).map((state) => <button type="button" key={state} className={controls.glassProgressState === state ? "is-active" : ""} onClick={() => selectGlassProgressState(state)}>{t[state]}</button>)}</div></header>
         <Range label={t.progressBlur} value={glassProgress.blur} min={0} max={20} unit="px" onChange={(value) => updateGlassProgress("blur", value)} />
         <Range label={t.progressTransparency} value={glassProgress.transparency} min={0} max={100} unit="%" onChange={(value) => updateGlassProgress("transparency", value)} />

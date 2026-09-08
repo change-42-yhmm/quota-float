@@ -423,6 +423,7 @@ button { font: inherit; }
 .design-stage--background-city { background: url("../assets/design-background-interstellar.jpg") center / cover no-repeat; }
 .design-card-frame { width: 314px; height: 314px; box-shadow: none; border-radius: var(--card-radius); }
 .design-orb-frame { width: 80px; height: 80px; box-shadow: none; border-radius: 24px; }
+.design-preview-pair { display: flex; align-items: center; justify-content: center; gap: 20px; }
 .design-preview-options { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .api-cost-card { min-height: 0; }.api-cost-metric { margin-top: 6px; }.api-cost-metric .api-cost-currency { margin: 0 5px 5px 0; font-family: inherit; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }
 .weekly-metric strong.api-cost-weekly-value { white-space: nowrap; }
@@ -442,10 +443,15 @@ button { font: inherit; }
 .design-stage--glass .quota-card,
 .design-stage--glass .quota-orb {
   border: 0 solid rgba(255,255,255,.2);
-  background: rgba(250,250,250,.14);
-  box-shadow: 4px 6px 20px 0 rgba(24,31,49,.30), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35);
-  backdrop-filter: blur(2px) saturate(64%);
-  -webkit-backdrop-filter: blur(2px) saturate(64%);
+  background: rgba(250,250,250,.18);
+  box-shadow: 4px 6px 20px 0 rgba(24,31,49,.16), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35);
+  backdrop-filter: blur(4px) saturate(70%);
+  -webkit-backdrop-filter: blur(4px) saturate(70%);
+}
+.design-stage--glass .quota-orb {
+  background-color: rgba(250,250,250,.05);
+  backdrop-filter: blur(4px) saturate(50%);
+  -webkit-backdrop-filter: blur(4px) saturate(50%);
 }
 .design-stage--glass .quota-card--caution,
 .design-stage--glass .quota-orb.quota-card--caution {
@@ -471,12 +477,22 @@ button { font: inherit; }
 .design-stage--glass .quota-card .progress,
 .design-stage--glass .quota-card .reset-time,
 .design-stage--glass .quota-card .error-state { position: relative; z-index: 2; }
+.design-stage--glass .quota-card .card-actions .pin-button--active { border-color: #fff; background: #c7dfff; }
 .design-stage--glass .quota-orb .orb-metric,
 .design-stage--glass .quota-orb .orb-unavailable { position: relative; z-index: 2; }
 .design-stage--glass .quota-orb .orb-weekly-badge { z-index: 2; }
 .design-stage--glass .quota-orb .orb-metric,
 .design-stage--glass .quota-orb .orb-metric span,
 .design-stage--glass .quota-orb .orb-metric small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; }
+.design-stage--glass .quota-orb .orb-metric { line-height: .82; letter-spacing: -.07em; }
+.design-stage--glass .quota-orb .orb-metric small { display: none; }
+.design-stage--glass .quota-orb .orb-metric span { color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start) 0 40%, var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.design-stage--glass .quota-orb.quota-card--healthy .orb-metric span { background-image: linear-gradient(135deg, #F5F9FF, #DEECFF); }
+.design-stage--glass .quota-orb.quota-card--caution .orb-metric span { background-image: linear-gradient(135deg, #FFFAF2, #FFF6DC); }
+.design-stage--glass .quota-orb.quota-card--critical .orb-metric span { background-image: linear-gradient(135deg, #FFF9FA, #FFE9E9); }
+.design-stage--glass .quota-orb .orb-weekly-badge { color: #fff; background: url("../assets/glass-week-cutout.svg") center / 100% 100% no-repeat; opacity: .75; }
+.design-stage--glass .quota-orb .orb-weekly-badge svg,
+.design-stage--glass .quota-orb .orb-weekly-badge b { display: none; }
 .design-stage--glass .quota-card--unavailable .status-icon,
 .design-stage--glass .quota-card--stale .status-icon,
 .design-stage--glass .quota-card--signed_out .status-icon { width: 58px; height: 56px; margin-bottom: 12px; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; }
@@ -486,6 +502,7 @@ button { font: inherit; }
 .design-stage--glass .quota-card--unavailable .status-icon svg,
 .design-stage--glass .quota-card--stale .status-icon svg,
 .design-stage--glass .quota-card--signed_out .status-icon svg { display: none; }
+.design-stage--glass .quota-card:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) .error-state strong { color: #7e828b; }
 .design-stage--glass .quota-card .progress { height: var(--progress-height, 10px); margin-top: 12px; }
 .design-stage--glass .quota-card .progress span { border: 0 solid rgba(255,255,255,.2); background: linear-gradient(90deg, color-mix(in srgb, var(--glass-progress-base-start) var(--glass-progress-transparency), transparent), color-mix(in srgb, var(--glass-progress-base-end) var(--glass-progress-transparency), transparent)); box-shadow: var(--glass-progress-shadow-x) var(--glass-progress-shadow-y) var(--glass-progress-shadow-blur) 0 rgb(var(--glass-progress-shadow-color) / var(--glass-progress-shadow-transparency)), inset 0 0 var(--glass-progress-glow-size) rgb(var(--glass-progress-glow-color) / var(--glass-progress-glow-transparency)), inset 0 0 4px 2px rgb(255 255 255 / var(--glass-progress-highlight)); backdrop-filter: blur(var(--glass-progress-blur)) saturate(64%); -webkit-backdrop-filter: blur(var(--glass-progress-blur)) saturate(64%); }
 .design-stage--glass .quota-orb.quota-card--unavailable .orb-unavailable,
@@ -499,7 +516,7 @@ button { font: inherit; }
 .design-stage--glass .quota-orb.quota-card--signed_out .orb-unavailable svg { display: none; }
 .design-stage--glass .quota-card .card-footer { position: absolute; }
 .design-stage--glass .quota-card .primary-metric > span,
-.design-stage--glass .quota-card .primary-metric > small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start), var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.design-stage--glass .quota-card .primary-metric > small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start) 0 40%, var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .design-stage--glass .quota-card--ok .eyebrow { color: #ffffff; font-weight: 700; }
 .design-stage--glass .quota-card--ok .updated { color: #ffffff; font-weight: 700; }
 .design-stage--glass .quota-card--ok .weekly-metric > p { color: #ffffff; font-weight: 500; }
@@ -515,9 +532,9 @@ button { font: inherit; }
 .design-stage--glass .quota-card .weekly-metric strong,
 .design-stage--glass .quota-card .weekly-metric strong small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; }
 .design-stage--glass .provider-mark--glass { width: 40px; height: 40px; padding: 0; }
-.design-stage--glass .quota-orb { box-shadow: 1px 2px 4px 0 rgba(24,31,49,.08), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35); }
-.design-stage--glass .quota-orb.quota-card--caution { box-shadow: 1px 2px 4px 0 rgba(65,39,21,.08), inset 0 0 50px rgba(234,143,83,.2), inset 0 0 4px 2px rgba(255,255,255,.35); }
-.design-stage--glass .quota-orb.quota-card--critical { box-shadow: 1px 2px 4px 0 rgba(51,51,51,.08), inset 0 0 50px rgba(234,93,83,.3), inset 0 0 4px 2px rgba(255,255,255,.35); }
+.design-stage--glass .quota-orb { box-shadow: 4px 6px 20px 0 rgba(24,31,49,.16), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35); }
+.design-stage--glass .quota-orb.quota-card--caution { box-shadow: 4px 6px 20px 0 rgba(65,39,21,.16), inset 0 0 50px rgba(234,143,83,.2), inset 0 0 4px 2px rgba(255,255,255,.35); }
+.design-stage--glass .quota-orb.quota-card--critical { box-shadow: 4px 6px 20px 0 rgba(51,51,51,.16), inset 0 0 50px rgba(234,93,83,.3), inset 0 0 4px 2px rgba(255,255,255,.35); }
 .nexus-glass-filter { position: absolute; }
 .design-stage--nexus .quota-card { border: 0; border-radius: 0; background: transparent; box-shadow: none; clip-path: url(#nexus-card-shape); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .design-stage--nexus .quota-card::before,
@@ -558,6 +575,7 @@ button { font: inherit; }
 .design-stage--nexus .quota-orb .orb-unavailable { width: 64%; height: 64%; margin-left: 5%; border: 0; border-radius: 0; background: url("../assets/Nexus-icon-unavailable.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; transform: translateY(-2px); }
 .design-stage--nexus .quota-orb.quota-card--stale .orb-unavailable { width: 39%; height: 45%; background-image: url("../assets/Nexus-icon-dataexpired.svg"); }
 .design-stage--nexus .quota-orb.quota-card--signed_out .orb-unavailable { width: 66%; height: 73%; background-image: url("../assets/Nexus-icon-login.svg"); transform: translateY(-2px) rotate(45deg); }
+.design-stage--nexus .quota-orb.quota-orb--idle { opacity: .82; }
 .design-stage--nexus .quota-card { position: relative; top: -3px; left: -4px; overflow: visible; clip-path: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 26px 22px; color: #eeebff; animation: none; }
 .design-stage--nexus .quota-card::before { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .nexus-quota-float { position: absolute; z-index: 2; left: -8px; right: 9px; top: 58px; height: 124px; background: url("../assets/nexus-health.png") center / 100% 100% no-repeat; pointer-events: none; }

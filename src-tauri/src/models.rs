@@ -142,10 +142,10 @@ impl WidgetPreferences {
                 self.unlocked_skins.push(legacy);
             }
         }
-        self.unlocked_skins.retain(|skin| matches!(skin.as_str(), "blur" | "computer"));
+        self.unlocked_skins.retain(|skin| matches!(skin.as_str(), "blur" | "computer" | "glass" | "nexus"));
         self.unlocked_skins.sort();
         self.unlocked_skins.dedup();
-        if !matches!(self.selected_skin.as_str(), "default" | "blur" | "computer") {
+        if !matches!(self.selected_skin.as_str(), "default" | "blur" | "computer" | "glass" | "nexus") {
             self.selected_skin = default_skin();
         }
         if self.selected_skin != "default" && !self.unlocked_skins.iter().any(|skin| skin == &self.selected_skin) {

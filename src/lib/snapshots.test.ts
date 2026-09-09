@@ -15,6 +15,12 @@ const success: ProviderSnapshot = {
 };
 
 describe("snapshot failure handling", () => {
+  it("retains weekly-only data and its original timestamp during a transient failure", () => {
+    const weeklyOnly: ProviderSnapshot = { ...success, shortWindow: null };
+    const failure: ProviderSnapshot = { ...weeklyOnly, weeklyWindow: null, status: "unavailable", message: "Network unavailable", updatedAt: "2026-07-07T01:00:00Z" };
+    expect(mergeSnapshots([weeklyOnly], [failure])[0]).toEqual({ ...weeklyOnly, status: "stale", message: "Network unavailable" });
+  });
+
   it("retains the last successful values during a transient failure", () => {
     const failure: ProviderSnapshot = { ...success, shortWindow: null, weeklyWindow: null, status: "unavailable", message: "Network unavailable", updatedAt: "2026-07-07T01:00:00Z" };
     expect(mergeSnapshots([success], [failure])[0]).toEqual({ ...success, status: "stale", message: "Network unavailable" });

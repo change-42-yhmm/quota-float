@@ -8,7 +8,7 @@ use std::{env, fs};
 use uuid::Uuid;
 
 fn usage() -> ! {
-    eprintln!("Usage:\n  license-cli generate-key --key-id supporter-v1\n  license-cli sign --skin-id blur|computer --device-hash QF1-... --private-key-file private.key [--key-id supporter-v1] [--license-id id] [--issued-at RFC3339]");
+    eprintln!("Usage:\n  license-cli generate-key --key-id supporter-v1\n  license-cli sign --skin-id blur|computer|glass|nexus --device-hash QF1-... --private-key-file private.key [--key-id supporter-v1] [--license-id id] [--issued-at RFC3339]");
     std::process::exit(2);
 }
 
@@ -38,8 +38,8 @@ fn main() -> Result<(), String> {
         }
         "sign" => {
             let skin_id = value(&args, "--skin-id").unwrap_or_else(|| usage());
-            if !matches!(skin_id.as_str(), "blur" | "computer") {
-                return Err("only built-in supporter skins can be signed by this CLI; currently: blur, computer".into());
+            if !matches!(skin_id.as_str(), "blur" | "computer" | "glass" | "nexus") {
+                return Err("only built-in supporter skins can be signed by this CLI; currently: blur, computer, glass, nexus".into());
             }
             let device_hash = value(&args, "--device-hash").unwrap_or_else(|| usage());
             if !device_hash.starts_with("QF1-") {

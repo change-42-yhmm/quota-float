@@ -9,8 +9,11 @@ pub const LICENSE_VERSION: u8 = 1;
 pub const BLUR_SKIN_ID: &str = "blur";
 pub const COMPUTER_SKIN_ID: &str = "computer";
 
+pub const GLASS_SKIN_ID: &str = "glass";
+pub const NEXUS_SKIN_ID: &str = "nexus";
+
 pub fn is_supported_skin_id(skin_id: &str) -> bool {
-    matches!(skin_id, BLUR_SKIN_ID | COMPUTER_SKIN_ID)
+    matches!(skin_id, BLUR_SKIN_ID | COMPUTER_SKIN_ID | GLASS_SKIN_ID | NEXUS_SKIN_ID)
 }
 const DEVICE_SALT: &str = "quota-float/supporter-license/v1";
 
@@ -176,6 +179,20 @@ mod tests {
     fn canonical_payload_excludes_signature() {
         let document = LicenseDocument { version: 1, skin_id: BLUR_SKIN_ID.into(), device_hash: "QF1-TEST".into(), issued_at: "2026-01-01T00:00:00Z".into(), license_id: "license-1".into(), key_id: "supporter-v1".into(), signature: "ignored".into() };
         assert!(!canonical_payload(&document).contains("ignored"));
+    }
+
+    #[test]
+    fn all_four_skins_verify_and_cannot_be_swapped() {
+        let key = SigningKey::from_bytes(&[7; 32]);
+        let request_code = request_code_from_raw("test-device");
+        for skin in [BLUR_SKIN_ID, COMPUTER_SKIN_ID, GLASS_SKIN_ID, NEXUS_SKIN_ID] {
+            let mut document = LicenseDocument { version: 1, skin_id: skin.into(), device_hash: request_code.clone(), issued_at: "2026-01-01T00:00:00Z".into(), license_id: "test".into(), key_id: "supporter-v1".into(), signature: String::new() };
+            document.signature = STANDARD.encode(key.sign(canonical_payload(&document).as_bytes()).to_bytes());
+            assert!(verify_document(document.clone(), &request_code, &key.verifying_key()).is_ok());
+            assert!(verify_document(document.clone(), "another-device", &key.verifying_key()).is_err());
+            document.skin_id = if skin == BLUR_SKIN_ID { GLASS_SKIN_ID } else { BLUR_SKIN_ID }.into();
+            assert!(verify_document(document, &request_code, &key.verifying_key()).is_err());
+        }
     }
 
     #[test]

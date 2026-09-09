@@ -1,7 +1,8 @@
+import { SkinEffects } from "./components/SkinEffects";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QuotaCard, QuotaOrb } from "./components/QuotaCard";
 import { fetchSnapshots, getPreferences, getSupporterStatus, listenDesktopEvents, setAlwaysOnTop, setWidgetExpanded, startDragging, syncWidgetAppearance, updatePreferences } from "./lib/bridge";
-import { needsFastRefresh, quotaTier } from "./lib/format";
+import { quotaTier } from "./lib/format";
 import { checkForAppUpdate, openReleasePage } from "./lib/appUpdate";
 import { copy, normalizeLanguage } from "./lib/i18n";
 import { mergeSnapshots } from "./lib/snapshots";
@@ -33,6 +34,7 @@ export default function App() {
   const [showUpdateFallback, setShowUpdateFallback] = useState(false);
   const [systemDark, setSystemDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
   const failures = useRef(0);
+  const refreshing = useRef(false);
   const previousPrimary = useRef(new Map<string, number>());
   const consumptionTimers = useRef(new Map<string, number>());
   const collapseTimer = useRef<number | null>(null);
@@ -56,7 +58,7 @@ export default function App() {
   };
   const theme: WidgetTheme = preferences.appearance === "system" ? (systemDark ? "dark" : "light") : preferences.appearance;
   const skin: WidgetSkin = preferences.unlockedSkins.includes(preferences.selectedSkin as Exclude<WidgetSkin, "default">)
-    && (preferences.selectedSkin === "blur" || preferences.selectedSkin === "computer")
+    && preferences.selectedSkin !== "default"
     ? preferences.selectedSkin
     : "default";
 
@@ -93,6 +95,8 @@ export default function App() {
   }, [language, t]);
 
   const refresh = useCallback(async (force = false) => {
+    if (refreshing.current) return;
+    refreshing.current = true;
     try {
       const values = await fetchSnapshots(force);
       const hasFailure = values.some((item) => item.status !== "ok");
@@ -119,6 +123,8 @@ export default function App() {
       setSnapshots((current) => current.length > 0
         ? current.map((item) => ({ ...item, status: "stale", message: "Refresh failed. Please try again later." }))
         : [{ provider: "codex", displayName: "CODEX", plan: null, shortWindow: null, weeklyWindow: null, resetCredits: null, resetCreditExpiresAt: [], updatedAt: new Date().toISOString(), status: "unavailable", message: "Quota is temporarily unavailable. It will retry automatically." }]);
+    } finally {
+      refreshing.current = false;
     }
   }, []);
 
@@ -159,8 +165,7 @@ export default function App() {
   }, [checkUpdate]);
 
   const refreshMs = useMemo(() => {
-    const backoff = failures.current === 0 ? 5 * 60_000 : Math.min(30 * 60_000, 30_000 * 2 ** (failures.current - 1));
-    if (failures.current === 0 && snapshots.some((item) => item.status === "ok" && needsFastRefresh(item))) return 60_000;
+    const backoff = failures.current === 0 ? 60_000 : Math.min(30 * 60_000, 30_000 * 2 ** (failures.current - 1));
     return backoff;
   }, [snapshots]);
 
@@ -234,11 +239,11 @@ export default function App() {
   }, [operation.expandFailed, preferences.stayExpanded]);
 
   if (compact) {
-    return <QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} theme={theme} skin={skin} style={cardStyle} />;
+    return <div className={`skin-surface--${skin}`}><SkinEffects /><QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} theme={theme} skin={skin} style={cardStyle} /></div>;
   }
 
   return (
-    <QuotaCard
+    <div className={`skin-surface--${skin}`}><SkinEffects /><QuotaCard
       snapshot={current}
       preferences={preferences}
       providerCount={snapshots.length}
@@ -263,8 +268,10 @@ export default function App() {
       isConsuming={consumingProviders.has(current.provider)}
       theme={theme}
       skin={skin}
+      nexusPreview={skin === "nexus"}
+      providerMarkVariant={skin === "glass" || skin === "nexus" ? "glass" : "default"}
       style={cardStyle}
       notice={showUpdateFallback && operationError ? <><span>{operationError}</span><button type="button" onMouseDown={(event) => event.stopPropagation()} onClick={() => void openReleasePage().catch(() => setOperationError(operation.releaseOpenFailed))}>GitHub Releases</button></> : operationError}
-    />
+    /></div>
   );
 }

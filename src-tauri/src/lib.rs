@@ -10,7 +10,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use license::{device_request_code, parse_and_verify, SupporterStatus, BLUR_SKIN_ID, COMPUTER_SKIN_ID};
+use license::{device_request_code, parse_and_verify, SupporterStatus, BLUR_SKIN_ID, COMPUTER_SKIN_ID, GLASS_SKIN_ID, NEXUS_SKIN_ID};
 use models::{ProviderSnapshot, WidgetPreferences};
 #[cfg(debug_assertions)]
 use models::UsageWindow;
@@ -1163,7 +1163,7 @@ fn select_supporter_skin(
     let mut preferences = preferences_lock(&state);
     if skin_id == "default" {
         preferences.selected_skin = "default".into();
-    } else if matches!(skin_id.as_str(), BLUR_SKIN_ID | COMPUTER_SKIN_ID) {
+    } else if matches!(skin_id.as_str(), BLUR_SKIN_ID | COMPUTER_SKIN_ID | GLASS_SKIN_ID | NEXUS_SKIN_ID) {
         let status = supporter_status(&preferences, &request_code);
         if !status.available_skins.iter().any(|available| available == &skin_id) {
             return Err("this skin is not activated on this device".into());
@@ -1282,7 +1282,9 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     // activated on this device opens the supporter window instead.
     let supporter_blur = CheckMenuItem::with_id(app, "supporter-skin-blur", "Blur", true, false, None::<&str>)?;
     let supporter_computer = CheckMenuItem::with_id(app, "supporter-skin-computer", "Computer", true, false, None::<&str>)?;
-    let supporter_skins = Submenu::with_items(app, "Supporter skins / 支持者皮肤", true, &[&supporter_blur, &supporter_computer])?;
+    let supporter_glass = CheckMenuItem::with_id(app, "supporter-skin-glass", "Glass", true, false, None::<&str>)?;
+    let supporter_nexus = CheckMenuItem::with_id(app, "supporter-skin-nexus", "Nexus", true, false, None::<&str>)?;
+    let supporter_skins = Submenu::with_items(app, "Supporter skins / 支持者皮肤", true, &[&supporter_blur, &supporter_computer, &supporter_glass, &supporter_nexus])?;
     let supporter_skins_top = MenuItem::with_id(app, "supporter-skins-top", "Support developer (skins) / 赞赏开发者（皮肤）", true, None::<&str>)?;
     // The default skin has exactly three mutually exclusive appearance
     // choices. Selecting any one also restores the free default skin.
@@ -1333,6 +1335,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .unwrap_or_else(|| "system".into());
     let _ = supporter_blur.set_checked(initial_selected_skin == BLUR_SKIN_ID);
     let _ = supporter_computer.set_checked(initial_selected_skin == COMPUTER_SKIN_ID);
+    let _ = supporter_glass.set_checked(initial_selected_skin == GLASS_SKIN_ID);
+    let _ = supporter_nexus.set_checked(initial_selected_skin == NEXUS_SKIN_ID);
     let _ = theme_system.set_checked(initial_appearance == "system");
     let _ = theme_dark.set_checked(initial_appearance == "dark");
     let _ = theme_light.set_checked(initial_appearance == "light");
@@ -1347,6 +1351,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .unwrap_or_else(|| vec!["default".into()]);
     let _ = supporter_blur.set_enabled(enabled_skins.iter().any(|skin| skin == BLUR_SKIN_ID));
     let _ = supporter_computer.set_enabled(enabled_skins.iter().any(|skin| skin == COMPUTER_SKIN_ID));
+    let _ = supporter_glass.set_enabled(enabled_skins.iter().any(|skin| skin == GLASS_SKIN_ID));
+    let _ = supporter_nexus.set_enabled(enabled_skins.iter().any(|skin| skin == NEXUS_SKIN_ID));
     if initial_language != "en" {
         let _ = show.set_text("显示 / 隐藏");
         let _ = refresh.set_text("立即刷新");
@@ -1417,10 +1423,16 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let supporter_skins_menu = supporter_skins.clone();
     let supporter_blur_menu = supporter_blur.clone();
     let supporter_computer_menu = supporter_computer.clone();
+    let supporter_glass_menu = supporter_glass.clone();
+    let supporter_nexus_menu = supporter_nexus.clone();
     let supporter_blur_state = supporter_blur.clone();
     let supporter_computer_state = supporter_computer.clone();
+    let supporter_glass_state = supporter_glass.clone();
+    let supporter_nexus_state = supporter_nexus.clone();
     let supporter_blur_access = supporter_blur.clone();
     let supporter_computer_access = supporter_computer.clone();
+    let supporter_glass_access = supporter_glass.clone();
+    let supporter_nexus_access = supporter_nexus.clone();
     let supporter_skins_top_menu = supporter_skins_top.clone();
     let quit_menu = quit.clone();
     #[cfg(debug_assertions)]
@@ -1429,12 +1441,16 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         if let Ok(skin_id) = serde_json::from_str::<String>(event.payload()) {
             let _ = supporter_blur_state.set_checked(skin_id == BLUR_SKIN_ID);
             let _ = supporter_computer_state.set_checked(skin_id == COMPUTER_SKIN_ID);
+            let _ = supporter_glass_state.set_checked(skin_id == GLASS_SKIN_ID);
+            let _ = supporter_nexus_state.set_checked(skin_id == NEXUS_SKIN_ID);
         }
     });
     let _tray_skin_access_listener = app.listen("supporter-skins-changed", move |event| {
         if let Ok(status) = serde_json::from_str::<SupporterStatus>(event.payload()) {
             let _ = supporter_blur_access.set_enabled(status.available_skins.iter().any(|skin| skin == BLUR_SKIN_ID));
             let _ = supporter_computer_access.set_enabled(status.available_skins.iter().any(|skin| skin == COMPUTER_SKIN_ID));
+            let _ = supporter_glass_access.set_enabled(status.available_skins.iter().any(|skin| skin == GLASS_SKIN_ID));
+            let _ = supporter_nexus_access.set_enabled(status.available_skins.iter().any(|skin| skin == NEXUS_SKIN_ID));
         }
     });
     builder
@@ -1472,12 +1488,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                     let _ = window.set_focus();
                 }
             }
-            "supporter-skin-blur" | "supporter-skin-computer" => {
-                let requested_skin = if event.id.as_ref() == "supporter-skin-blur" {
-                    BLUR_SKIN_ID
-                } else {
-                    COMPUTER_SKIN_ID
-                };
+            "supporter-skin-blur" | "supporter-skin-computer" | "supporter-skin-glass" | "supporter-skin-nexus" => {
+                let requested_skin = match event.id.as_ref() { "supporter-skin-blur" => BLUR_SKIN_ID, "supporter-skin-glass" => GLASS_SKIN_ID, "supporter-skin-nexus" => NEXUS_SKIN_ID, _ => COMPUTER_SKIN_ID };
                 if let Some(state) = app.try_state::<AppState>() {
                     if let Ok(request_code) = device_request_code() {
                         if let Ok(mut preferences) = state.preferences.lock() {
@@ -1488,6 +1500,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                                     let saved = preferences.clone();
                                     let _ = supporter_blur_menu.set_checked(requested_skin == BLUR_SKIN_ID);
                                     let _ = supporter_computer_menu.set_checked(requested_skin == COMPUTER_SKIN_ID);
+                                    let _ = supporter_glass_menu.set_checked(requested_skin == GLASS_SKIN_ID);
+                                    let _ = supporter_nexus_menu.set_checked(requested_skin == NEXUS_SKIN_ID);
                                     let _ = app.emit_to("widget", "preferences-changed", saved.clone());
                                     let _ = app.emit_to("supporter", "preferences-changed", saved);
                                 }
@@ -1619,6 +1633,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         if persist_preferences(&state.preferences_path, &normalized).is_ok() {
                             let _ = supporter_blur_menu.set_checked(false);
                             let _ = supporter_computer_menu.set_checked(false);
+                            let _ = supporter_glass_menu.set_checked(false);
+                            let _ = supporter_nexus_menu.set_checked(false);
                             let _ = theme_system_state.set_checked(normalized.appearance == "system");
                             let _ = theme_dark_state.set_checked(normalized.appearance == "dark");
                             let _ = theme_light_state.set_checked(normalized.appearance == "light");

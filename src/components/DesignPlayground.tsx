@@ -1,3 +1,4 @@
+import { SkinEffects } from "./SkinEffects";
 import { useMemo, useState, type CSSProperties } from "react";
 import { DESKTOP_PALETTES, type DesktopPaletteName } from "../lib/desktopPalette";
 import { quotaTier } from "../lib/format";
@@ -7,7 +8,7 @@ import { SupporterPanel } from "./SupporterPanel";
 
 type ErrorMode = "unavailable" | "stale" | "signed_out";
 type PreviewProvider = "codex" | "claude";
-type PreviewBackground = "transparent" | "background-1" | "liquid" | "city";
+type PreviewBackground = "transparent" | "background-1" | "liquid" | "city" | "mechanical";
 type QuotaOrbMode = "healthy-orb" | "caution-orb" | "critical-orb";
 type Mode = 74 | 35 | 8 | "cost" | "cost-orb" | "orb" | "weekly" | "weekly-orb" | ErrorMode | QuotaOrbMode | `${ErrorMode}-orb`;
 type GlassProgressState = "healthy" | "caution" | "critical";
@@ -30,7 +31,7 @@ const fields = ["--cool", "--glow", "--warm", "--progress-start", "--progress-en
 const workbenchCopy = {
   "zh-CN": {
     widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", supporter: "支持者皮肤",
-    previewState: "预览状态", previewTheme: "预览主题", previewBackground: "预览背景", transparent: "透明", backgroundOne: "背景 1", backgroundLiquid: "液态玻璃", backgroundCity: "星际霓虹", language: "内容语言", light: "浅色", dark: "深色", presentation: "展示模式", edit: "编辑模式",
+    previewState: "预览状态", previewTheme: "预览主题", previewBackground: "预览背景", transparent: "透明", backgroundOne: "背景 1", backgroundLiquid: "液态玻璃", backgroundCity: "星际霓虹", backgroundMechanical: "机械", language: "内容语言", light: "浅色", dark: "深色", presentation: "展示模式", edit: "编辑模式",
     previewProvider: "预览来源", codex: "Codex", claude: "Claude",
     geometryPreview: "几何预览", description: "配色为只读，始终来自桌面组件。以下几何调整仅用于此预览，并会在刷新后恢复默认。",
     source: "桌面来源：", cornerRadius: "圆角", mainNumber: "主数字", progressHeight: "进度条高度", brightness: "亮度", motion: "动效", reset: "重置几何设置", numberGradient: "主数字 · 渐变", gradientStart: "渐变起点", gradientEnd: "渐变终点", gradientAngle: "渐变角度", progressMaterial: "动态条 · 玻璃材质", progressBlur: "Blur", progressTransparency: "Transparency", progressBaseColor: "Base Color", progressShadowX: "Shadow X", progressShadowY: "Shadow Y", progressShadowBlur: "Shadow Blur", progressShadowColor: "Shadow Color", progressShadowTransparency: "Shadow Transparency", progressHighlight: "Highlight", progressGlowSize: "Glow Size", progressGlowColor: "Glow Color", progressGlowTransparency: "Glow Transparency",
@@ -39,7 +40,7 @@ const workbenchCopy = {
   },
   en: {
     widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", supporter: "Supporter skins",
-    previewState: "Preview state", previewTheme: "Preview theme", previewBackground: "Preview background", transparent: "Transparent", backgroundOne: "Background 1", backgroundLiquid: "Liquid glass", backgroundCity: "Interstellar neon", language: "Content language", light: "Light", dark: "Dark", presentation: "Present", edit: "Edit",
+    previewState: "Preview state", previewTheme: "Preview theme", previewBackground: "Preview background", transparent: "Transparent", backgroundOne: "Background 1", backgroundLiquid: "Liquid glass", backgroundCity: "Interstellar neon", backgroundMechanical: "Mechanical", language: "Content language", light: "Light", dark: "Dark", presentation: "Present", edit: "Edit",
     previewProvider: "Preview source", codex: "Codex", claude: "Claude",
     geometryPreview: "Geometry preview", description: "The palette is read-only and always comes from the desktop widget. Geometry changes below exist only in this preview and reset on refresh.",
     source: "Desktop source:", cornerRadius: "Corner radius", mainNumber: "Main number", progressHeight: "Progress height", brightness: "Brightness", motion: "Motion", reset: "Reset geometry", numberGradient: "Main number · Gradient", gradientStart: "Gradient start", gradientEnd: "Gradient end", gradientAngle: "Gradient angle", progressMaterial: "Dynamic bar · Glass material", progressBlur: "Blur", progressTransparency: "Transparency", progressBaseColor: "Base Color", progressShadowX: "Shadow X", progressShadowY: "Shadow Y", progressShadowBlur: "Shadow Blur", progressShadowColor: "Shadow Color", progressShadowTransparency: "Shadow Transparency", progressHighlight: "Highlight", progressGlowSize: "Glow Size", progressGlowColor: "Glow Color", progressGlowTransparency: "Glow Transparency",
@@ -139,7 +140,7 @@ export function DesignPlayground() {
 
   return <main className={`design-workbench design-workbench--${theme}`}>
     <section className={`design-stage design-stage--${previewTab} design-stage--background-${previewBackground}${presentationMode ? " design-stage--presentation" : ""}`} aria-label={t.widget}>
-<svg className="nexus-glass-filter" width="0" height="0" aria-hidden="true"><defs><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.001" numOctaves={2} seed={92} result="noise" /><feGaussianBlur in="noise" stdDeviation={2} result="blurred" /><feDisplacementMap in="SourceGraphic" in2="blurred" scale={50} xChannelSelector="R" yChannelSelector="G" /></filter><clipPath id="nexus-card-shape" clipPathUnits="userSpaceOnUse"><path d="M0.566073 17.4186L16.9105 0.605952C17.2871 0.2186 17.8043 0 18.3445 0H289.172C289.702 0 290.211 0.210714 290.586 0.585787L297.414 7.41421C297.789 7.78929 298 8.29799 298 8.82843V183.77C298 184.241 297.833 184.698 297.53 185.058L282.47 202.942C282.167 203.302 282 203.758 282 204.23V261.144C282 261.616 282.167 262.072 282.47 262.433L297.53 280.317C297.833 280.677 298 281.133 298 281.605V304C298 305.105 297.105 306 296 306H10.8282C10.2977 306 9.78901 305.789 9.41393 305.414L0.585768 296.586C0.210706 296.211 0 295.702 0 295.172L0.000113964 18.8127C0.000113964 18.292 0.20315 17.7919 0.566073 17.4186Z" /></clipPath></defs></svg>
+<SkinEffects />
       <button className="design-presentation-toggle" type="button" aria-pressed={presentationMode} onClick={() => setPresentationMode((value) => !value)}>{presentationMode ? t.edit : t.presentation}</button>
       <div className="design-selection-controls">
       <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "nexus"} className={previewTab === "nexus" ? "is-active" : ""} onClick={() => setPreviewTab("nexus")}>{t.nexus}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
@@ -152,7 +153,7 @@ export function DesignPlayground() {
           {(["light", "dark"] as const).map((value) => <button key={value} className={theme === value ? "is-active" : ""} onClick={() => setTheme(value)}>{value === "light" ? t.light : t.dark}</button>)}
         </div>
         <div className="design-theme-switch" role="group" aria-label={t.previewBackground}>
-          {(["transparent", "background-1", "liquid", "city"] as const).map((value) => <button key={value} className={previewBackground === value ? "is-active" : ""} onClick={() => setPreviewBackground(value)}>{value === "transparent" ? t.transparent : value === "background-1" ? t.backgroundOne : value === "liquid" ? t.backgroundLiquid : t.backgroundCity}</button>)}
+          {(["transparent", "background-1", "liquid", "city", "mechanical"] as const).map((value) => <button key={value} className={previewBackground === value ? "is-active" : ""} onClick={() => setPreviewBackground(value)}>{value === "transparent" ? t.transparent : value === "background-1" ? t.backgroundOne : value === "liquid" ? t.backgroundLiquid : value === "city" ? t.backgroundCity : t.backgroundMechanical}</button>)}
         </div>
         {previewTab === "blur" || previewTab === "computer" || previewTab === "glass" || previewTab === "nexus" ? <div className="design-theme-switch" role="group" aria-label={t.previewProvider}>
           {(["codex", "claude"] as const).map((value) => <button key={value} className={previewProvider === value ? "is-active" : ""} onClick={() => setPreviewProvider(value)}>{t[value]}</button>)}

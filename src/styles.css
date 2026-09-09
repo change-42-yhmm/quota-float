@@ -394,16 +394,21 @@ button { font: inherit; }
 .quota-orb--skin-blur.quota-card--signed_out .aurora { display: none; }
 .quota-orb--skin-blur .orb-metric { color: #10171a; font-family: ui-rounded, "SF Pro Rounded", "Segoe UI Rounded", "Arial Rounded MT Bold", sans-serif; }
 
-.supporter-panel { box-sizing: border-box; width: 100%; min-height: 100dvh; padding: 28px 32px 18px; overflow: auto; color: #152430; background-color: #fff; background-image: url("../assets/supporter-background.svg"); background-repeat: no-repeat; background-position: center top; background-size: 100% auto; font-size: 14px; }
+.supporter-panel { box-sizing: border-box; width: 100%; min-height: 100dvh; padding: 28px 32px 18px; overflow: auto; color: #152430; background-color: #fff; background-image: linear-gradient(rgba(255,255,255,.2), rgba(255,255,255,.2)), url("../assets/supporter-background.jpg"); background-repeat: no-repeat; background-position: center top, center -50px; background-size: 100% 100%, 100% auto; font-size: 14px; }
 .supporter-brand { display: flex; justify-content: center; align-items: center; min-height: 50px; margin-bottom: 16px; }
 .supporter-logo { display: flex; align-items: center; gap: 14px; color: #fff; font-size: 29px; font-weight: 520; letter-spacing: -.025em; text-shadow: 0 1px 2px rgba(0,105,154,.18); }
 .supporter-logo img { width: 50px; height: 50px; object-fit: contain; }
-.supporter-panel h1 { margin: 0 0 8px; color: #092030; font-size: 19px; font-weight: 650; letter-spacing: -.02em; }.supporter-description { max-width: 430px; margin: 0 0 16px; color: #315261; font-size: 14px; line-height: 1.48; }
-.supporter-workflow { display: grid; gap: 13px; }.supporter-workflow h2 { margin: 0; color: #17394b; font-size: 16px; font-weight: 650; }.supporter-step { display: grid; gap: 7px; color: #193645; font-weight: 600; }.supporter-step > span { font-size: 14px; }.supporter-step textarea { box-sizing: border-box; width: 100%; min-height: 82px; resize: vertical; padding: 11px; border: 1px solid #3bc7f1; border-radius: 6px; outline: none; color: #29414d; background: rgba(255,255,255,.9); font: 13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; }.supporter-step textarea:focus { border-color: #12acd8; box-shadow: 0 0 0 2px rgba(18,172,216,.14); }
-.supporter-skins { display: flex; flex-wrap: wrap; gap: 9px; min-height: 50px; }.supporter-skins button { display: grid; grid-template-columns: 14px minmax(56px, 1fr) 38px; align-items: center; gap: 8px; width: 150px; min-height: 50px; padding: 5px 7px 5px 10px; border: 1px solid rgba(54,164,199,.38); border-radius: 8px; color: #254151; background: rgba(255,255,255,.75); text-align: left; cursor: pointer; transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease; }.supporter-skins button:not(.is-selected) { opacity: .72; }.supporter-skins button:hover:not(:disabled) { border-color: #25bfe9; background: #fff; transform: translateY(-1px); }.supporter-skins button:active:not(:disabled) { transform: translateY(0) scale(.985); }.supporter-skins button.is-selected { border: 2px solid #22b6e8; padding: 4px 6px 4px 9px; color: #12394a; background: #fff; box-shadow: 0 0 0 3px rgba(36,188,234,.2), 0 8px 18px rgba(38,171,210,.18); }.supporter-skins button:disabled { cursor: default; }.skin-choice-dot { width: 10px; height: 10px; border: 1px solid #80b1c2; border-radius: 50%; background: #fff; }.is-selected .skin-choice-dot { border: 3px solid #fff; box-sizing: border-box; background: #1baee2; box-shadow: 0 0 0 2px #2bbbe9; }.skin-choice-copy { display: grid; gap: 2px; }.supporter-skins b { font-size: 14px; font-weight: 500; }.skin-choice-copy small { color: #2784a9; font-size: 11px; font-weight: 700; line-height: 1; }.supporter-skins img { width: 36px; height: 36px; border-radius: 5px; object-fit: cover; }
-.computer-skin-thumbnail { width: 36px; height: 36px; border: 2px solid #a6a79d; border-radius: 3px; background: linear-gradient(#e9e9df 68%, #d9dad1 68%); box-shadow: inset 0 0 0 5px #f1f0e8; }
+.supporter-panel h1 { margin: 0 0 8px; color: #0c456e; font-size: 16px; font-weight: 600; letter-spacing: -.02em; }.supporter-description { width: 100%; margin: 0 0 16px; color: #172f3b; font-size: 14px; line-height: 1.48; }
+.supporter-workflow { display: grid; gap: 13px; }.supporter-workflow h2 { margin: 0; color: #0c456e; font-size: 16px; font-weight: 600; }.supporter-step { display: grid; gap: 7px; color: #193645; font-weight: 600; }.supporter-workflow > div.supporter-step { margin-bottom: 6px; }.supporter-step > span { font-size: 14px; font-weight: 500; letter-spacing: .08em; line-height: 1.6; }.supporter-step textarea { box-sizing: border-box; width: 100%; min-height: 82px; resize: vertical; padding: 11px; border: 1px solid #3bc7f1; border-radius: 6px; outline: none; color: #29414d; background: rgba(255,255,255,.9); font: 13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; }.supporter-step textarea:focus { border-color: #12acd8; box-shadow: 0 0 0 2px rgba(18,172,216,.14); }
+.supporter-skins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.supporter-skins button { display: block; min-width: 0; padding: 0; border: 2px solid transparent; border-radius: 12px; background: transparent; cursor: pointer; }
+.supporter-skins button.is-selected { border-color: #169fd2; box-shadow: 0 0 0 3px rgba(36,188,234,.2); }
+.supporter-skins button:focus-visible { outline: 3px solid #0c779d; outline-offset: 3px; }
+.supporter-skins button:disabled { cursor: default; opacity: .65; }
+.supporter-skins img { display: block; width: 100%; height: auto; border-radius: 10px; }
 .supporter-code { display: flex; align-items: center; min-height: 28px; padding-left: 9px; border: 1px solid #39c3ed; border-radius: 6px; background: rgba(255,255,255,.88); overflow: hidden; }.supporter-code code { flex: 1; overflow: hidden; color: #3d5662; font: 13px ui-monospace, SFMono-Regular, Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }.supporter-code button { align-self: stretch; min-width: 48px; border: 0; border-radius: 5px; color: #fff; background: #27aeda; font-size: 12px; cursor: pointer; }.supporter-code button:hover { background: #149dcc; }
-.supporter-primary { width: 100%; min-height: 37px; margin-top: 8px; border: 0; border-radius: 5px; color: #fff; background: linear-gradient(90deg, #1faeda, #47d6b6); font-size: 15px; font-weight: 650; cursor: pointer; }.supporter-primary:disabled { color: #fff; background: #B4C1C3; cursor: default; }.supporter-status { min-height: 18px; margin: 6px 0 0; font-size: 12px; line-height: 1.5; text-align: center; }.supporter-status--ready { color: rgba(36,109,136,.72); }.supporter-status--info { color: #247fa4; }.supporter-status--success { color: #16826e; }.supporter-status--error { color: #b55437; }.supporter-contact { margin: 12px 0 0; color: rgba(36,109,136,.72); font-size: 13px; text-align: center; }.supporter-contact a { color: #279fc9; }.supporter-legal { margin: 14px 0 0; padding: 10px 12px; border: 1px solid rgba(42,133,163,.2); border-radius: 8px; color: rgba(32,73,91,.76); background: rgba(255,255,255,.58); font-size: 10px; line-height: 1.6; }.supporter-legal strong { display: block; margin-bottom: 4px; color: rgba(24,74,94,.82); font-size: 11px; font-weight: 700; }.supporter-legal ul { display: grid; gap: 3px; margin: 0; padding-left: 15px; }.supporter-legal li { padding-left: 1px; }.supporter-designer { margin: 10px 0 0; color: #82C9F6; font-size: 16px; line-height: 1.25; text-align: center; }.supporter-designer span { color: #82C9F6; font-size: 16px; font-weight: 520; letter-spacing: -.025em; }
+.supporter-platforms { display: grid; gap: 6px; color: #315261; font-size: 12px; line-height: 1.3; }.supporter-platforms > strong { color: #0c456e; font-size: 12px; font-weight: 600; }.supporter-platform-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }.supporter-platform-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; min-height: 62px; padding: 7px 6px 7px 8px; border: 1px solid rgba(42,133,163,.2); border-radius: 7px; background: rgba(255,255,255,.72); }.supporter-platform-card > div { display: grid; min-width: 0; gap: 2px; }.supporter-platform-card b { color: #0c456e; font-size: 12px; font-weight: 650; }.supporter-platform-card span, .supporter-platform-card small { overflow: hidden; color: #527482; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }.supporter-platform-card small { color: #6c8b96; }.supporter-platform-link { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 4px; border-radius: 3px; color: #fff; background: #0c779d; font-size: 0; font-weight: 800; line-height: 1; text-decoration: none; }.supporter-platform-link::before { content: "↗"; font-size: 13px; transform: translateY(-2px); }.supporter-platform-link:hover { background: #085b7a; }
+.supporter-primary { width: 100%; min-height: 37px; margin-top: 8px; border: 0; border-radius: 5px; color: #fff; background: linear-gradient(90deg, #1faeda, #47d6b6); font-size: 15px; font-weight: 650; cursor: pointer; }.supporter-primary:disabled { color: #fff; background: #B4C1C3; cursor: default; }.supporter-status { min-height: 18px; margin: 6px 0 0; font-size: 12px; line-height: 1.5; text-align: center; }.supporter-status--ready { color: rgba(36,109,136,.72); }.supporter-status--info { color: #247fa4; }.supporter-status--success { color: #16826e; }.supporter-status--error { color: #b55437; }.supporter-contact { margin: 12px 0 0; color: rgba(36,109,136,.72); font-size: 13px; text-align: center; }.supporter-contact a { color: #279fc9; }.supporter-legal { margin: 14px 0 0; padding: 10px 12px; border: 1px solid rgba(42,133,163,.2); border-radius: 8px; color: rgba(32,73,91,.76); background: rgba(255,255,255,.58); font-size: 10px; line-height: 1.6; }.supporter-legal strong { display: block; margin-bottom: 4px; color: rgba(24,74,94,.82); font-size: 11px; font-weight: 700; }.supporter-legal ul { display: grid; gap: 3px; margin: 0; padding-left: 15px; }.supporter-legal li { padding-left: 1px; }
 .supporter-like-burst { position: absolute; left: 50%; z-index: 2; width: 48px; height: 48px; margin: -42px 0 0 -24px; pointer-events: none; animation: supporter-like-pop 1.5s cubic-bezier(.16,.84,.32,1) forwards; }.supporter-like-burst img { width: 100%; height: 100%; filter: drop-shadow(0 8px 12px rgba(48,185,201,.26)); }.supporter-legal { background: #f8fcfe; }@keyframes supporter-like-pop { 0% { opacity: 0; transform: translateY(9px) scale(.35) rotate(-10deg); } 22% { opacity: 1; transform: translateY(-4px) scale(1.16) rotate(5deg); } 48% { opacity: 1; transform: translateY(-10px) scale(.98) rotate(0); } 100% { opacity: 0; transform: translateY(-24px) scale(.78); } }@media (prefers-reduced-motion: reduce) { .supporter-like-burst { animation-duration: .01ms; } }
 .orb-metric { display: flex; align-items: flex-end; justify-content: center; line-height: .86; letter-spacing: -.06em; }
 .orb-metric span { font-size: 27px; font-weight: 560; font-variant-numeric: tabular-nums; }
@@ -421,10 +426,12 @@ button { font: inherit; }
 .design-stage--background-background-1 { background: url("../assets/design-background-1.png") center / cover no-repeat; }
 .design-stage--background-liquid { background: url("../assets/design-background-liquid.png") center / cover no-repeat; }
 .design-stage--background-city { background: url("../assets/design-background-interstellar.jpg") center / cover no-repeat; }
+.design-stage--background-mechanical { background: url("../assets/design-background-mechanical.jpg") center / cover no-repeat; }
 .design-card-frame { width: 314px; height: 314px; box-shadow: none; border-radius: var(--card-radius); }
 .design-orb-frame { width: 80px; height: 80px; box-shadow: none; border-radius: 24px; }
 .design-preview-pair { display: flex; align-items: flex-start; justify-content: center; gap: 20px; }
-.design-stage--nexus .design-preview-pair .design-orb-frame .quota-orb { margin-top: 1px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .design-preview-pair .design-orb-frame { position: relative; left: -50px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .design-preview-pair .design-orb-frame .quota-orb { margin-top: 1px; }
 .design-preview-options { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .api-cost-card { min-height: 0; }.api-cost-metric { margin-top: 6px; }.api-cost-metric .api-cost-currency { margin: 0 5px 5px 0; font-family: inherit; font-size: 16px; font-weight: 700; letter-spacing: -.04em; }
 .weekly-metric strong.api-cost-weekly-value { white-space: nowrap; }
@@ -441,184 +448,184 @@ button { font: inherit; }
 .design-stage--computer .quota-card--skin-computer .primary-metric small,
 .design-stage--computer .quota-card--skin-computer .weekly-metric strong,
 .design-stage--computer .quota-card--skin-computer .weekly-metric strong small { font-family: "Computer Bitcount", monospace; font-synthesis: none; }
-.design-stage--glass .quota-card,
-.design-stage--glass .quota-orb {
+:is(.design-stage--glass, .skin-surface--glass) .quota-card,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb {
   border: 0 solid rgba(255,255,255,.2);
   background: rgba(250,250,250,.18);
   box-shadow: 4px 6px 20px 0 rgba(24,31,49,.16), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35);
   backdrop-filter: blur(4px) saturate(70%);
   -webkit-backdrop-filter: blur(4px) saturate(70%);
 }
-.design-stage--glass .quota-orb {
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb {
   background-color: rgba(250,250,250,.05);
   backdrop-filter: blur(4px) saturate(50%);
   -webkit-backdrop-filter: blur(4px) saturate(50%);
 }
-.design-stage--glass .quota-card--caution,
-.design-stage--glass .quota-orb.quota-card--caution {
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--caution,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--caution {
   box-shadow: 4px 6px 20px 0 rgba(65,39,21,.16), inset 0 0 50px rgba(234,143,83,.2), inset 0 0 4px 2px rgba(255,255,255,.35);
 }
-.design-stage--glass .quota-card--critical,
-.design-stage--glass .quota-orb.quota-card--critical {
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--critical,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--critical {
   box-shadow: 4px 6px 20px 0 rgba(51,51,51,.16), inset 0 0 50px rgba(234,93,83,.3), inset 0 0 4px 2px rgba(255,255,255,.35);
 }
-.design-stage--glass .quota-card::before,
-.design-stage--glass .quota-orb::before,
-.design-stage--glass .quota-card::after,
-.design-stage--glass .quota-orb::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none; }
-.design-stage--glass .quota-card::before,
-.design-stage--glass .quota-orb::before { background: linear-gradient(to left top, rgba(255,255,255,.225) 0%, rgba(255,255,255,0) 50%); }
-.design-stage--glass .quota-card::after,
-.design-stage--glass .quota-orb::after { background: linear-gradient(to bottom, rgba(255,255,255,.135) 0%, rgba(255,255,255,0) 100%); }
-.design-stage--glass .quota-card .aurora,
-.design-stage--glass .quota-orb .aurora { display: none; }
-.design-stage--glass .quota-card .card-header,
-.design-stage--glass .quota-card .card-footer,
-.design-stage--glass .quota-card .primary-metric,
-.design-stage--glass .quota-card .progress,
-.design-stage--glass .quota-card .reset-time,
-.design-stage--glass .quota-card .error-state { position: relative; z-index: 2; }
-.design-stage--glass .quota-card .card-actions .pin-button--active { border-color: #fff; background: #c7dfff; }
-.design-stage--glass .quota-orb .orb-metric,
-.design-stage--glass .quota-orb .orb-unavailable { position: relative; z-index: 2; }
-.design-stage--glass .quota-orb .orb-weekly-badge { z-index: 2; }
-.design-stage--glass .quota-orb .orb-metric,
-.design-stage--glass .quota-orb .orb-metric span,
-.design-stage--glass .quota-orb .orb-metric small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; }
-.design-stage--glass .quota-orb .orb-metric { line-height: .82; letter-spacing: -.07em; }
-.design-stage--glass .quota-orb .orb-metric small { display: none; }
-.design-stage--glass .quota-orb .orb-metric span { color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start) 0 40%, var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.design-stage--glass .quota-orb.quota-card--healthy .orb-metric span { background-image: linear-gradient(135deg, #F5F9FF, #DEECFF); }
-.design-stage--glass .quota-orb.quota-card--caution .orb-metric span { background-image: linear-gradient(135deg, #FFFAF2, #FFF6DC); }
-.design-stage--glass .quota-orb.quota-card--critical .orb-metric span { background-image: linear-gradient(135deg, #FFF9FA, #FFE9E9); }
-.design-stage--glass .quota-orb .orb-weekly-badge { color: #fff; background: url("../assets/glass-week-cutout.svg") center / 100% 100% no-repeat; opacity: .75; }
-.design-stage--glass .quota-orb .orb-weekly-badge svg,
-.design-stage--glass .quota-orb .orb-weekly-badge b { display: none; }
-.design-stage--glass .quota-card--unavailable .status-icon,
-.design-stage--glass .quota-card--stale .status-icon,
-.design-stage--glass .quota-card--signed_out .status-icon { width: 58px; height: 56px; margin-bottom: 12px; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; }
-.design-stage--glass .quota-card--unavailable .status-icon { background: url("../assets/glass-unavailable-icon.svg") center / contain no-repeat; }
-.design-stage--glass .quota-card--stale .status-icon { background: url("../assets/glass-stale-icon.svg") center / contain no-repeat; }
-.design-stage--glass .quota-card--signed_out .status-icon { background: url("../assets/glass-signedout-icon.svg") center / contain no-repeat; }
-.design-stage--glass .quota-card--unavailable .status-icon svg,
-.design-stage--glass .quota-card--stale .status-icon svg,
-.design-stage--glass .quota-card--signed_out .status-icon svg { display: none; }
-.design-stage--glass .quota-card:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) .error-state strong { color: #7e828b; }
-.design-stage--glass .quota-card .progress { height: var(--progress-height, 10px); margin-top: 12px; }
-.design-stage--glass .quota-card .progress span { border: 0 solid rgba(255,255,255,.2); background: linear-gradient(90deg, color-mix(in srgb, var(--glass-progress-base-start) var(--glass-progress-transparency), transparent), color-mix(in srgb, var(--glass-progress-base-end) var(--glass-progress-transparency), transparent)); box-shadow: var(--glass-progress-shadow-x) var(--glass-progress-shadow-y) var(--glass-progress-shadow-blur) 0 rgb(var(--glass-progress-shadow-color) / var(--glass-progress-shadow-transparency)), inset 0 0 var(--glass-progress-glow-size) rgb(var(--glass-progress-glow-color) / var(--glass-progress-glow-transparency)), inset 0 0 4px 2px rgb(255 255 255 / var(--glass-progress-highlight)); backdrop-filter: blur(var(--glass-progress-blur)) saturate(64%); -webkit-backdrop-filter: blur(var(--glass-progress-blur)) saturate(64%); }
-.design-stage--glass .quota-orb.quota-card--unavailable .orb-unavailable,
-.design-stage--glass .quota-orb.quota-card--stale .orb-unavailable,
-.design-stage--glass .quota-orb.quota-card--signed_out .orb-unavailable { border: 0; border-radius: 0; background-color: transparent; box-shadow: none; backdrop-filter: none; }
-.design-stage--glass .quota-orb.quota-card--unavailable .orb-unavailable { background: url("../assets/glass-unavailable-icon.svg") center / contain no-repeat; }
-.design-stage--glass .quota-orb.quota-card--stale .orb-unavailable { background: url("../assets/glass-stale-icon.svg") center / contain no-repeat; }
-.design-stage--glass .quota-orb.quota-card--signed_out .orb-unavailable { background: url("../assets/glass-signedout-icon.svg") center / contain no-repeat; }
-.design-stage--glass .quota-orb.quota-card--unavailable .orb-unavailable svg,
-.design-stage--glass .quota-orb.quota-card--stale .orb-unavailable svg,
-.design-stage--glass .quota-orb.quota-card--signed_out .orb-unavailable svg { display: none; }
-.design-stage--glass .quota-card .card-footer { position: absolute; }
-.design-stage--glass .quota-card .primary-metric > span,
-.design-stage--glass .quota-card .primary-metric > small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start) 0 40%, var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.design-stage--glass .quota-card--ok .eyebrow { color: #ffffff; font-weight: 700; }
-.design-stage--glass .quota-card--ok .updated { color: #ffffff; font-weight: 700; }
-.design-stage--glass .quota-card--ok .weekly-metric > p { color: #ffffff; font-weight: 500; }
-.design-stage--glass .quota-card--ok .reset-time { margin-top: 5px; color: #f7f7f7; font-size: 14px; font-weight: 500; }
-.design-stage--glass .quota-card--ok .reset-credit-row > span { color: #f7f7f7; }
-.design-stage--glass .quota-card--ok .reset-credit-button { color: #5e738d; }
-.design-stage--glass .quota-card--ok .weekly-metric strong,
-.design-stage--glass .quota-card--ok .weekly-metric strong small { color: #fff; }
-.design-stage--glass .quota-card--ok .eyebrow,
-.design-stage--glass .quota-card--ok .updated,
-.design-stage--glass .quota-card--ok .weekly-metric,
-.design-stage--glass .quota-card--ok .reset-time { text-shadow: 0 1px 2px rgba(60,70,96,.30); }
-.design-stage--glass .quota-card .weekly-metric strong,
-.design-stage--glass .quota-card .weekly-metric strong small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; }
-.design-stage--glass .provider-mark--glass { width: 40px; height: 40px; padding: 0; }
-.design-stage--glass .quota-orb { box-shadow: 4px 6px 20px 0 rgba(24,31,49,.16), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35); }
-.design-stage--glass .quota-orb.quota-card--caution { box-shadow: 4px 6px 20px 0 rgba(65,39,21,.16), inset 0 0 50px rgba(234,143,83,.2), inset 0 0 4px 2px rgba(255,255,255,.35); }
-.design-stage--glass .quota-orb.quota-card--critical { box-shadow: 4px 6px 20px 0 rgba(51,51,51,.16), inset 0 0 50px rgba(234,93,83,.3), inset 0 0 4px 2px rgba(255,255,255,.35); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card::before,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb::before,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card::after,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card::before,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb::before { background: linear-gradient(to left top, rgba(255,255,255,.225) 0%, rgba(255,255,255,0) 50%); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card::after,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb::after { background: linear-gradient(to bottom, rgba(255,255,255,.135) 0%, rgba(255,255,255,0) 100%); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .aurora,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .aurora { display: none; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .card-header,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .card-footer,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .primary-metric,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .progress,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .reset-time,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .error-state { position: relative; z-index: 2; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .card-actions .pin-button--active { border-color: #fff; background: #c7dfff; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-unavailable { position: relative; z-index: 2; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-weekly-badge { z-index: 2; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric span,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric { line-height: .82; letter-spacing: -.07em; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric small { display: none; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric span { color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start) 0 40%, var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--healthy .orb-metric span { background-image: linear-gradient(135deg, #F5F9FF, #DEECFF); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--caution .orb-metric span { background-image: linear-gradient(135deg, #FFFAF2, #FFF6DC); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--critical .orb-metric span { background-image: linear-gradient(135deg, #FFF9FA, #FFE9E9); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-weekly-badge { color: #fff; background: url("../assets/glass-week-cutout.svg") center / 100% 100% no-repeat; opacity: .75; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-weekly-badge svg,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-weekly-badge b { display: none; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--unavailable .status-icon,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--stale .status-icon,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--signed_out .status-icon { width: 58px; height: 56px; margin-bottom: 12px; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--unavailable .status-icon { background: url("../assets/glass-unavailable-icon.svg") center / contain no-repeat; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--stale .status-icon { background: url("../assets/glass-stale-icon.svg") center / contain no-repeat; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--signed_out .status-icon { background: url("../assets/glass-signedout-icon.svg") center / contain no-repeat; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--unavailable .status-icon svg,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--stale .status-icon svg,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--signed_out .status-icon svg { display: none; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) .error-state strong { color: #7e828b; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .progress { height: var(--progress-height, 10px); margin-top: 12px; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .progress span { border: 0 solid rgba(255,255,255,.2); background: linear-gradient(90deg, color-mix(in srgb, var(--glass-progress-base-start) var(--glass-progress-transparency), transparent), color-mix(in srgb, var(--glass-progress-base-end) var(--glass-progress-transparency), transparent)); box-shadow: var(--glass-progress-shadow-x) var(--glass-progress-shadow-y) var(--glass-progress-shadow-blur) 0 rgb(var(--glass-progress-shadow-color) / var(--glass-progress-shadow-transparency)), inset 0 0 var(--glass-progress-glow-size) rgb(var(--glass-progress-glow-color) / var(--glass-progress-glow-transparency)), inset 0 0 4px 2px rgb(255 255 255 / var(--glass-progress-highlight)); backdrop-filter: blur(var(--glass-progress-blur)) saturate(64%); -webkit-backdrop-filter: blur(var(--glass-progress-blur)) saturate(64%); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--unavailable .orb-unavailable,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--stale .orb-unavailable,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--signed_out .orb-unavailable { border: 0; border-radius: 0; background-color: transparent; box-shadow: none; backdrop-filter: none; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--unavailable .orb-unavailable { background: url("../assets/glass-unavailable-icon.svg") center / contain no-repeat; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--stale .orb-unavailable { background: url("../assets/glass-stale-icon.svg") center / contain no-repeat; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--signed_out .orb-unavailable { background: url("../assets/glass-signedout-icon.svg") center / contain no-repeat; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--unavailable .orb-unavailable svg,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--stale .orb-unavailable svg,
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--signed_out .orb-unavailable svg { display: none; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .card-footer { position: absolute; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .primary-metric > span,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .primary-metric > small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start) 0 40%, var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .eyebrow { color: #ffffff; font-weight: 700; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .updated { color: #ffffff; font-weight: 700; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .weekly-metric > p { color: #ffffff; font-weight: 500; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .reset-time { margin-top: 5px; color: #f7f7f7; font-size: 14px; font-weight: 500; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .reset-credit-row > span { color: #f7f7f7; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .reset-credit-button { color: #5e738d; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .weekly-metric strong,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .weekly-metric strong small { color: #fff; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .eyebrow,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .updated,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .weekly-metric,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card--ok .reset-time { text-shadow: 0 1px 2px rgba(60,70,96,.30); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .weekly-metric strong,
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .weekly-metric strong small { font-family: "Glass Saira", "Quota Sans", sans-serif; font-weight: 500; }
+:is(.design-stage--glass, .skin-surface--glass) .provider-mark--glass { width: 40px; height: 40px; padding: 0; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb { box-shadow: 4px 6px 20px 0 rgba(24,31,49,.16), inset 0 0 50px rgba(234,143,83,0), inset 0 0 4px 2px rgba(255,255,255,.35); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--caution { box-shadow: 4px 6px 20px 0 rgba(65,39,21,.16), inset 0 0 50px rgba(234,143,83,.2), inset 0 0 4px 2px rgba(255,255,255,.35); }
+:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--critical { box-shadow: 4px 6px 20px 0 rgba(51,51,51,.16), inset 0 0 50px rgba(234,93,83,.3), inset 0 0 4px 2px rgba(255,255,255,.35); }
 .nexus-glass-filter { position: absolute; }
-.design-stage--nexus .quota-card { border: 0; border-radius: 0; background: transparent; box-shadow: none; clip-path: url(#nexus-card-shape); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-.design-stage--nexus .quota-card::before,
-.design-stage--nexus .quota-card::after { content: ""; position: absolute; inset: 0 0 0 4px; border-radius: 0; clip-path: path("M0.566073 17.4186L16.9105 0.605952C17.2871 0.2186 17.8043 0 18.3445 0H289.172C289.702 0 290.211 0.210714 290.586 0.585787L297.414 7.41421C297.789 7.78929 298 8.29799 298 8.82843V183.77C298 184.241 297.833 184.698 297.53 185.058L282.47 202.942C282.167 203.302 282 203.758 282 204.23V261.144C282 261.616 282.167 262.072 282.47 262.433L297.53 280.317C297.833 280.677 298 281.133 298 281.605V304C298 305.105 297.105 306 296 306H10.8282C10.2977 306 9.78901 305.789 9.41393 305.414L0.585768 296.586C0.210706 296.211 0 295.702 0 295.172L0.000113964 18.8127C0.000113964 18.292 0.20315 17.7919 0.566073 17.4186Z"); pointer-events: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card { border: 0; border-radius: 0; background: transparent; box-shadow: none; clip-path: url(#nexus-card-shape); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card::before,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card::after { content: ""; position: absolute; inset: 0 0 0 4px; border-radius: 0; clip-path: path("M0.566073 17.4186L16.9105 0.605952C17.2871 0.2186 17.8043 0 18.3445 0H289.172C289.702 0 290.211 0.210714 290.586 0.585787L297.414 7.41421C297.789 7.78929 298 8.29799 298 8.82843V183.77C298 184.241 297.833 184.698 297.53 185.058L282.47 202.942C282.167 203.302 282 203.758 282 204.23V261.144C282 261.616 282.167 262.072 282.47 262.433L297.53 280.317C297.833 280.677 298 281.133 298 281.605V304C298 305.105 297.105 306 296 306H10.8282C10.2977 306 9.78901 305.789 9.41393 305.414L0.585768 296.586C0.210706 296.211 0 295.702 0 295.172L0.000113964 18.8127C0.000113964 18.292 0.20315 17.7919 0.566073 17.4186Z"); pointer-events: none; }
 /* Apply frost to the card itself; SVG backdrop URL filters suppress blur in this renderer. */
-.design-stage--nexus .quota-card::before { inset: 0; z-index: 1; background: linear-gradient(to bottom right, rgba(47,44,59,.8), rgba(17,18,40,.8)); box-shadow: 0 0 0 -50px rgba(0,0,0,.3), inset 0 0 0 -50px rgba(0,0,0,.7); }
-.design-stage--nexus .quota-card::after { display: none; }
-.design-stage--nexus .quota-card.quota-card--caution::before { background: linear-gradient(to bottom right, rgb(59 53 44 / .8), rgb(40 29 17 / .8)); }
-.design-stage--nexus .quota-card.quota-card--critical::before { background: linear-gradient(to bottom right, rgb(59 49 44 / .8), rgb(40 17 18 / .8)); }
-.design-stage--nexus .quota-card .card-header,
-.design-stage--nexus .quota-card .primary-metric,
-.design-stage--nexus .quota-card .reset-time,
-.design-stage--nexus .quota-card .error-state,
-.design-stage--nexus .quota-card .api-cost-card { position: relative; z-index: 2; }
-.design-stage--nexus .quota-card .card-footer { z-index: 2; }
-.design-stage--nexus .quota-card .aurora,
-.design-stage--nexus .quota-card .progress { display: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card::before { inset: 0; z-index: 1; background: linear-gradient(to bottom right, rgba(47,44,59,.8), rgba(17,18,40,.8)); box-shadow: 0 0 0 -50px rgba(0,0,0,.3), inset 0 0 0 -50px rgba(0,0,0,.7); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card::after { display: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card.quota-card--caution::before { background: linear-gradient(to bottom right, rgb(59 53 44 / .8), rgb(40 29 17 / .8)); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card.quota-card--critical::before { background: linear-gradient(to bottom right, rgb(59 49 44 / .8), rgb(40 17 18 / .8)); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .card-header,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .primary-metric,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .reset-time,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .error-state,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .api-cost-card { position: relative; z-index: 2; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .card-footer { z-index: 2; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .aurora,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .progress { display: none; }
 
 @font-face { font-family: "Nexus Orbitron"; src: url("../assets/fonts/Orbitron-Variable.ttf") format("truetype"); font-weight: 400 900; font-display: swap; }
 @font-face { font-family: "Nexus Title"; src: url("../assets/fonts/PlayfairDisplaySC-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
-.design-stage--nexus .quota-orb.quota-card--ok { height: auto; aspect-ratio: 110 / 100.287; margin: calc((80px - var(--orb-visible-size) * 100.287 / 110) / 2) var(--edge-safe-inset); border: 0; border-radius: 0; background: url("../assets/Nexus-ball-healthy.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; opacity: 1; }
-.design-stage--nexus .quota-orb.quota-card--ok.quota-card--caution { background-image: url("../assets/Nexus-ball-caution.svg"); }
-.design-stage--nexus .quota-orb.quota-card--ok.quota-card--critical { background-image: url("../assets/Nexus-ball-critical.svg"); }
-.design-stage--nexus .quota-orb.quota-card--ok.quota-orb--weekly { background-image: url("../assets/Nexus-ball-healthy.svg"); }
-.design-stage--nexus .quota-orb.quota-card--ok .aurora,
-.design-stage--nexus .quota-orb.quota-card--ok .orb-metric small { display: none; }
-.design-stage--nexus .quota-orb.quota-card--ok .orb-metric { color: #F0EEFF; font-family: "Nexus Orbitron", sans-serif; font-weight: 600; text-shadow: 0 2px 2px #0005; }
-.design-stage--nexus .quota-orb.quota-card--ok .orb-metric span { font-size: 28px; font-weight: 600; line-height: 1; letter-spacing: 2px; }
-.design-stage--nexus .quota-orb.quota-card--ok.quota-card--caution .orb-metric { color: #FFF6EE; }
-.design-stage--nexus .quota-orb.quota-card--ok.quota-card--critical .orb-metric { color: #FFF1EE; }
-.design-stage--nexus .quota-orb.quota-card--ok .orb-metric .orb-cost-value { font-size: 20px; }
-.design-stage--nexus .quota-orb .orb-weekly-badge { top: 3%; left: auto; right: 2.7%; width: 17.273%; height: auto; aspect-ratio: 19 / 11; transform: none; background: url("../assets/nexus-week.svg") center / contain no-repeat; }
-.design-stage--nexus .quota-orb .orb-weekly-badge svg,
-.design-stage--nexus .quota-orb .orb-weekly-badge b { display: none; }
-.design-stage--nexus .quota-orb:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) { height: auto; aspect-ratio: 110 / 100; margin: calc((80px - var(--orb-visible-size) * 100 / 110) / 2) var(--edge-safe-inset); border: 0; border-radius: 0; background: url("../assets/nexus-ball-notion.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; opacity: 1; }
-.design-stage--nexus .quota-orb:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) .aurora,
-.design-stage--nexus .quota-orb .orb-unavailable svg { display: none; }
-.design-stage--nexus .quota-orb .orb-unavailable { width: 64%; height: 64%; margin-left: 5%; border: 0; border-radius: 0; background: url("../assets/Nexus-icon-unavailable.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; transform: translateY(-2px); }
-.design-stage--nexus .quota-orb.quota-card--stale .orb-unavailable { width: 39%; height: 45%; background-image: url("../assets/Nexus-icon-dataexpired.svg"); }
-.design-stage--nexus .quota-orb.quota-card--signed_out .orb-unavailable { width: 66%; height: 73%; background-image: url("../assets/Nexus-icon-login.svg"); transform: translateY(-2px) rotate(45deg); }
-.design-stage--nexus .quota-orb.quota-orb--idle { opacity: .82; }
-.design-stage--nexus .quota-card { position: relative; top: -3px; left: -4px; overflow: visible; clip-path: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 26px 22px; color: #eeebff; animation: none; }
-.design-stage--nexus .quota-card::before { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok { height: auto; aspect-ratio: 110 / 100.287; margin: calc((80px - var(--orb-visible-size) * 100.287 / 110) / 2) var(--edge-safe-inset); border: 0; border-radius: 0; background: url("../assets/Nexus-ball-healthy.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; opacity: 1; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok.quota-card--caution { background-image: url("../assets/Nexus-ball-caution.svg"); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok.quota-card--critical { background-image: url("../assets/Nexus-ball-critical.svg"); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok.quota-orb--weekly { background-image: url("../assets/Nexus-ball-healthy.svg"); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok .aurora,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok .orb-metric small { display: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok .orb-metric { color: #F0EEFF; font-family: "Nexus Orbitron", sans-serif; font-weight: 600; text-shadow: 0 2px 2px #0005; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok .orb-metric span { font-size: 28px; font-weight: 600; line-height: 1; letter-spacing: 2px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok.quota-card--caution .orb-metric { color: #FFF6EE; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok.quota-card--critical .orb-metric { color: #FFF1EE; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--ok .orb-metric .orb-cost-value { font-size: 20px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb .orb-weekly-badge { top: 3%; left: auto; right: 2.7%; width: 17.273%; height: auto; aspect-ratio: 19 / 11; transform: none; background: url("../assets/nexus-week.svg") center / contain no-repeat; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb .orb-weekly-badge svg,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb .orb-weekly-badge b { display: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) { height: auto; aspect-ratio: 110 / 100; margin: calc((80px - var(--orb-visible-size) * 100 / 110) / 2) var(--edge-safe-inset); border: 0; border-radius: 0; background: url("../assets/nexus-ball-notion.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; opacity: 1; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb:is(.quota-card--unavailable, .quota-card--stale, .quota-card--signed_out) .aurora,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb .orb-unavailable svg { display: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb .orb-unavailable { width: 64%; height: 64%; margin-left: 5%; border: 0; border-radius: 0; background: url("../assets/Nexus-icon-unavailable.svg") center / contain no-repeat; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; transform: translateY(-2px); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--stale .orb-unavailable { width: 39%; height: 45%; background-image: url("../assets/Nexus-icon-dataexpired.svg"); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-card--signed_out .orb-unavailable { width: 66%; height: 73%; background-image: url("../assets/Nexus-icon-login.svg"); transform: translateY(-2px) rotate(45deg); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-orb.quota-orb--idle { opacity: .82; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card { position: relative; top: -3px; left: -4px; overflow: visible; clip-path: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 26px 22px; color: #eeebff; animation: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card::before { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .nexus-quota-float { position: absolute; z-index: 2; left: -8px; right: 9px; top: 58px; height: 124px; background: url("../assets/nexus-health.png") center / 100% 100% no-repeat; pointer-events: none; }
 .quota-card--caution .nexus-quota-float { background-image: url("../assets/nexus-caution.png"); }
 .quota-card--critical .nexus-quota-float { background-image: url("../assets/nexus-critical.png"); }
-.design-stage--nexus .quota-card .card-header { position: static; min-height: 0; }
-.design-stage--nexus .eyebrow { position: relative; z-index: 2; max-width: 174px; color: rgb(255 255 255 / .7); font-family: "Nexus Title", "Times New Roman", serif; font-size: 18px; line-height: 1.15; font-weight: 400; letter-spacing: 0; text-transform: uppercase; }
-.design-stage--nexus .card-header::before { content: ""; position: absolute; z-index: 2; left: 20px; top: 13px; width: 157px; height: 5px; border-top: 1px solid #ffffff30; border-left: 1px solid #efedf3; transform: skewX(-45deg); }
-.design-stage--nexus .card-actions { position: absolute; z-index: 2; right: 22px; top: 20px; gap: 5px; }
-.design-stage--nexus .card-actions button,
-.design-stage--nexus .card-actions .usage-indicator { width: 25px; height: 25px; border: 0; border-radius: 0; background: url("../assets/nexus-action-frame.svg") center / 100% 100% no-repeat; box-shadow: none; backdrop-filter: none; }
-.design-stage--nexus .card-actions button:hover { background-color: #ffffff12; }
-.design-stage--nexus .usage-indicator i { width: 10.485px; height: 2px; border-radius: 1px; rotate: -45deg; }
-.design-stage--nexus .card-actions button[aria-pressed="true"] { color: #111228; background: url("../assets/Nexus-button-choice.svg") center / 100% 100% no-repeat; filter: none; }
-.design-stage--nexus .updated { position: absolute; z-index: 3; top: 72px; left: 22px; margin: 0; color: #F0EEFF; font-size: 12px; letter-spacing: 0; }
-.design-stage--nexus .quota-card .primary-metric { position: absolute; top: 101px; left: 22px; margin: 0; padding: 0; color: #F0EEFF; font-family: "Nexus Orbitron", sans-serif; line-height: 1; letter-spacing: -.035em; text-shadow: 0 3px 4px #0005; }
-.design-stage--nexus .primary-metric span { position: relative; top: -4px; font-size: 48px; font-weight: 600; letter-spacing: 4px; }
-.design-stage--nexus .primary-metric small { position: relative; top: -3px; font-family: inherit; font-size: 22px; font-weight: 600; margin-bottom: 3px; }
-.design-stage--nexus .quota-card .reset-time { position: absolute; top: 154px; left: 22px; right: 22px; margin: 0; color: #ffffff80; font-size: 10px; line-height: 1.35; letter-spacing: 0; }
-.design-stage--nexus .quota-card .card-footer { left: 20px; right: 31px; bottom: 22px; color: #c6c3ce; }
-.design-stage--nexus .weekly-metric { width: 100%; }
-.design-stage--nexus .weekly-metric p { position: relative; top: -4px; color: rgb(255 255 255 / .5); font-size: 11px; letter-spacing: 0; }
-.design-stage--nexus .weekly-metric strong { position: relative; width: fit-content; min-width: 102.354px; margin: 7px 0; padding-bottom: 5px; border-bottom: 0; color: transparent; -webkit-text-stroke: 1px #949494; font-family: "Nexus Orbitron", sans-serif; font-size: 30px; font-weight: 700; letter-spacing: 2px; }
-.design-stage--nexus .weekly-metric strong::after { content: ""; position: absolute; left: 0; bottom: 0; width: min(100%, 172px); height: 6.854px; background: url("../assets/划线.svg") center / 100% 100% no-repeat; pointer-events: none; }
-.design-stage--nexus .weekly-metric strong.api-cost-weekly-value { max-width: 172px; padding-right: 8px; }
-.design-stage--nexus .weekly-metric strong small { color: #949494; -webkit-text-stroke: 0; font-family: inherit; font-weight: inherit; letter-spacing: 0; }
-.design-stage--nexus .weekly-metric span { color: #c6c3ce; font-family: "Nexus Orbitron", "Segoe UI", sans-serif; font-size: 10px; }
-.design-stage--nexus .reset-credit-button { color: #d6cfff; }
-.design-stage--nexus .reset-credit-row,
-.design-stage--nexus .reset-credit-row span,
-.design-stage--nexus .reset-credit-row button { -webkit-text-stroke: 0; text-shadow: none; }
-.design-stage--nexus .card-footer .provider-mark { position: absolute; right: 0; bottom: 146px; width: 36px; height: 36px; padding: 0; opacity: 1; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .card-header { position: static; min-height: 0; }
+:is(.design-stage--nexus, .skin-surface--nexus) .eyebrow { position: relative; z-index: 2; max-width: 174px; color: rgb(255 255 255 / .7); font-family: "Nexus Title", "Times New Roman", serif; font-size: 18px; line-height: 1.15; font-weight: 400; letter-spacing: 0; text-transform: uppercase; }
+:is(.design-stage--nexus, .skin-surface--nexus) .card-header::before { content: ""; position: absolute; z-index: 2; left: 20px; top: 13px; width: 157px; height: 5px; border-top: 1px solid #ffffff30; border-left: 1px solid #efedf3; transform: skewX(-45deg); }
+:is(.design-stage--nexus, .skin-surface--nexus) .card-actions { position: absolute; z-index: 2; right: 22px; top: 20px; gap: 5px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .card-actions button,
+:is(.design-stage--nexus, .skin-surface--nexus) .card-actions .usage-indicator { width: 25px; height: 25px; border: 0; border-radius: 0; background: url("../assets/nexus-action-frame.svg") center / 100% 100% no-repeat; box-shadow: none; backdrop-filter: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .card-actions button:hover { background-color: #ffffff12; }
+:is(.design-stage--nexus, .skin-surface--nexus) .usage-indicator i { width: 10.485px; height: 2px; border-radius: 1px; rotate: -45deg; }
+:is(.design-stage--nexus, .skin-surface--nexus) .card-actions button[aria-pressed="true"] { color: #111228; background: url("../assets/Nexus-button-choice.svg") center / 100% 100% no-repeat; filter: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .updated { position: absolute; z-index: 3; top: 72px; left: 22px; margin: 0; color: #F0EEFF; font-size: 12px; letter-spacing: 0; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .primary-metric { position: absolute; top: 101px; left: 22px; margin: 0; padding: 0; color: #F0EEFF; font-family: "Nexus Orbitron", sans-serif; line-height: 1; letter-spacing: -.035em; text-shadow: 0 3px 4px #0005; }
+:is(.design-stage--nexus, .skin-surface--nexus) .primary-metric span { position: relative; top: -4px; font-size: 48px; font-weight: 600; letter-spacing: 4px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .primary-metric small { position: relative; top: -3px; font-family: inherit; font-size: 22px; font-weight: 600; margin-bottom: 3px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .reset-time { position: absolute; top: 154px; left: 22px; right: 22px; margin: 0; color: #ffffff80; font-size: 10px; line-height: 1.35; letter-spacing: 0; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .card-footer { left: 20px; right: 31px; bottom: 22px; color: #c6c3ce; }
+:is(.design-stage--nexus, .skin-surface--nexus) .weekly-metric { width: 100%; }
+:is(.design-stage--nexus, .skin-surface--nexus) .weekly-metric p { position: relative; top: -4px; color: rgb(255 255 255 / .5); font-size: 11px; letter-spacing: 0; }
+:is(.design-stage--nexus, .skin-surface--nexus) .weekly-metric strong { position: relative; width: fit-content; min-width: 102.354px; margin: 7px 0; padding-bottom: 5px; border-bottom: 0; color: transparent; -webkit-text-stroke: 1px #949494; font-family: "Nexus Orbitron", sans-serif; font-size: 30px; font-weight: 700; letter-spacing: 2px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .weekly-metric strong::after { content: ""; position: absolute; left: 0; bottom: 0; width: min(100%, 172px); height: 6.854px; background: url("../assets/划线.svg") center / 100% 100% no-repeat; pointer-events: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .weekly-metric strong.api-cost-weekly-value { max-width: 172px; padding-right: 8px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .weekly-metric strong small { color: #949494; -webkit-text-stroke: 0; font-family: inherit; font-weight: inherit; letter-spacing: 0; }
+:is(.design-stage--nexus, .skin-surface--nexus) .weekly-metric span { color: #c6c3ce; font-family: "Nexus Orbitron", "Segoe UI", sans-serif; font-size: 10px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .reset-credit-button { color: #d6cfff; }
+:is(.design-stage--nexus, .skin-surface--nexus) .reset-credit-row,
+:is(.design-stage--nexus, .skin-surface--nexus) .reset-credit-row span,
+:is(.design-stage--nexus, .skin-surface--nexus) .reset-credit-row button { -webkit-text-stroke: 0; text-shadow: none; }
+:is(.design-stage--nexus, .skin-surface--nexus) .card-footer .provider-mark { position: absolute; right: 0; bottom: 146px; width: 36px; height: 36px; padding: 0; opacity: 1; }
 .provider-mark--nexus img { position: absolute; inset: 0; width: 100%; height: 100%; }
 .provider-mark--nexus .nexus-provider-fill { transition: clip-path .3s ease; }
-.design-stage--nexus .card-footer .provider-mark--nexus-claude { height: 24.686px; bottom: 151.657px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .card-footer .provider-mark--nexus-claude { height: 24.686px; bottom: 151.657px; }
 .provider-mark--nexus-claude img { object-fit: contain; }
 @media (prefers-reduced-motion: reduce) { .provider-mark--nexus .nexus-provider-fill { transition: none; } }
-.design-stage--nexus .quota-card .api-cost-card { position: static; }
-.design-stage--nexus .api-cost-metric span { font-size: 38px; }
-.design-stage--nexus .api-cost-metric span { top: -1px; }
-.design-stage--nexus .api-cost-metric .api-cost-currency { font-size: 20px; }
-.design-stage--nexus .quota-card .error-state { position: absolute; z-index: 2; top: 96px; left: 16px; right: 24px; display: grid; justify-items: center; margin: 0; color: #eeebff; text-align: center; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .api-cost-card { position: static; }
+:is(.design-stage--nexus, .skin-surface--nexus) .api-cost-metric span { font-size: 38px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .api-cost-metric span { top: -1px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .api-cost-metric .api-cost-currency { font-size: 20px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card .error-state { position: absolute; z-index: 2; top: 96px; left: 16px; right: 24px; display: grid; justify-items: center; margin: 0; color: #eeebff; text-align: center; }
 .nexus-error-decoration { position: relative; width: 100%; height: 92px; display: grid; place-items: center; }
 .nexus-error-lettering { position: relative; z-index: 0; color: rgb(255 255 255 / .2); font-family: "Nexus Title", "Times New Roman", serif; font-size: 32px; line-height: 1; white-space: nowrap; }
 .nexus-error-artwork { position: absolute; z-index: 1; width: 106.163px; height: 89.162px; object-fit: contain; }
@@ -626,25 +633,25 @@ button { font: inherit; }
 .nexus-error-decoration--stale .nexus-error-artwork { left: 82px; width: 45.486px; height: 47.967px; }
 .nexus-error-decoration--signed_out .nexus-error-lettering { margin-left: 84px; }
 .nexus-error-decoration--signed_out .nexus-error-artwork { left: 12px; width: 124.596px; height: 124.596px; }
-.design-stage--nexus .error-state strong { margin: 22px 0 0; color: rgb(255 255 255 / .7); font-family: "Quota Sans", "Segoe UI", system-ui, sans-serif; font-size: 17px; font-weight: 400; letter-spacing: 0; line-height: 1.35; }
-.design-stage--nexus .error-state p { color: #d1c9e4; }
-.design-stage--nexus .nexus-error-decoration--unavailable .nexus-error-lettering { margin-right: -28px; }
-.design-stage--nexus .nexus-error-decoration--unavailable .nexus-error-artwork { margin-right: -30px; }
-.design-stage--nexus .quota-card--unavailable .error-state strong,
-.design-stage--nexus .quota-card--signed_out .error-state strong { margin-right: -24px; }
-.design-stage--nexus .nexus-error-decoration--stale .nexus-error-artwork { margin-bottom: -4px; margin-left: -2px; }
-.design-stage--nexus .nexus-error-decoration--stale .nexus-error-lettering > span:nth-child(2) { margin-left: 8px; }
-.design-stage--nexus .reset-credit-tip { z-index: 4; border: 0 solid #fff; border-radius: 2px; color: #eeeafa; background: #292637; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
-.design-stage--nexus .quota-card--caution .primary-metric,
-.design-stage--nexus .quota-card--caution .updated { color: #FFF6EE; }
-.design-stage--nexus .quota-card--critical .primary-metric,
-.design-stage--nexus .quota-card--critical .updated { color: #FFF1EE; }
+:is(.design-stage--nexus, .skin-surface--nexus) .error-state strong { margin: 22px 0 0; color: rgb(255 255 255 / .7); font-family: "Quota Sans", "Segoe UI", system-ui, sans-serif; font-size: 17px; font-weight: 400; letter-spacing: 0; line-height: 1.35; }
+:is(.design-stage--nexus, .skin-surface--nexus) .error-state p { color: #d1c9e4; }
+:is(.design-stage--nexus, .skin-surface--nexus) .nexus-error-decoration--unavailable .nexus-error-lettering { margin-right: -28px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .nexus-error-decoration--unavailable .nexus-error-artwork { margin-right: -30px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card--unavailable .error-state strong,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card--signed_out .error-state strong { margin-right: -24px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .nexus-error-decoration--stale .nexus-error-artwork { margin-bottom: -4px; margin-left: -2px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .nexus-error-decoration--stale .nexus-error-lettering > span:nth-child(2) { margin-left: 8px; }
+:is(.design-stage--nexus, .skin-surface--nexus) .reset-credit-tip { z-index: 4; border: 0 solid #fff; border-radius: 2px; color: #eeeafa; background: #292637; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card--caution .primary-metric,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card--caution .updated { color: #FFF6EE; }
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card--critical .primary-metric,
+:is(.design-stage--nexus, .skin-surface--nexus) .quota-card--critical .updated { color: #FFF1EE; }
 .design-preview-switch { max-width: 520px; display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; padding: 5px; border: 1px solid rgba(99,108,128,.16); border-radius: 14px; background: rgba(255,255,255,.84); box-shadow: 0 8px 24px rgba(36,42,60,.08); }
 .design-presentation-toggle { position: absolute; top: 18px; right: 18px; z-index: 3; min-height: 32px; padding: 0 12px; border: 1px solid rgb(255 255 255 / .42); border-radius: 8px; color: #fff; background: rgb(17 18 40 / .56); box-shadow: 0 4px 14px rgb(0 0 0 / .22); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; backdrop-filter: blur(8px); }
 .design-stage--presentation { padding-bottom: 60px; }
 .design-stage--presentation .design-selection-controls,
 .design-stage--presentation .design-preview-options { display: none; }
-.design-page-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid rgba(99,108,128,.16); border-radius: 12px; background: rgba(255,255,255,.84); box-shadow: 0 8px 24px rgba(36,42,60,.08); }.design-page-tabs button { min-height: 30px; padding: 0 12px; border: 0; border-radius: 8px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }.design-page-tabs button:hover { color: #202631; background: rgba(105,137,190,.1); }.design-page-tabs button.is-active { color: #fff; background: #315f9f; }.design-supporter-frame { width: 520px; height: 680px; overflow: hidden; box-shadow: 0 18px 48px rgba(51,83,100,.2); }.design-supporter-frame .supporter-panel { width: 520px; min-height: 680px; height: 680px; }
+.design-page-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid rgba(99,108,128,.16); border-radius: 12px; background: rgba(255,255,255,.84); box-shadow: 0 8px 24px rgba(36,42,60,.08); }.design-page-tabs button { min-height: 30px; padding: 0 12px; border: 0; border-radius: 8px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }.design-page-tabs button:hover { color: #202631; background: rgba(105,137,190,.1); }.design-page-tabs button.is-active { color: #fff; background: #315f9f; }.design-supporter-frame { width: 560px; height: 680px; overflow: hidden; box-shadow: 0 18px 48px rgba(51,83,100,.2); }.design-supporter-frame .supporter-panel { width: 560px; min-height: 680px; height: 680px; }
 .design-preview-switch button { min-height: 34px; padding: 0 13px; border: 0; border-radius: 10px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 650; }
 .design-preview-switch button span { margin-left: 3px; font-size: 10px; font-weight: 500; }
 .design-preview-switch button:hover { color: #202631; background: rgba(105,137,190,.1); }
@@ -752,3 +759,16 @@ button { font: inherit; }
 .design-workbench--dark .design-source-note { border-color: #729cf5; color: #b5c5df; background: #1d2a3d; }
 @media (max-width: 1320px) { .design-workbench { grid-template-columns: minmax(480px, 1fr) 390px; } .palette-matrix { grid-column: 1 / -1; min-height: auto; border-top: 1px solid #dbe1e9; border-left: 0; } .palette-matrix__themes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 820px) { .design-workbench { grid-template-columns: 1fr; } .design-stage { min-height: 520px; padding: 40px 20px; } .design-controls { position: static; height: auto; border-left: 0; border-top: 1px solid #dfe1e6; } .palette-matrix { padding: 34px 20px 44px; } .palette-matrix__themes { grid-template-columns: 1fr; } }
+
+.supporter-platform-card b, .supporter-platform-card span, .supporter-platform-card small { font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
+.skin-preview-dialog { width: fit-content; max-width: 90vw; padding: 36px 12px 12px; border: 0; border-radius: 16px; background: #fff; }
+.skin-preview-dialog::backdrop { background: rgba(12,26,38,.7); }
+.skin-preview-dialog > img { display: block; width: auto; height: auto; max-width: min(952px, calc(90vw - 24px)); max-height: 80dvh; object-fit: contain; }
+.skin-preview-dialog > button { position: absolute; right: 8px; top: 4px; border: 0; background: transparent; font-size: 26px; cursor: pointer; }
+
+.skin-surface--glass { --glass-number-gradient-angle: 135deg; --glass-number-gradient-start: #5b92ec; --glass-number-gradient-end: #abccf7; --glass-progress-blur: 4px; --glass-progress-transparency: 14%; --glass-progress-base-start: #fafafa; --glass-progress-base-end: #fafafa; --glass-progress-shadow-x: -6px; --glass-progress-shadow-y: 12px; --glass-progress-shadow-blur: 20px; --glass-progress-shadow-color: 51 51 51; --glass-progress-shadow-transparency: .3; --glass-progress-highlight: .45; --glass-progress-glow-size: 70px; --glass-progress-glow-color: 234 143 83; --glass-progress-glow-transparency: 0; }
+.skin-surface--glass .quota-card--caution { --glass-number-gradient-start: #e59b34; --glass-number-gradient-end: #f3cf6d; --glass-progress-transparency: 31%; --glass-progress-base-start: #e5d094; --glass-progress-base-end: #e38e16; }
+.skin-surface--glass .quota-card--critical { --glass-number-gradient-start: #eb6075; --glass-number-gradient-end: #fba2a2; --glass-progress-transparency: 60%; --glass-progress-base-start: #e8b0b0; --glass-progress-base-end: #ea0606; }
+
+.supporter-platform-card small { font-size: 12px; }
+.supporter-platform-card:nth-child(-n+2) > div > span { font-weight: 500; }

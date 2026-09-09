@@ -153,7 +153,7 @@ fn issue_license(
     order_number: String,
     private_key: String,
 ) -> Result<IssuedLicense, String> {
-    if !matches!(skin_id.as_str(), "blur" | "computer") {
+    if !matches!(skin_id.as_str(), "blur" | "computer" | "glass" | "nexus") {
         return Err("只允许签发 Blur 或 Computer 内置皮肤。".into());
     }
     if !device_hash.starts_with("QF1-") || device_hash.len() < 12 {

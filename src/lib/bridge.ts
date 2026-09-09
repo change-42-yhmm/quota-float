@@ -133,7 +133,10 @@ export async function listenDesktopEvents(handlers: {
 }): Promise<() => void> {
   if (!isTauri()) return () => undefined;
   const { listen } = await import("@tauri-apps/api/event");
-  const unlistenPreferences = await listen<WidgetPreferences>("preferences-changed", (event) => handlers.onPreferences(event.payload));
+  // Events are notifications, never an authority for paid-skin access.
+  const unlistenPreferences = await listen("preferences-changed", () => {
+    void getPreferences().then(handlers.onPreferences).catch(() => undefined);
+  });
   const unlistenRefresh = await listen("refresh-requested", handlers.onRefresh);
   const unlistenUpdate = await listen("update-check-requested", handlers.onUpdate);
   return () => { unlistenPreferences(); unlistenRefresh(); unlistenUpdate(); };

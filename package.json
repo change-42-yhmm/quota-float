@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --configLoader native",
-    "build": "tsc && vite build --configLoader native",
+    "build": "tsc && vite build --configLoader native && node scripts/check-release-assets.mjs",
     "check:codex": "powershell -ExecutionPolicy Bypass -File scripts/check-codex-update.ps1",
     "test": "vitest run --configLoader native",
     "tauri": "tauri"

@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose::STANDARD, Engine as _};
-use ed25519_dalek::{Signature, Verifier, VerifyingKey};
+use ed25519_dalek::{Signature, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 #[cfg(target_os = "macos")]
@@ -91,7 +91,7 @@ fn platform_device_identifier() -> Result<String, String> {
 
 #[cfg(target_os = "macos")]
 fn platform_device_identifier() -> Result<String, String> {
-    let output = Command::new("ioreg")
+    let output = Command::new("/usr/sbin/ioreg")
         .args(["-rd1", "-c", "IOPlatformExpertDevice"])
         .output()
         .map_err(|_| "unable to read macOS device identifier".to_string())?;
@@ -143,7 +143,7 @@ fn verify_document(document: LicenseDocument, request_code: &str, key: &Verifyin
     }
     let signature_bytes = STANDARD.decode(&document.signature).map_err(|_| "license signature is invalid".to_string())?;
     let signature = Signature::from_slice(&signature_bytes).map_err(|_| "license signature is invalid".to_string())?;
-    key.verify(canonical_payload(&document).as_bytes(), &signature)
+    key.verify_strict(canonical_payload(&document).as_bytes(), &signature)
         .map_err(|_| "license signature could not be verified".to_string())?;
     Ok(document)
 }

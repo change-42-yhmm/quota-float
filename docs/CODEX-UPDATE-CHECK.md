@@ -51,10 +51,10 @@ The script does not save raw quota responses, tokens, account ids, prompts, or c
 
 Codex Desktop does not expose a stable public post-update hook. The practical automation is to run this script at Windows login or once per day. It is cheap because it skips full checks when the Codex fingerprint has not changed.
 
-Suggested Task Scheduler action:
+Suggested Task Scheduler action (set “Start in” to your project directory):
 
 ```text
-powershell.exe -ExecutionPolicy Bypass -File "D:\AI\额度插件\scripts\check-codex-update.ps1"
+powershell.exe -ExecutionPolicy Bypass -File ".\scripts\check-codex-update.ps1"
 ```
 
 Use a trigger such as "At log on" or a daily trigger. If Codex changed, the script runs the full check and records the new fingerprint only after success.

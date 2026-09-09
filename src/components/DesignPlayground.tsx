@@ -1,3 +1,5 @@
+import "../design-only.css";
+import "../design-backgrounds.css";
 import { SkinEffects } from "./SkinEffects";
 import { useMemo, useState, type CSSProperties } from "react";
 import { DESKTOP_PALETTES, type DesktopPaletteName } from "../lib/desktopPalette";

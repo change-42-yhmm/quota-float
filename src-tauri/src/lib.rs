@@ -1,6 +1,7 @@
 mod codex;
 mod license;
 mod models;
+mod native_material;
 
 use std::{
     fs,
@@ -341,7 +342,7 @@ fn safe_inset_for_current_appearance(state: &AppState, scale_factor: f64) -> u32
 }
 
 fn shadow_inset_for_skin(skin: &str) -> f64 {
-    if cfg!(target_os = "windows") && skin == GLASS_SKIN_ID { 32.0 } else { EDGE_SAFE_INSET_LOGICAL }
+    if cfg!(any(target_os = "windows", target_os = "macos")) && skin == GLASS_SKIN_ID { 32.0 } else { EDGE_SAFE_INSET_LOGICAL }
 }
 
 fn window_size_for_visual_size(visual_size: u32, safe_inset: u32) -> u32 {
@@ -1295,7 +1296,9 @@ fn sync_widget_appearance(_appearance: String, app: AppHandle, state: State<'_, 
     }
     window
         .set_size(PhysicalSize::new(side, side))
-        .map_err(|_| "failed to resize widget for appearance".to_string())
+        .map_err(|_| "failed to resize widget for appearance".to_string())?;
+    native_material::sync(&window);
+    Ok(())
 }
 
 fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
@@ -1857,6 +1860,11 @@ pub fn run() {
             }
         })
         .on_window_event(|window, event| {
+            if window.label() == "widget" && matches!(event, WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. }) {
+                if let Some(widget) = window.app_handle().get_webview_window("widget") {
+                    native_material::sync(&widget);
+                }
+            }
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let _ = window.hide();

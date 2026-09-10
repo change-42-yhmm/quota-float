@@ -2921,6 +2921,7 @@ name = "quota-float"
 version = "0.2.7"
 dependencies = [
  "base64 0.22.1",
+ "cc",
  "chrono",
  "dirs 6.0.0",
  "ed25519-dalek",

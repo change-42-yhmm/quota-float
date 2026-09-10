@@ -47,7 +47,7 @@ button { font: inherit; }
   user-select: none;
 }
 .quota-card { color: #17191f; }
-.skin-surface--glass.desktop-windows { --edge-safe-inset: 32px; }
+.skin-surface--glass.desktop-native { --edge-safe-inset: 32px; }
 .quota-card { animation: panel-in .16s ease-out both; transform-origin: center; }
 @keyframes panel-in { from { opacity: .88; transform: scale(.985); } to { opacity: 1; transform: scale(1); } }
 /* State palettes live only in src/lib/desktopPalette.ts. The application

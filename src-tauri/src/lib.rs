@@ -336,8 +336,12 @@ fn logical_to_physical(value: f64, scale_factor: f64) -> u32 {
 }
 
 fn safe_inset_for_current_appearance(state: &AppState, scale_factor: f64) -> u32 {
-    let _ = state;
-    logical_to_physical(EDGE_SAFE_INSET_LOGICAL, scale_factor)
+    let skin = preferences_lock(state).selected_skin.clone();
+    logical_to_physical(shadow_inset_for_skin(&skin), scale_factor)
+}
+
+fn shadow_inset_for_skin(skin: &str) -> f64 {
+    if cfg!(target_os = "windows") && skin == GLASS_SKIN_ID { 32.0 } else { EDGE_SAFE_INSET_LOGICAL }
 }
 
 fn window_size_for_visual_size(visual_size: u32, safe_inset: u32) -> u32 {
@@ -667,6 +671,30 @@ mod geometry_tests {
     fn window_size_includes_the_transparent_safe_inset() {
         assert_eq!(window_size_for_visual_size(72, 4), 80);
         assert_eq!(widget_window_size(306.0, 1.5, 6), 471);
+    }
+
+    #[test]
+    fn glass_padding_keeps_visible_bottom_right_edges_at_each_dpi() {
+        for scale in [1.0, 1.25, 1.5, 2.0] {
+            let inset = logical_to_physical(shadow_inset_for_skin(GLASS_SKIN_ID), scale);
+            let collapsed = widget_window_size(72.0, scale, inset);
+            let expanded = widget_window_size(306.0, scale, inset);
+            let right = logical_to_physical(1920.0, scale) as i32;
+            let bottom = logical_to_physical(1040.0, scale) as i32;
+            let position = expanded_position_in_bounds(
+                rect(right - collapsed as i32 + inset as i32, bottom - collapsed as i32 + inset as i32, collapsed),
+                PhysicalSize::new(expanded, expanded),
+                DockState { horizontal: Some(HorizontalDock::Right), vertical: Some(VerticalDock::Bottom) },
+                PhysicalPosition::new(0, 0),
+                PhysicalSize::new(right as u32, bottom as u32),
+                inset as i32,
+            );
+            assert_eq!(position.x + expanded as i32 - inset as i32, right);
+            assert_eq!(position.y + expanded as i32 - inset as i32, bottom);
+        }
+        for skin in ["default", BLUR_SKIN_ID, COMPUTER_SKIN_ID, NEXUS_SKIN_ID] {
+            assert_eq!(shadow_inset_for_skin(skin), EDGE_SAFE_INSET_LOGICAL);
+        }
     }
 
     #[test]
@@ -1256,6 +1284,15 @@ fn sync_widget_appearance(_appearance: String, app: AppHandle, state: State<'_, 
         COLLAPSED_LOGICAL_SIZE
     };
     let side = widget_window_size(visual_size, scale_factor, safe_inset);
+    if current.size.width != side {
+        // Preserve the visible top-left when entering/leaving Glass. Cached
+        // collapse anchors were measured with the old inset and must be reset.
+        let previous_inset = (current.size.width as i32 - logical_to_physical(visual_size, scale_factor) as i32) / 2;
+        let offset = previous_inset - safe_inset as i32;
+        window.set_position(PhysicalPosition::new(current.position.x + offset, current.position.y + offset))
+            .map_err(|_| "failed to position widget for appearance".to_string())?;
+        if let Ok(mut geometry) = state.geometry.lock() { *geometry = None; }
+    }
     window
         .set_size(PhysicalSize::new(side, side))
         .map_err(|_| "failed to resize widget for appearance".to_string())

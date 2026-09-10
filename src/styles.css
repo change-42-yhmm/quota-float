@@ -47,6 +47,7 @@ button { font: inherit; }
   user-select: none;
 }
 .quota-card { color: #17191f; }
+.skin-surface--glass.desktop-windows { --edge-safe-inset: 32px; }
 .quota-card { animation: panel-in .16s ease-out both; transform-origin: center; }
 @keyframes panel-in { from { opacity: .88; transform: scale(.985); } to { opacity: 1; transform: scale(1); } }
 /* State palettes live only in src/lib/desktopPalette.ts. The application
@@ -467,7 +468,7 @@ button { font: inherit; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-card .progress,
 :is(.design-stage--glass, .skin-surface--glass) .quota-card .reset-time,
 :is(.design-stage--glass, .skin-surface--glass) .quota-card .error-state { position: relative; z-index: 2; }
-:is(.design-stage--glass, .skin-surface--glass) .quota-card .card-actions .pin-button--active { border-color: #fff; background: #c7dfff; }
+:is(.design-stage--glass, .skin-surface--glass) .quota-card .card-actions :is(.pin-button--active, .expand-button--active) { border-color: #fff; background: #c7dfff; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric,
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-unavailable { position: relative; z-index: 2; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-weekly-badge { z-index: 2; }

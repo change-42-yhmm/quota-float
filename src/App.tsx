@@ -63,11 +63,9 @@ export default function App() {
     : "default";
 
   useEffect(() => {
-    // This only reconciles the transparent-window safety inset after a theme
-    // change. A platform refusal is non-fatal: the current widget geometry is
-    // still usable and users should never see an internal resize error.
+    // Reconcile the transparent shadow padding when the skin changes.
     void syncWidgetAppearance(theme).catch(() => undefined);
-  }, [theme]);
+  }, [theme, skin]);
 
   useEffect(() => {
     const media = window.matchMedia?.("(prefers-color-scheme: dark)");
@@ -239,11 +237,11 @@ export default function App() {
   }, [operation.expandFailed, preferences.stayExpanded]);
 
   if (compact) {
-    return <div className={`skin-surface--${skin}`}><SkinEffects /><QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} theme={theme} skin={skin} style={cardStyle} /></div>;
+    return <div className={`skin-surface--${skin}${/Windows/.test(navigator.userAgent) ? " desktop-windows" : ""}`}><SkinEffects /><QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} theme={theme} skin={skin} style={cardStyle} /></div>;
   }
 
   return (
-    <div className={`skin-surface--${skin}`}><SkinEffects /><QuotaCard
+    <div className={`skin-surface--${skin}${/Windows/.test(navigator.userAgent) ? " desktop-windows" : ""}`}><SkinEffects /><QuotaCard
       snapshot={current}
       preferences={preferences}
       providerCount={snapshots.length}

@@ -26,8 +26,8 @@
 .design-page-tabs button { min-height: 30px; padding: 0 12px; border: 0; border-radius: 8px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 700; }
 .design-page-tabs button:hover { color: #202631; background: rgba(105,137,190,.1); }
 .design-page-tabs button.is-active { color: #fff; background: #315f9f; }
-.design-supporter-frame { width: 560px; height: 680px; overflow: hidden; box-shadow: 0 18px 48px rgba(51,83,100,.2); }
-.design-supporter-frame .supporter-panel { width: 560px; min-height: 680px; height: 680px; }
+.design-supporter-frame { width: 560px; height: 760px; overflow: hidden; box-shadow: 0 18px 48px rgba(51,83,100,.2); }
+.design-supporter-frame .supporter-panel { width: 560px; min-height: 760px; height: 760px; }
 .design-preview-switch button { min-height: 34px; padding: 0 13px; border: 0; border-radius: 10px; color: #626a78; background: transparent; cursor: pointer; font-size: 12px; font-weight: 650; }
 .design-preview-switch button span { margin-left: 3px; font-size: 10px; font-weight: 500; }
 .design-preview-switch button:hover { color: #202631; background: rgba(105,137,190,.1); }

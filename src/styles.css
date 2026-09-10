@@ -477,9 +477,6 @@ button { font: inherit; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric { line-height: .82; letter-spacing: -.07em; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric small { display: none; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-metric span { color: transparent; background: linear-gradient(var(--glass-number-gradient-angle), var(--glass-number-gradient-start) 0 40%, var(--glass-number-gradient-end)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--healthy .orb-metric span { background-image: linear-gradient(135deg, #F5F9FF, #DEECFF); }
-:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--caution .orb-metric span { background-image: linear-gradient(135deg, #FFFAF2, #FFF6DC); }
-:is(.design-stage--glass, .skin-surface--glass) .quota-orb.quota-card--critical .orb-metric span { background-image: linear-gradient(135deg, #FFF9FA, #FFE9E9); }
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-weekly-badge { color: #fff; background: url("../assets/glass-week-cutout.svg") center / 100% 100% no-repeat; opacity: .75; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-weekly-badge svg,
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .orb-weekly-badge b { display: none; }

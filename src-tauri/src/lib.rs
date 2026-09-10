@@ -241,9 +241,9 @@ const SUPPORTER_PROMPT_REVISION: u8 = 1;
 fn should_show_supporter_prompt(
     preferences: &mut WidgetPreferences,
     now: DateTime<Utc>,
-    has_supporter_license: bool,
+    _has_supporter_license: bool,
 ) -> bool {
-    if has_supporter_license || preferences.supporter_prompt_revision >= SUPPORTER_PROMPT_REVISION {
+    if preferences.supporter_prompt_revision >= SUPPORTER_PROMPT_REVISION {
         return false;
     }
     if preferences.supporter_prompt_first_seen_at.is_none() {
@@ -984,10 +984,10 @@ mod supporter_preference_tests {
     }
 
     #[test]
-    fn supporter_prompt_never_shows_for_an_active_supporter() {
+    fn supporter_prompt_shows_once_for_an_active_supporter_after_upgrade() {
         let mut preferences = WidgetPreferences::default();
+        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), true));
         assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), true));
-        assert!(preferences.supporter_prompt_shown_at.is_none());
     }
 
     #[test]

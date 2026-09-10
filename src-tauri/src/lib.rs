@@ -15,7 +15,7 @@ use models::{ProviderSnapshot, WidgetPreferences};
 #[cfg(debug_assertions)]
 use models::UsageWindow;
 use serde::Deserialize;
-use chrono::{DateTime, Duration as ChronoDuration, Utc};
+use chrono::{DateTime, Utc};
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -236,29 +236,21 @@ fn persist_preferences(path: &PathBuf, value: &WidgetPreferences) -> Result<(), 
     Ok(())
 }
 
-const SUPPORTER_PROMPT_DELAY_DAYS: i64 = 3;
+const SUPPORTER_PROMPT_REVISION: u8 = 1;
 
 fn should_show_supporter_prompt(
     preferences: &mut WidgetPreferences,
     now: DateTime<Utc>,
     has_supporter_license: bool,
 ) -> bool {
-    if has_supporter_license || preferences.supporter_prompt_shown_at.is_some() {
+    if has_supporter_license || preferences.supporter_prompt_revision >= SUPPORTER_PROMPT_REVISION {
         return false;
     }
-    let first_seen = preferences
-        .supporter_prompt_first_seen_at
-        .as_deref()
-        .and_then(|value| DateTime::parse_from_rfc3339(value).ok())
-        .map(|value| value.with_timezone(&Utc));
-    let Some(first_seen) = first_seen else {
+    if preferences.supporter_prompt_first_seen_at.is_none() {
         preferences.supporter_prompt_first_seen_at = Some(now.to_rfc3339());
-        return false;
-    };
-    if now.signed_duration_since(first_seen) < ChronoDuration::days(SUPPORTER_PROMPT_DELAY_DAYS) {
-        return false;
     }
     preferences.supporter_prompt_shown_at = Some(now.to_rfc3339());
+    preferences.supporter_prompt_revision = SUPPORTER_PROMPT_REVISION;
     true
 }
 
@@ -983,25 +975,32 @@ mod supporter_preference_tests {
     }
 
     #[test]
-    fn supporter_prompt_waits_three_days_then_only_shows_once() {
-        let first_seen = Utc::now() - ChronoDuration::days(SUPPORTER_PROMPT_DELAY_DAYS);
-        let mut preferences = WidgetPreferences {
-            supporter_prompt_first_seen_at: Some(first_seen.to_rfc3339()),
-            ..WidgetPreferences::default()
-        };
+    fn supporter_prompt_shows_once_after_upgrade_for_non_supporters() {
+        let mut preferences = WidgetPreferences::default();
         assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), false));
         assert!(preferences.supporter_prompt_shown_at.is_some());
+        assert_eq!(preferences.supporter_prompt_revision, SUPPORTER_PROMPT_REVISION);
         assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), false));
     }
 
     #[test]
     fn supporter_prompt_never_shows_for_an_active_supporter() {
-        let mut preferences = WidgetPreferences {
-            supporter_prompt_first_seen_at: Some((Utc::now() - ChronoDuration::days(4)).to_rfc3339()),
-            ..WidgetPreferences::default()
-        };
+        let mut preferences = WidgetPreferences::default();
         assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), true));
         assert!(preferences.supporter_prompt_shown_at.is_none());
+    }
+
+    #[test]
+    fn reconciliation_keeps_license_payloads_for_future_revalidation() {
+        let raw_license = "stored-signed-license".to_string();
+        let mut preferences = WidgetPreferences {
+            licenses: vec![raw_license.clone()],
+            unlocked_skins: vec![BLUR_SKIN_ID.into()],
+            selected_skin: BLUR_SKIN_ID.into(),
+            ..WidgetPreferences::default()
+        };
+        reconcile_supporter_fields(&mut preferences, Vec::new());
+        assert_eq!(preferences.licenses, vec![raw_license]);
     }
 
     #[test]

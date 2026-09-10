@@ -57,4 +57,5 @@ export interface WidgetPreferences {
   selectedSkin: WidgetSkin;
   supporterPromptFirstSeenAt?: string | null;
   supporterPromptShownAt?: string | null;
+  supporterPromptRevision?: number;
 }

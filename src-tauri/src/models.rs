@@ -81,6 +81,8 @@ pub struct WidgetPreferences {
     pub supporter_prompt_first_seen_at: Option<String>,
     #[serde(default)]
     pub supporter_prompt_shown_at: Option<String>,
+    #[serde(default)]
+    pub supporter_prompt_revision: u8,
 }
 
 fn default_always_on_top() -> bool {
@@ -141,6 +143,7 @@ impl Default for WidgetPreferences {
             selected_skin: default_skin(),
             supporter_prompt_first_seen_at: None,
             supporter_prompt_shown_at: None,
+            supporter_prompt_revision: 0,
         }
     }
 }
@@ -188,7 +191,7 @@ impl WidgetPreferences {
 
 #[cfg(test)]
 mod tests {
-    use super::language_from_locale;
+    use super::{language_from_locale, WidgetPreferences};
 
     #[test]
     fn defaults_to_chinese_only_for_chinese_system_locales() {
@@ -196,5 +199,18 @@ mod tests {
         assert_eq!(language_from_locale("ZH-hant-TW"), "zh-CN");
         assert_eq!(language_from_locale("en-US"), "en");
         assert_eq!(language_from_locale("ja-JP"), "en");
+    }
+
+    #[test]
+    fn legacy_license_payload_migrates_without_loss() {
+        let preferences = WidgetPreferences {
+            license: Some("signed-license-json".into()),
+            unlocked_skin: Some("blur".into()),
+            selected_skin: "blur".into(),
+            ..WidgetPreferences::default()
+        }
+        .normalized();
+        assert_eq!(preferences.licenses, vec!["signed-license-json"]);
+        assert_eq!(preferences.license.as_deref(), Some("signed-license-json"));
     }
 }

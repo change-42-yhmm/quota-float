@@ -1,6 +1,10 @@
 import type { Language } from "../types";
 
-export const DEFAULT_LANGUAGE: Language = "zh-CN";
+export function systemLanguage(): Language {
+  return globalThis.navigator?.language?.toLowerCase().startsWith("zh") ? "zh-CN" : "en";
+}
+
+export const DEFAULT_LANGUAGE: Language = systemLanguage();
 
 export const copy = {
   "zh-CN": {

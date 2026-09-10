@@ -14,10 +14,10 @@ type PreviewSkin = Exclude<WidgetSkin, "default">;
 // Keep prices in UI data rather than in the preview artwork. Update this table
 // when storefront prices change; no online exchange-rate lookup is performed.
 const choices: Array<{ id: PreviewSkin; name: Record<Language, string>; price: Record<Language, string>; thumbnail: string }> = [
-  { id: "blur", name: { "zh-CN": "Blur", en: "Blur" }, price: { "zh-CN": "¥2", en: "US$0.29" }, thumbnail: blurThumbnailUrl },
-  { id: "computer", name: { "zh-CN": "Computer", en: "Computer" }, price: { "zh-CN": "¥4", en: "US$0.57" }, thumbnail: computerThumbnailUrl },
-  { id: "glass", name: { "zh-CN": "Glass", en: "Glass" }, price: { "zh-CN": "¥4", en: "US$0.57" }, thumbnail: glassThumbnailUrl },
-  { id: "nexus", name: { "zh-CN": "Nexus", en: "Nexus" }, price: { "zh-CN": "¥8", en: "US$1.14" }, thumbnail: nexusThumbnailUrl },
+  { id: "blur", name: { "zh-CN": "Blur", en: "Blur" }, price: { "zh-CN": "¥2", en: "$1" }, thumbnail: blurThumbnailUrl },
+  { id: "computer", name: { "zh-CN": "Computer", en: "Computer" }, price: { "zh-CN": "¥4", en: "$2" }, thumbnail: computerThumbnailUrl },
+  { id: "glass", name: { "zh-CN": "Glass", en: "Glass" }, price: { "zh-CN": "¥4", en: "$2" }, thumbnail: glassThumbnailUrl },
+  { id: "nexus", name: { "zh-CN": "Nexus", en: "Nexus" }, price: { "zh-CN": "¥8", en: "$3" }, thumbnail: nexusThumbnailUrl },
 ];
 const previewStatus: SupporterStatus = { requestCode: "QF1-DEMO-DEVICE-CODE", active: true, message: "Supporter licenses are active.", unlockedSkin: "blur", unlockedSkins: ["blur", "computer"], selectedSkin: "blur", availableSkins: ["default", "blur", "computer"] };
 

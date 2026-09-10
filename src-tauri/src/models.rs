@@ -87,7 +87,35 @@ fn default_always_on_top() -> bool {
     true
 }
 fn default_language() -> String {
-    "zh-CN".into()
+    platform_default_language().into()
+}
+
+fn language_from_locale(locale: &str) -> &'static str {
+    if locale.trim().to_ascii_lowercase().starts_with("zh") {
+        "zh-CN"
+    } else {
+        "en"
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn platform_default_language() -> &'static str {
+    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+
+    let user = RegKey::predef(HKEY_CURRENT_USER);
+    user.open_subkey(r"Control Panel\International")
+        .ok()
+        .and_then(|key| key.get_value::<String, _>("LocaleName").ok())
+        .map(|locale| language_from_locale(&locale))
+        .unwrap_or("en")
+}
+
+#[cfg(not(target_os = "windows"))]
+fn platform_default_language() -> &'static str {
+    std::env::var("LANG")
+        .ok()
+        .map(|locale| language_from_locale(&locale))
+        .unwrap_or("en")
 }
 fn default_appearance() -> String {
     "light".into()
@@ -155,5 +183,18 @@ impl WidgetPreferences {
         self.license = self.licenses.first().cloned();
         self.unlocked_skin = self.unlocked_skins.first().cloned();
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::language_from_locale;
+
+    #[test]
+    fn defaults_to_chinese_only_for_chinese_system_locales() {
+        assert_eq!(language_from_locale("zh-CN"), "zh-CN");
+        assert_eq!(language_from_locale("ZH-hant-TW"), "zh-CN");
+        assert_eq!(language_from_locale("en-US"), "en");
+        assert_eq!(language_from_locale("ja-JP"), "en");
     }
 }

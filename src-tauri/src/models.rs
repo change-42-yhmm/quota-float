@@ -83,6 +83,10 @@ pub struct WidgetPreferences {
     pub supporter_prompt_shown_at: Option<String>,
     #[serde(default)]
     pub supporter_prompt_revision: u8,
+    #[serde(default)]
+    pub supporter_prompt_version: String,
+    #[serde(default)]
+    pub supporter_prompt_launch_count: u8,
 }
 
 fn default_always_on_top() -> bool {
@@ -144,6 +148,8 @@ impl Default for WidgetPreferences {
             supporter_prompt_first_seen_at: None,
             supporter_prompt_shown_at: None,
             supporter_prompt_revision: 0,
+            supporter_prompt_version: String::new(),
+            supporter_prompt_launch_count: 0,
         }
     }
 }

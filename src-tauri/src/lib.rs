@@ -237,21 +237,25 @@ fn persist_preferences(path: &PathBuf, value: &WidgetPreferences) -> Result<(), 
     Ok(())
 }
 
-const SUPPORTER_PROMPT_REVISION: u8 = 1;
+const SUPPORTER_PROMPT_LAUNCHES: u8 = 2;
 
 fn should_show_supporter_prompt(
     preferences: &mut WidgetPreferences,
     now: DateTime<Utc>,
-    _has_supporter_license: bool,
+    version: &str,
 ) -> bool {
-    if preferences.supporter_prompt_revision >= SUPPORTER_PROMPT_REVISION {
+    if preferences.supporter_prompt_version != version {
+        preferences.supporter_prompt_version = version.to_string();
+        preferences.supporter_prompt_launch_count = 0;
+    }
+    if preferences.supporter_prompt_launch_count >= SUPPORTER_PROMPT_LAUNCHES {
         return false;
     }
     if preferences.supporter_prompt_first_seen_at.is_none() {
         preferences.supporter_prompt_first_seen_at = Some(now.to_rfc3339());
     }
     preferences.supporter_prompt_shown_at = Some(now.to_rfc3339());
-    preferences.supporter_prompt_revision = SUPPORTER_PROMPT_REVISION;
+    preferences.supporter_prompt_launch_count += 1;
     true
 }
 
@@ -967,6 +971,9 @@ fn renderer_preferences(current: &WidgetPreferences, requested: WidgetPreference
     preferences.selected_skin = current.selected_skin.clone();
     preferences.supporter_prompt_first_seen_at = current.supporter_prompt_first_seen_at.clone();
     preferences.supporter_prompt_shown_at = current.supporter_prompt_shown_at.clone();
+    preferences.supporter_prompt_revision = current.supporter_prompt_revision;
+    preferences.supporter_prompt_version = current.supporter_prompt_version.clone();
+    preferences.supporter_prompt_launch_count = current.supporter_prompt_launch_count;
     preferences
 }
 
@@ -1004,19 +1011,27 @@ mod supporter_preference_tests {
     }
 
     #[test]
-    fn supporter_prompt_shows_once_after_upgrade_for_non_supporters() {
+    fn supporter_prompt_shows_on_first_two_launches_per_version() {
         let mut preferences = WidgetPreferences::default();
-        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), false));
+        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), "0.2.10"));
         assert!(preferences.supporter_prompt_shown_at.is_some());
-        assert_eq!(preferences.supporter_prompt_revision, SUPPORTER_PROMPT_REVISION);
-        assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), false));
+        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), "0.2.10"));
+        assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), "0.2.10"));
+        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), "0.2.11"));
+        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), "0.2.11"));
+        assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), "0.2.11"));
     }
 
     #[test]
-    fn supporter_prompt_shows_once_for_an_active_supporter_after_upgrade() {
-        let mut preferences = WidgetPreferences::default();
-        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), true));
-        assert!(!should_show_supporter_prompt(&mut preferences, Utc::now(), true));
+    fn legacy_prompt_record_does_not_suppress_new_version_or_get_reset_by_renderer() {
+        let mut preferences = WidgetPreferences { supporter_prompt_revision: 1, ..WidgetPreferences::default() };
+        assert!(should_show_supporter_prompt(&mut preferences, Utc::now(), "0.2.10"));
+        let persisted = serde_json::to_string(&preferences).unwrap();
+        let restored: WidgetPreferences = serde_json::from_str(&persisted).unwrap();
+        let mut saved = renderer_preferences(&restored, WidgetPreferences::default());
+        assert_eq!(saved.supporter_prompt_launch_count, 1);
+        assert!(should_show_supporter_prompt(&mut saved, Utc::now(), "0.2.10"));
+        assert!(!should_show_supporter_prompt(&mut saved, Utc::now(), "0.2.10"));
     }
 
     #[test]
@@ -1747,20 +1762,18 @@ pub fn run() {
             let data_dir = app.path().app_config_dir()?;
             let preferences_path = data_dir.join("preferences.json");
             let mut preferences = load_preferences(&preferences_path);
-            let has_supporter_license = match device_request_code() {
+            match device_request_code() {
                 Ok(request_code) => {
                     reconcile_verified_supporter_fields(&mut preferences, &request_code);
-                    supporter_status(&preferences, &request_code).active
                 }
                 Err(_) => {
                     reconcile_supporter_fields(&mut preferences, Vec::new());
-                    false
                 }
             };
             let show_supporter_prompt = should_show_supporter_prompt(
                 &mut preferences,
                 Utc::now(),
-                has_supporter_license,
+                env!("CARGO_PKG_VERSION"),
             );
             // Persist the first-use timestamp immediately; persist the shown
             // marker before opening the window so a crash or restart cannot

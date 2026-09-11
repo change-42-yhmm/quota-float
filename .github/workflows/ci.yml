@@ -19,6 +19,8 @@ jobs:
       - run: npm audit --audit-level=high
 
   desktop:
+    env:
+      QUOTA_FLOAT_LICENSE_PUBLIC_KEY: ${{ secrets.QUOTA_FLOAT_LICENSE_PUBLIC_KEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -48,6 +50,16 @@ jobs:
         with:
           workspaces: src-tauri
       - run: npm ci
+      - name: Validate license verification key
+        shell: pwsh
+        run: |
+          $key = $env:QUOTA_FLOAT_LICENSE_PUBLIC_KEY
+          if ([string]::IsNullOrWhiteSpace($key)) {
+            throw "QUOTA_FLOAT_LICENSE_PUBLIC_KEY is not configured for this private QA build."
+          }
+          if ([Convert]::FromBase64String($key.Trim()).Length -ne 32) {
+            throw "QUOTA_FLOAT_LICENSE_PUBLIC_KEY must decode to exactly 32 bytes."
+          }
       - run: cargo test --manifest-path src-tauri/Cargo.toml
       - run: ${{ matrix.build-command }}
       - uses: actions/upload-artifact@v4

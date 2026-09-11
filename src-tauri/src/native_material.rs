@@ -1,6 +1,9 @@
 //! Native material lives inside the widget window; CSS still draws its shadow.
 use tauri::Manager;
 use super::{AppState, GLASS_SKIN_ID, NEXUS_SKIN_ID, shadow_inset_for_skin};
+#[cfg(target_os = "windows")]
+#[path = "native_material_windows.rs"]
+mod windows;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Surface {
@@ -44,7 +47,13 @@ pub fn sync(window: &tauri::WebviewWindow) {
             unsafe { quota_update_material(handle, s.x, s.y, s.width, s.height, s.radius,
                 points.as_ptr(), NEXUS_POINTS.len()) };
         }
-        #[cfg(not(target_os = "macos"))]
+        #[cfg(target_os = "windows")]
+        if let Ok(hwnd) = widget.hwnd() {
+            if let Err(error) = windows::sync(hwnd, shape, scale) {
+                eprintln!("native desktop material unavailable: {error}");
+            }
+        }
+        #[cfg(not(any(target_os = "macos", target_os = "windows")))]
         let _ = (shape, NEXUS_POINTS);
     });
 }

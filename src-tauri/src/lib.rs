@@ -1860,7 +1860,7 @@ pub fn run() {
             }
         })
         .on_window_event(|window, event| {
-            if window.label() == "widget" && matches!(event, WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. }) {
+            if window.label() == "widget" && matches!(event, WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } | WindowEvent::Focused(_)) {
                 if let Some(widget) = window.app_handle().get_webview_window("widget") {
                     native_material::sync(&widget);
                 }

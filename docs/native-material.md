@@ -2,9 +2,14 @@
 
 - `v0.2.7-css-glass-baseline`: original shared workbench CSS; no native desktop blur.
 - `v0.2.7-macos-material`: AppKit NSVisualEffectView inside the existing widget window, behind-window blending, shape mask and transparent shadow padding. Windows remains at the CSS baseline.
+- `v0.2.9-native-material-qa`: macOS implementation plus Windows Composition Host Backdrop in the same widget HWND, using a SpriteVisual and geometric clip. Requires Windows 11; Windows 10 retains CSS transparency when the API is unsupported. This is a QA checkpoint, not visual acceptance.
 
 The original CSS blur, saturation, highlights and shadow parameters are retained. Native material only samples the desktop behind Glass (orb and card) and Nexus (expanded card). Other skins remove the material. Native Nexus masking approximates the SVG's 2px corner curves with straight segments.
 
 macOS source requires an actual Mac/Xcode build and visual validation. Windows-hosted Rust tests do not compile Objective-C or prove macOS rendering. This checkpoint is implementation source, not a verified macOS installer.
 
 Check on each OS: desktop text/background genuinely blurs; no rectangular solid background; rounded corners and Nexus cutout are clear; the 32px Glass padding remains clear; switching skins, collapsing, moving and changing DPI keep the material aligned. System accessibility/transparency settings can suppress native translucency.
+
+Windows API smoke test passes on the development host: a hidden HWND exercises Glass orb/card and Nexus shapes at 100%, 125%, 150%, and 200% DPI, then removes the material. It does not include WebView2 rendering or prove visual correctness. Run explicitly: `cargo test --manifest-path src-tauri/Cargo.toml native_host_backdrop_accepts_shapes_and_clears -- --ignored`.
+
+Windows uses the official Composition Host Backdrop brush instead of whole-window Acrylic, which would cover the shadow padding. It creates no additional backdrop window and captures no screenshots. Native blur strength is independent of CSS blur(4px). If advanced effects are disabled when updating, the material remains hidden.

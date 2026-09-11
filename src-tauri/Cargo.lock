@@ -2918,7 +2918,7 @@ dependencies = [
 
 [[package]]
 name = "quota-float"
-version = "0.2.7"
+version = "0.2.9"
 dependencies = [
  "base64 0.22.1",
  "cc",
@@ -2938,6 +2938,9 @@ dependencies = [
  "tauri-plugin-updater",
  "tauri-plugin-window-state",
  "tokio",
+ "windows",
+ "windows-core 0.61.2",
+ "windows-numerics",
  "winreg 0.55.0",
 ]
 

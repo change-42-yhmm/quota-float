@@ -1,6 +1,6 @@
 [package]
 name = "quota-float"
-version = "0.2.7"
+version = "0.2.9"
 description = "A lightweight floating Codex quota monitor"
 authors = ["Quota Float contributors"]
 license = "MIT"
@@ -36,3 +36,6 @@ tauri-plugin-updater = "2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"
+windows = { version = "0.61.3", features = ["Foundation", "Graphics", "System", "UI_Composition", "UI_Composition_Desktop", "UI_ViewManagement", "Win32_Foundation", "Win32_Graphics_Dwm", "Win32_Graphics_Direct2D", "Win32_Graphics_Direct2D_Common", "Win32_System_WinRT", "Win32_System_WinRT_Composition", "Win32_System_WinRT_Graphics_Direct2D"] }
+windows-core = "0.61.2"
+windows-numerics = "0.2"

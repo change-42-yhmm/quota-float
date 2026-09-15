@@ -23,7 +23,7 @@ void quota_update_material(void *handle, double x, double y, double width,
         }
         if (!material) {
             material = [[QuotaMaterialView alloc] initWithFrame:NSZeroRect];
-            material.material = NSVisualEffectMaterialUnderWindowBackground;
+            material.material = NSVisualEffectMaterialHUDWindow;
             material.blendingMode = NSVisualEffectBlendingModeBehindWindow;
             material.state = NSVisualEffectStateFollowsWindowActiveState;
             [content addSubview:material positioned:NSWindowBelow relativeTo:nil];

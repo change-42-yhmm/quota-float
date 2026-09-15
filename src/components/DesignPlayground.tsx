@@ -109,7 +109,7 @@ export function DesignPlayground() {
   const [controls, setControls] = useState<Controls>(defaults);
   const [language, setLanguage] = useState<Language>(() => query.get("language") === "en" ? "en" : "zh-CN");
   const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "native-material" | "supporter">("widget");
-  const [nativeMaterial, setNativeMaterial] = useState<NativeMaterial>("under-window");
+  const [nativeMaterial, setNativeMaterial] = useState<NativeMaterial>("hud");
   const [nativeAppearance, setNativeAppearance] = useState<NativeAppearance>("system");
   const [nativeBlending, setNativeBlending] = useState<NativeBlending>("behind");
   const [nativeState, setNativeState] = useState<NativeState>("follows");
@@ -151,7 +151,7 @@ export function DesignPlayground() {
   const renderOrb = (item: ProviderSnapshot) => <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />;
 
   return <main className={`design-workbench design-workbench--${theme}`}>
-    <section className={`design-stage design-stage--${previewTab} design-stage--background-${previewBackground} native-material--${nativeMaterial} native-appearance--${nativeAppearance} native-blending--${nativeBlending} native-state--${nativeState}${presentationMode ? " design-stage--presentation" : ""}`} aria-label={t.widget}>
+    <section className={`design-stage design-stage--${previewTab}${previewTab === "native-material" ? " design-stage--glass" : ""} design-stage--background-${previewBackground} native-material--${nativeMaterial} native-appearance--${nativeAppearance} native-blending--${nativeBlending} native-state--${nativeState}${presentationMode ? " design-stage--presentation" : ""}`} aria-label={t.widget}>
 <SkinEffects />
       <button className="design-presentation-toggle" type="button" aria-pressed={presentationMode} onClick={() => setPresentationMode((value) => !value)}>{presentationMode ? t.edit : t.presentation}</button>
       <div className="design-selection-controls">

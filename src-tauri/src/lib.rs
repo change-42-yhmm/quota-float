@@ -1071,12 +1071,16 @@ fn get_preferences(state: State<'_, AppState>) -> WidgetPreferences {
 #[tauri::command]
 fn set_preferences(
     preferences: WidgetPreferences,
+    app: AppHandle,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
     let current = preferences_lock(&state).clone();
     let preferences = renderer_preferences(&current, preferences);
     persist_preferences(&state.preferences_path, &preferences)?;
     *preferences_lock(&state) = preferences;
+    if let Some(window) = app.get_webview_window("widget") {
+        native_material::sync(&window);
+    }
     Ok(())
 }
 

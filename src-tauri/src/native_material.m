@@ -11,7 +11,9 @@
 static char materialKey;
 
 void quota_update_material(void *handle, double x, double y, double width,
-                           double height, double radius, const double *points, size_t count) {
+                           double height, double radius, const double *points, size_t count,
+                           NSInteger materialKind, NSInteger appearanceKind,
+                           NSInteger blendingKind, NSInteger stateKind) {
     @autoreleasepool {
         NSWindow *window = (__bridge NSWindow *)handle;
         NSView *content = window.contentView;
@@ -23,12 +25,13 @@ void quota_update_material(void *handle, double x, double y, double width,
         }
         if (!material) {
             material = [[QuotaMaterialView alloc] initWithFrame:NSZeroRect];
-            material.material = NSVisualEffectMaterialHUDWindow;
-            material.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-            material.state = NSVisualEffectStateActive;
             [content addSubview:material positioned:NSWindowBelow relativeTo:nil];
             objc_setAssociatedObject(window, &materialKey, material, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
+        material.material = (NSVisualEffectMaterial)materialKind;
+        material.blendingMode = (NSVisualEffectBlendingMode)blendingKind;
+        material.state = (NSVisualEffectState)stateKind;
+        material.appearance = appearanceKind == 1 ? [NSAppearance appearanceNamed:NSAppearanceNameAqua] : appearanceKind == 2 ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : nil;
         CGFloat nativeY = content.isFlipped ? y : NSHeight(content.bounds) - y - height;
         material.frame = NSMakeRect(x, nativeY, width, height);
         NSImage *mask = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];

@@ -1,7 +1,7 @@
 import type { ProviderSnapshot, SupporterStatus, WidgetPreferences, WidgetSkin } from "../types";
 import { systemLanguage } from "./i18n";
 
-const defaultPreferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: systemLanguage(), appearance: "light", showTrayMetric: false, license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
+const defaultPreferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: systemLanguage(), appearance: "light", showTrayMetric: false, macosMaterial: "hud-window", macosMaterialAppearance: "system", macosMaterialBlending: "behind-window", macosMaterialState: "active", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
 
 const mockSnapshot: ProviderSnapshot = {
   provider: "codex",

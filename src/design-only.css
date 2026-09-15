@@ -47,11 +47,6 @@
 .design-kicker { margin: 0 0 9px; font-size: 11px; font-weight: 750; letter-spacing: .2em; color: #6c7280; }
 .design-controls h1 { margin: 0; font-size: 31px; letter-spacing: -.04em; font-weight: 620; }
 .design-description { margin: 10px 0 0; max-width: 30ch; font-size: 13px; line-height: 1.55; color: #737986; }
-.native-material-stage { max-width: 430px; padding: 28px; border: 1px solid rgba(255,255,255,.35); border-radius: 22px; color: #fff; background: rgba(17,18,40,.52); box-shadow: 0 18px 48px rgba(0,0,0,.18); backdrop-filter: blur(10px); }
-.native-material-stage h2 { margin: 0 0 12px; font-size: 24px; }.native-material-stage p { margin: 8px 0; line-height: 1.6; }
-.native-material-controls { display: grid; gap: 16px; }.native-material-controls header { padding-bottom: 6px; border-bottom: 1px solid rgba(99,108,128,.16); }
-.select-control { display: grid; gap: 7px; color: #626a78; font-size: 12px; font-weight: 700; }.select-control select { min-height: 38px; padding: 0 10px; border: 1px solid rgba(99,108,128,.22); border-radius: 9px; color: inherit; background: rgba(255,255,255,.9); font: inherit; }
-.design-workbench--dark .select-control { color: #bdc9da; }.design-workbench--dark .select-control select { border-color: #3a4a62; color: #e8effb; background: #1d2a3d; }
 .glass-progress-controls { display: grid; gap: 12px; padding-top: 18px; border-top: 1px solid rgba(99,108,128,.16); }
 .glass-progress-controls > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .glass-progress-controls h2 { margin: 0; color: #315f9f; font-size: 13px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }

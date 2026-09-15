@@ -69,14 +69,6 @@ pub struct WidgetPreferences {
     pub appearance: String,
     #[serde(default)]
     pub show_tray_metric: bool,
-    #[serde(default = "default_macos_material")]
-    pub macos_material: String,
-    #[serde(default = "default_macos_material_appearance")]
-    pub macos_material_appearance: String,
-    #[serde(default = "default_macos_material_blending")]
-    pub macos_material_blending: String,
-    #[serde(default = "default_macos_material_state")]
-    pub macos_material_state: String,
     #[serde(default)]
     pub license: Option<String>,
     #[serde(default)]
@@ -165,10 +157,6 @@ fn default_appearance() -> String {
 fn default_skin() -> String {
     "default".into()
 }
-fn default_macos_material() -> String { "hud-window".into() }
-fn default_macos_material_appearance() -> String { "system".into() }
-fn default_macos_material_blending() -> String { "behind-window".into() }
-fn default_macos_material_state() -> String { "active".into() }
 
 impl Default for WidgetPreferences {
     fn default() -> Self {
@@ -181,10 +169,6 @@ impl Default for WidgetPreferences {
             language: default_language(),
             appearance: default_appearance(),
             show_tray_metric: false,
-            macos_material: default_macos_material(),
-            macos_material_appearance: default_macos_material_appearance(),
-            macos_material_blending: default_macos_material_blending(),
-            macos_material_state: default_macos_material_state(),
             license: None,
             licenses: Vec::new(),
             unlocked_skin: None,
@@ -211,10 +195,6 @@ impl WidgetPreferences {
         if self.appearance != "system" && self.appearance != "light" && self.appearance != "dark" {
             self.appearance = default_appearance();
         }
-        if !matches!(self.macos_material.as_str(), "hud-window" | "popover" | "menu" | "sidebar" | "under-window-background" | "window-background") { self.macos_material = default_macos_material(); }
-        if !matches!(self.macos_material_appearance.as_str(), "system" | "light" | "dark") { self.macos_material_appearance = default_macos_material_appearance(); }
-        if !matches!(self.macos_material_blending.as_str(), "behind-window" | "within-window") { self.macos_material_blending = default_macos_material_blending(); }
-        if !matches!(self.macos_material_state.as_str(), "follows-window" | "active" | "inactive") { self.macos_material_state = default_macos_material_state(); }
         if self.licenses.is_empty() {
             if let Some(legacy) = self.license.take() {
                 self.licenses.push(legacy);

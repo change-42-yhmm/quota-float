@@ -4,10 +4,6 @@ export type Language = "zh-CN" | "en";
 export type WidgetTheme = "light" | "dark";
 export type AppearancePreference = "system" | WidgetTheme;
 export type WidgetSkin = "default" | "blur" | "computer" | "glass" | "nexus";
-export type MacosMaterial = "hud-window" | "popover" | "menu" | "sidebar" | "under-window-background" | "window-background";
-export type MacosMaterialAppearance = "system" | "light" | "dark";
-export type MacosMaterialBlending = "behind-window" | "within-window";
-export type MacosMaterialState = "follows-window" | "active" | "inactive";
 
 export interface SupporterStatus {
   requestCode: string;
@@ -55,10 +51,6 @@ export interface WidgetPreferences {
   language: Language;
   appearance: AppearancePreference;
   showTrayMetric: boolean;
-  macosMaterial: MacosMaterial;
-  macosMaterialAppearance: MacosMaterialAppearance;
-  macosMaterialBlending: MacosMaterialBlending;
-  macosMaterialState: MacosMaterialState;
   license: string | null;
   licenses: string[];
   unlockedSkin: Exclude<WidgetSkin, "default"> | null;

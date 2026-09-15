@@ -1,13 +1,12 @@
 import "../design-only.css";
 import "../design-backgrounds.css";
 import { SkinEffects } from "./SkinEffects";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { DESKTOP_PALETTES, type DesktopPaletteName } from "../lib/desktopPalette";
 import { quotaTier } from "../lib/format";
-import type { Language, MacosMaterial, MacosMaterialAppearance, MacosMaterialBlending, MacosMaterialState, ProviderSnapshot, WidgetPreferences, WidgetSkin, WidgetTheme } from "../types";
+import type { Language, ProviderSnapshot, WidgetPreferences, WidgetSkin, WidgetTheme } from "../types";
 import { QuotaCard, QuotaOrb } from "./QuotaCard";
 import { SupporterPanel } from "./SupporterPanel";
-import { getPreferences, updatePreferences } from "../lib/bridge";
 
 type ErrorMode = "unavailable" | "stale" | "signed_out";
 type PreviewProvider = "codex" | "claude";
@@ -25,7 +24,7 @@ const base: ProviderSnapshot = {
   weeklyWindow: { remainingPercent: 42, resetsAt: new Date(Date.now() + 3.2 * 86_400_000).toISOString(), windowSeconds: 604_800 },
   resetCredits: 1, resetCreditExpiresAt: [], updatedAt: new Date().toISOString(), status: "ok", message: null,
 };
-const preferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: "codex", autoRotateSeconds: 12, language: "en", appearance: "system", showTrayMetric: false, macosMaterial: "hud-window", macosMaterialAppearance: "system", macosMaterialBlending: "behind-window", macosMaterialState: "active", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
+const preferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: "codex", autoRotateSeconds: 12, language: "en", appearance: "system", showTrayMetric: false, license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
 const healthyGlassProgress: GlassProgressMaterial = { blur: 4, transparency: 14, baseStart: "#fafafa", baseEnd: "#fafafa", shadowX: -6, shadowY: 12, shadowBlur: 20, shadowColor: "#333333", shadowTransparency: 30, highlight: 45, glowSize: 70, glowColor: "#ea8f53", glowTransparency: 0 };
 const defaults: Controls = { radius: 38, numberSize: 64, progressHeight: 6, brightness: 100, motion: 18, glassProgressState: "healthy", glassProgress: { healthy: healthyGlassProgress, caution: { ...healthyGlassProgress, transparency: 31, baseStart: "#e5d094", baseEnd: "#e38e16" }, critical: { ...healthyGlassProgress, transparency: 60, baseStart: "#e8b0b0", baseEnd: "#ea0606" } }, glassNumberGradient: { healthy: { start: "#5b92ec", end: "#abccf7", angle: 135 }, caution: { start: "#e59b34", end: "#f3cf6d", angle: 135 }, critical: { start: "#eb6075", end: "#fba2a2", angle: 135 } } };
 const names: DesktopPaletteName[] = ["healthy", "caution", "critical", "unavailable", "stale", "signed_out"];
@@ -33,22 +32,22 @@ const modes: Array<[Mode, string]> = [[74, "healthy"], [35, "caution"], [8, "cri
 const fields = ["--cool", "--glow", "--warm", "--progress-start", "--progress-end"] as const;
 const workbenchCopy = {
   "zh-CN": {
-    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", nativeMaterial: "macOS 原生材质", supporter: "支持者皮肤",
+    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", supporter: "支持者皮肤",
     previewState: "预览状态", previewTheme: "预览主题", previewBackground: "预览背景", transparent: "透明", backgroundOne: "背景 1", backgroundLiquid: "液态玻璃", backgroundCity: "星际霓虹", backgroundMechanical: "机械", language: "内容语言", light: "浅色", dark: "深色", presentation: "展示模式", edit: "编辑模式",
     previewProvider: "预览来源", codex: "Codex", claude: "Claude",
     geometryPreview: "几何预览", description: "配色为只读，始终来自桌面组件。以下几何调整仅用于此预览，并会在刷新后恢复默认。",
     source: "桌面来源：", cornerRadius: "圆角", mainNumber: "主数字", progressHeight: "进度条高度", brightness: "亮度", motion: "动效", reset: "重置几何设置", numberGradient: "主数字 · 渐变", gradientStart: "渐变起点", gradientEnd: "渐变终点", gradientAngle: "渐变角度", progressMaterial: "动态条 · 玻璃材质", progressBlur: "Blur", progressTransparency: "Transparency", progressBaseColor: "Base Color", progressShadowX: "Shadow X", progressShadowY: "Shadow Y", progressShadowBlur: "Shadow Blur", progressShadowColor: "Shadow Color", progressShadowTransparency: "Shadow Transparency", progressHighlight: "Highlight", progressGlowSize: "Glow Size", progressGlowColor: "Glow Color", progressGlowTransparency: "Glow Transparency",
     sourceValues: "桌面源数值", paletteMatrix: "配色矩阵", paletteDescription: "这些数值为只读。选择一个状态即可检查其生产环境外观；如需修改桌面配色，请编辑", preview: "预览", verification: "预览验证成功",
-    nativeMaterialTitle: "macOS 原生材质", nativeMaterialDescription: "选择项会立即应用到运行中的 Glass 组件。macOS 已隐藏 Glass 的 CSS 背景，只显示原生材质。", material: "材质", materialAppearance: "外观", materialBlending: "混合方式", materialState: "状态", materialNote: "请在 Mac 上选中 Glass 皮肤查看实际效果。", healthy: "健康", caution: "注意", critical: "紧急", apiCost: "API 成本", apiCostOrb: "API 成本圆形", weekly: "每周", unavailable: "不可用", stale: "数据过期", signedOut: "未登录", healthyOrb: "健康圆形", cautionOrb: "注意圆形", criticalOrb: "紧急圆形", weeklyOrb: "每周圆形", unavailableOrb: "不可用圆形", staleOrb: "数据过期圆形", signedOutOrb: "未登录圆形",
+    healthy: "健康", caution: "注意", critical: "紧急", apiCost: "API 成本", apiCostOrb: "API 成本圆形", weekly: "每周", unavailable: "不可用", stale: "数据过期", signedOut: "未登录", healthyOrb: "健康圆形", cautionOrb: "注意圆形", criticalOrb: "紧急圆形", weeklyOrb: "每周圆形", unavailableOrb: "不可用圆形", staleOrb: "数据过期圆形", signedOutOrb: "未登录圆形",
   },
   en: {
-    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", nativeMaterial: "macOS material", supporter: "Supporter skins",
+    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", supporter: "Supporter skins",
     previewState: "Preview state", previewTheme: "Preview theme", previewBackground: "Preview background", transparent: "Transparent", backgroundOne: "Background 1", backgroundLiquid: "Liquid glass", backgroundCity: "Interstellar neon", backgroundMechanical: "Mechanical", language: "Content language", light: "Light", dark: "Dark", presentation: "Present", edit: "Edit",
     previewProvider: "Preview source", codex: "Codex", claude: "Claude",
     geometryPreview: "Geometry preview", description: "The palette is read-only and always comes from the desktop widget. Geometry changes below exist only in this preview and reset on refresh.",
     source: "Desktop source:", cornerRadius: "Corner radius", mainNumber: "Main number", progressHeight: "Progress height", brightness: "Brightness", motion: "Motion", reset: "Reset geometry", numberGradient: "Main number · Gradient", gradientStart: "Gradient start", gradientEnd: "Gradient end", gradientAngle: "Gradient angle", progressMaterial: "Dynamic bar · Glass material", progressBlur: "Blur", progressTransparency: "Transparency", progressBaseColor: "Base Color", progressShadowX: "Shadow X", progressShadowY: "Shadow Y", progressShadowBlur: "Shadow Blur", progressShadowColor: "Shadow Color", progressShadowTransparency: "Shadow Transparency", progressHighlight: "Highlight", progressGlowSize: "Glow Size", progressGlowColor: "Glow Color", progressGlowTransparency: "Glow Transparency",
     sourceValues: "Desktop source values", paletteMatrix: "Palette matrix", paletteDescription: "These values are read-only. Select a state to inspect its production appearance; edit", preview: "Preview", verification: "Preview verification success",
-    nativeMaterialTitle: "macOS native material", nativeMaterialDescription: "Each choice immediately applies to the running Glass widget. macOS hides the Glass CSS background so only the native material remains.", material: "Material", materialAppearance: "Appearance", materialBlending: "Blending", materialState: "State", materialNote: "Select the Glass skin on a Mac to see the real effect.", healthy: "Healthy", caution: "Caution", critical: "Critical", apiCost: "API cost", apiCostOrb: "API cost orb", weekly: "Weekly", unavailable: "Unavailable", stale: "Stale", signedOut: "Signed out", healthyOrb: "Healthy orb", cautionOrb: "Caution orb", criticalOrb: "Critical orb", weeklyOrb: "Weekly orb", unavailableOrb: "Unavailable orb", staleOrb: "Stale orb", signedOutOrb: "Signed out orb",
+    healthy: "Healthy", caution: "Caution", critical: "Critical", apiCost: "API cost", apiCostOrb: "API cost orb", weekly: "Weekly", unavailable: "Unavailable", stale: "Stale", signedOut: "Signed out", healthyOrb: "Healthy orb", cautionOrb: "Caution orb", criticalOrb: "Critical orb", weeklyOrb: "Weekly orb", unavailableOrb: "Unavailable orb", staleOrb: "Stale orb", signedOutOrb: "Signed out orb",
   },
 } as const;
 
@@ -103,8 +102,7 @@ export function DesignPlayground() {
   const [mode, setMode] = useState<Mode>(() => (query.get("mode") as Mode) || 74);
   const [controls, setControls] = useState<Controls>(defaults);
   const [language, setLanguage] = useState<Language>(() => query.get("language") === "en" ? "en" : "zh-CN");
-  const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "native-material" | "supporter">("widget");
-  const [macosMaterial, setMacosMaterial] = useState({ material: "hud-window" as MacosMaterial, appearance: "system" as MacosMaterialAppearance, blending: "behind-window" as MacosMaterialBlending, state: "active" as MacosMaterialState });
+  const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "supporter">("widget");
   const [previewProvider, setPreviewProvider] = useState<PreviewProvider>("codex");
   const [previewBackground, setPreviewBackground] = useState<PreviewBackground>("transparent");
   const [celebrationKey, setCelebrationKey] = useState(0);
@@ -115,12 +113,6 @@ export function DesignPlayground() {
   const t = workbenchCopy[language];
   const glassProgress = controls.glassProgress[controls.glassProgressState];
   const glassNumberGradient = controls.glassNumberGradient[controls.glassProgressState];
-  useEffect(() => { void getPreferences().then((saved) => setMacosMaterial({ material: saved.macosMaterial, appearance: saved.macosMaterialAppearance, blending: saved.macosMaterialBlending, state: saved.macosMaterialState })).catch(() => undefined); }, []);
-  const updateMacosMaterial = <K extends keyof typeof macosMaterial>(key: K, value: typeof macosMaterial[K]) => setMacosMaterial((current) => {
-    const next = { ...current, [key]: value };
-    void getPreferences().then((saved) => updatePreferences({ ...saved, macosMaterial: next.material, macosMaterialAppearance: next.appearance, macosMaterialBlending: next.blending, macosMaterialState: next.state })).catch(() => undefined);
-    return next;
-  });
   const style = (item: ProviderSnapshot) => {
     const palette = DESKTOP_PALETTES[theme][paletteName(item)];
     return { ...palette, "--card-radius": `${controls.radius}px`, "--number-size": `${controls.numberSize}px`, "--progress-height": `${controls.progressHeight}px`, "--card-brightness": `${controls.brightness}%`, "--motion-duration": `${controls.motion}s`, "--glass-number-gradient-start": glassNumberGradient.start, "--glass-number-gradient-end": glassNumberGradient.end, "--glass-number-gradient-angle": `${glassNumberGradient.angle}deg`, "--glass-progress-blur": `${glassProgress.blur}px`, "--glass-progress-transparency": `${glassProgress.transparency}%`, "--glass-progress-base-start": glassProgress.baseStart, "--glass-progress-base-end": glassProgress.baseEnd, "--glass-progress-shadow-x": `${glassProgress.shadowX}px`, "--glass-progress-shadow-y": `${glassProgress.shadowY}px`, "--glass-progress-shadow-blur": `${glassProgress.shadowBlur}px`, "--glass-progress-shadow-color": hexToRgb(glassProgress.shadowColor), "--glass-progress-shadow-transparency": `${glassProgress.shadowTransparency / 100}`, "--glass-progress-highlight": `${glassProgress.highlight / 100}`, "--glass-progress-glow-size": `${glassProgress.glowSize}px`, "--glass-progress-glow-color": hexToRgb(glassProgress.glowColor), "--glass-progress-glow-transparency": `${glassProgress.glowTransparency / 100}` } as CSSProperties;
@@ -153,9 +145,9 @@ export function DesignPlayground() {
 <SkinEffects />
       <button className="design-presentation-toggle" type="button" aria-pressed={presentationMode} onClick={() => setPresentationMode((value) => !value)}>{presentationMode ? t.edit : t.presentation}</button>
       <div className="design-selection-controls">
-      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "nexus"} className={previewTab === "nexus" ? "is-active" : ""} onClick={() => setPreviewTab("nexus")}>{t.nexus}</button><button role="tab" aria-selected={previewTab === "native-material"} className={previewTab === "native-material" ? "is-active" : ""} onClick={() => setPreviewTab("native-material")}>{t.nativeMaterial}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
+      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "nexus"} className={previewTab === "nexus" ? "is-active" : ""} onClick={() => setPreviewTab("nexus")}>{t.nexus}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
       </div>
-      {previewTab !== "supporter" && previewTab !== "native-material" ? <><div className="design-selection-controls"><div className="design-preview-switch" role="group" aria-label={t.previewState}>
+      {previewTab !== "supporter" ? <><div className="design-selection-controls"><div className="design-preview-switch" role="group" aria-label={t.previewState}>
         {modes.map(([value, label]) => <button key={label} className={mode === value ? "is-active" : ""} onClick={() => selectMode(value)}>{t[label as keyof typeof t]}</button>)}
       </div></div>
       <div className="design-preview-options">
@@ -169,12 +161,11 @@ export function DesignPlayground() {
           {(["codex", "claude"] as const).map((value) => <button key={value} className={previewProvider === value ? "is-active" : ""} onClick={() => setPreviewProvider(value)}>{t[value]}</button>)}
         </div> : null}
       </div>
-      <div className="design-preview-pair"><div className="design-orb-frame">{renderOrb(snapshot)}</div><div className="design-card-frame">{renderCard(snapshot)}</div></div></> : previewTab === "native-material" ? <div className="native-material-stage"><h2>{t.nativeMaterialTitle}</h2><p>{t.nativeMaterialDescription}</p><p>{t.materialNote}</p></div> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
+      <div className="design-preview-pair"><div className="design-orb-frame">{renderOrb(snapshot)}</div><div className="design-card-frame">{renderCard(snapshot)}</div></div></> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
     </section>
     <aside className="design-controls">
       <header><p className="design-kicker">QUOTA FLOAT · PREVIEW</p><h1>{t.geometryPreview}</h1><p className="design-description">{t.description}</p></header>
       <div className="design-language-switch" role="group" aria-label={t.language}><span>{t.language}</span>{(["zh-CN", "en"] as const).map((value) => <button key={value} className={language === value ? "is-active" : ""} onClick={() => setLanguage(value)}>{value === "zh-CN" ? "中文" : "English"}</button>)}</div>
-      {previewTab === "native-material" ? <section className="native-material-controls"><header><p className="design-kicker">MACOS</p><h1>{t.nativeMaterialTitle}</h1><p className="design-description">{t.nativeMaterialDescription}</p></header><Select label={t.material} value={macosMaterial.material} onChange={(value) => updateMacosMaterial("material", value as MacosMaterial)} options={[["hud-window", "HUD window"], ["popover", "Popover"], ["menu", "Menu"], ["sidebar", "Sidebar"], ["under-window-background", "Under window background"], ["window-background", "Window background"]]} /><Select label={t.materialAppearance} value={macosMaterial.appearance} onChange={(value) => updateMacosMaterial("appearance", value as MacosMaterialAppearance)} options={[["system", "System"], ["light", "Light Aqua"], ["dark", "Dark Aqua"]]} /><Select label={t.materialBlending} value={macosMaterial.blending} onChange={(value) => updateMacosMaterial("blending", value as MacosMaterialBlending)} options={[["behind-window", "Behind window"], ["within-window", "Within window"]]} /><Select label={t.materialState} value={macosMaterial.state} onChange={(value) => updateMacosMaterial("state", value as MacosMaterialState)} options={[["follows-window", "Follows window"], ["active", "Always active"], ["inactive", "Always inactive"]]} /><p className="design-source-note">{t.materialNote}</p></section> : <>
       <p className="design-source-note">{t.source} <code>DESKTOP_PALETTES.{theme}.{active}</code></p>
       <Range label={t.cornerRadius} value={controls.radius} min={18} max={64} unit="px" onChange={(value) => update("radius", value)} />
       <Range label={t.mainNumber} value={controls.numberSize} min={48} max={88} unit="px" onChange={(value) => update("numberSize", value)} />
@@ -204,7 +195,6 @@ export function DesignPlayground() {
         <Range label={t.progressGlowTransparency} value={glassProgress.glowTransparency} min={0} max={100} unit="%" onChange={(value) => updateGlassProgress("glowTransparency", value)} />
       </section> : null}
       <button className="reset-design" onClick={() => setControls(defaults)}>{t.reset}</button>
-      </>}
     </aside>
     <section className="palette-matrix" aria-labelledby="palette-matrix-title" hidden>
       <header className="palette-matrix__header"><p className="design-kicker">{t.sourceValues}</p><h2 id="palette-matrix-title">{t.paletteMatrix}</h2><p>{t.paletteDescription} <code>src/lib/desktopPalette.ts</code>{language === "zh-CN" ? "。" : "."}</p></header>
@@ -219,10 +209,6 @@ function Range({ label, value, min, max, unit, onChange }: { label: string; valu
 
 function Color({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return <label className="color-control color-control--glass"><span>{label}</span><input type="color" value={value} onChange={(event) => onChange(event.target.value)} /><code>{value}</code></label>;
-}
-
-function Select({ label, value, options, onChange }: { label: string; value: string; options: Array<[string, string]>; onChange: (value: string) => void }) {
-  return <label className="select-control"><span>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([option, text]) => <option key={option} value={option}>{text}</option>)}</select></label>;
 }
 
 function PaletteCard({ theme, name, label, previewLabel, selected, onSelect }: { theme: WidgetTheme; name: DesktopPaletteName; label: string; previewLabel: string; selected: boolean; onSelect: () => void }) {

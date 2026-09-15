@@ -38,8 +38,6 @@ pub fn sync(window: &tauri::WebviewWindow) {
     let _ = window.run_on_main_thread(move || {
         let Some(state) = widget.try_state::<AppState>() else { return; };
         let skin = super::preferences_lock(&state).selected_skin.clone();
-        #[cfg(target_os = "macos")]
-        let preferences = super::preferences_lock(&state).clone();
         let (Ok(size), Ok(scale)) = (widget.inner_size(), widget.scale_factor()) else { return; };
         let shape = surface(&skin, size.width as f64 / scale > 200.);
         #[cfg(target_os = "macos")]
@@ -47,11 +45,7 @@ pub fn sync(window: &tauri::WebviewWindow) {
             let s = shape.unwrap_or(Surface { x: 0., y: 0., width: 0., height: 0., radius: 0. });
             let points: Vec<f64> = NEXUS_POINTS.iter().flat_map(|&(x, y)| [x, y]).collect();
             unsafe { quota_update_material(handle, s.x, s.y, s.width, s.height, s.radius,
-                points.as_ptr(), NEXUS_POINTS.len(),
-                macos_material_code(&preferences.macos_material),
-                macos_appearance_code(&preferences.macos_material_appearance),
-                macos_blending_code(&preferences.macos_material_blending),
-                macos_state_code(&preferences.macos_material_state)) };
+                points.as_ptr(), NEXUS_POINTS.len()) };
         }
         #[cfg(target_os = "windows")]
         if let Ok(hwnd) = widget.hwnd() {
@@ -65,21 +59,9 @@ pub fn sync(window: &tauri::WebviewWindow) {
 }
 
 #[cfg(target_os = "macos")]
-fn macos_material_code(value: &str) -> i64 {
-    match value { "popover" => 6, "menu" => 5, "sidebar" => 7, "under-window-background" => 21, "window-background" => 12, _ => 13 }
-}
-#[cfg(target_os = "macos")]
-fn macos_appearance_code(value: &str) -> i64 { match value { "light" => 1, "dark" => 2, _ => 0 } }
-#[cfg(target_os = "macos")]
-fn macos_blending_code(value: &str) -> i64 { if value == "within-window" { 0 } else { 1 } }
-#[cfg(target_os = "macos")]
-fn macos_state_code(value: &str) -> i64 { match value { "follows-window" => 0, "inactive" => 2, _ => 1 } }
-
-#[cfg(target_os = "macos")]
 extern "C" {
     fn quota_update_material(window: *mut std::ffi::c_void, x: f64, y: f64, width: f64,
-        height: f64, radius: f64, points: *const f64, count: usize, material: i64,
-        appearance: i64, blending: i64, state: i64);
+        height: f64, radius: f64, points: *const f64, count: usize);
 }
 
 #[cfg(test)]

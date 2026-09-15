@@ -112,7 +112,7 @@ export function DesignPlayground() {
   const [nativeMaterial, setNativeMaterial] = useState<NativeMaterial>("hud");
   const [nativeAppearance, setNativeAppearance] = useState<NativeAppearance>("system");
   const [nativeBlending, setNativeBlending] = useState<NativeBlending>("behind");
-  const [nativeState, setNativeState] = useState<NativeState>("follows");
+  const [nativeState, setNativeState] = useState<NativeState>("active");
   const [previewProvider, setPreviewProvider] = useState<PreviewProvider>("codex");
   const [previewBackground, setPreviewBackground] = useState<PreviewBackground>("transparent");
   const [celebrationKey, setCelebrationKey] = useState(0);

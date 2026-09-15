@@ -159,7 +159,8 @@ fn sync_macos_menu_bar_metric(app: &AppHandle, state: &AppState, snapshots: &[Pr
     let preferences = preferences_lock(state).clone();
     if !preferences.show_tray_metric {
         if let Some(tray) = app.tray_by_id("main") {
-            let _ = tray.set_title(None::<String>);
+            // tray-icon on macOS ignores None; an empty title clears existing text.
+            let _ = tray.set_title(Some(""));
             if let Some(icon) = app.default_window_icon() {
                 let _ = tray.set_icon(Some(icon.clone()));
             }

@@ -236,12 +236,14 @@ export default function App() {
     void setWidgetExpanded(true).catch(() => setOperationError(operation.expandFailed));
   }, [operation.expandFailed, preferences.stayExpanded]);
 
+  const surfaceClassName = `skin-surface--${skin}${/Windows|Macintosh/.test(navigator.userAgent) ? " desktop-native" : ""}${/Macintosh/.test(navigator.userAgent) ? " macos-native-only" : ""}`;
+
   if (compact) {
-    return <div className={`skin-surface--${skin}${/Windows|Macintosh/.test(navigator.userAgent) ? " desktop-native" : ""}`}><SkinEffects /><QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} theme={theme} skin={skin} style={cardStyle} /></div>;
+    return <div className={surfaceClassName}><SkinEffects /><QuotaOrb snapshot={current} language={language} onDrag={() => startDragging()} onHover={handleHover} theme={theme} skin={skin} style={cardStyle} /></div>;
   }
 
   return (
-    <div className={`skin-surface--${skin}${/Windows|Macintosh/.test(navigator.userAgent) ? " desktop-native" : ""}`}><SkinEffects /><QuotaCard
+    <div className={surfaceClassName}><SkinEffects /><QuotaCard
       snapshot={current}
       preferences={preferences}
       providerCount={snapshots.length}

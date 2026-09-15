@@ -460,6 +460,17 @@ button { font: inherit; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb::before { background: linear-gradient(to left top, rgba(255,255,255,.225) 0%, rgba(255,255,255,0) 50%); }
 :is(.design-stage--glass, .skin-surface--glass) .quota-card::after,
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb::after { background: linear-gradient(to bottom, rgba(255,255,255,.135) 0%, rgba(255,255,255,0) 100%); }
+/* macOS material preview: isolate the native background without CSS frosting. */
+.skin-surface--glass.macos-native-only :is(.quota-card, .quota-orb) {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.skin-surface--glass.macos-native-only :is(.quota-card, .quota-orb)::before,
+.skin-surface--glass.macos-native-only :is(.quota-card, .quota-orb)::after {
+  display: none;
+}
 :is(.design-stage--glass, .skin-surface--glass) .quota-card .aurora,
 :is(.design-stage--glass, .skin-surface--glass) .quota-orb .aurora { display: none; }
 :is(.design-stage--glass, .skin-surface--glass) .quota-card .card-header,

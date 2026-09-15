@@ -5,6 +5,8 @@
 .screenshot-stage { width: 100vw; height: 100vh; display: grid; place-content: center; background: #f6f7fb; overflow: hidden; }
 .screenshot-stage--states { grid-template-columns: repeat(3, 320px); gap: 28px; align-content: center; justify-content: center; }
 .design-stage { position: relative; min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 60px 60px 360px; background-image: linear-gradient(45deg, #e6e8ec 25%, transparent 25%), linear-gradient(-45deg, #e6e8ec 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e6e8ec 75%), linear-gradient(-45deg, transparent 75%, #e6e8ec 75%); background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+.design-stage--glass .quota-card { backdrop-filter: blur(var(--glass-progress-blur, 4px)) saturate(70%); -webkit-backdrop-filter: blur(var(--glass-progress-blur, 4px)) saturate(70%); }
+.design-stage--glass .quota-orb { backdrop-filter: blur(var(--glass-progress-blur, 4px)) saturate(50%); -webkit-backdrop-filter: blur(var(--glass-progress-blur, 4px)) saturate(50%); }
 .design-card-frame { width: 314px; height: 314px; box-shadow: none; border-radius: var(--card-radius); }
 .design-orb-frame { width: 80px; height: 80px; box-shadow: none; border-radius: 24px; }
 .design-preview-pair { display: flex; align-items: flex-start; justify-content: center; gap: 20px; }

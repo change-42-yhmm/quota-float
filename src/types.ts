@@ -50,6 +50,7 @@ export interface WidgetPreferences {
   autoRotateSeconds: number;
   language: Language;
   appearance: AppearancePreference;
+  showMacosMenuBarMetric: boolean;
   license: string | null;
   licenses: string[];
   unlockedSkin: Exclude<WidgetSkin, "default"> | null;

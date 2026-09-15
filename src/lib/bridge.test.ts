@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
+  openUrl: vi.fn(async (_url: string) => {}),
   calls: [] as string[],
   invoke: vi.fn(async (command: string) => {
     api.calls.push(`start:${command}`);
@@ -13,12 +14,30 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: api.invoke }));
+vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: api.openUrl }));
 vi.mock("@tauri-apps/api/window", () => ({ currentMonitor: api.currentMonitor }));
 
 beforeEach(() => {
   vi.clearAllMocks();
   api.calls.length = 0;
   vi.stubGlobal("window", { __TAURI_INTERNALS__: {} });
+});
+
+describe("external links", () => {
+  it("opens desktop links through the system browser", async () => {
+    const { openExternalUrl } = await import("./bridge");
+    await openExternalUrl("https://ko-fi.com/change42/shop");
+    expect(api.openUrl).toHaveBeenCalledWith("https://ko-fi.com/change42/shop");
+  });
+
+  it("opens preview links without access to the opener window", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("window", { open });
+    const { openExternalUrl } = await import("./bridge");
+    await openExternalUrl("https://x.com/Spacelooklook");
+    expect(open).toHaveBeenCalledWith("https://x.com/Spacelooklook", "_blank", "noopener,noreferrer");
+    expect(api.openUrl).not.toHaveBeenCalled();
+  });
 });
 
 describe("widget transitions", () => {

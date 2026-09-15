@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { activateSupporterLicense, getPreferences, getSupporterStatus, listenDesktopEvents } from "../lib/bridge";
+import { ArrowUpRight } from "@phosphor-icons/react";
+import { activateSupporterLicense, getPreferences, getSupporterStatus, listenDesktopEvents, openExternalUrl } from "../lib/bridge";
 import { normalizeLanguage } from "../lib/i18n";
 import type { Language, SupporterStatus, WidgetSkin } from "../types";
 import logoUrl from "../../assets/quota-float-logo.svg";
@@ -45,12 +46,12 @@ export function SupporterPanel({ onStatus, preview = false, previewLanguage, cel
       <section className="supporter-platforms" aria-label={t.creatorPlatforms}>
         <strong>{t.creatorPlatforms}</strong>
         <div className="supporter-platform-grid">
-          <article className="supporter-platform-card"><div><b>小红书</b><span>Change设计师</span><small>350939939</small></div><a className="supporter-platform-link" href="https://xhslink.cn/o/7iGbWDEkuMO" target="_blank" rel="noreferrer" aria-label="打开小红书主页">↗</a></article>
-          <article className="supporter-platform-card"><div><b>抖音</b><span>Change | UI设计师</span><small>1872422843</small></div><a className="supporter-platform-link" href="https://v.douyin.com/Wsw9ZoB87uI/" target="_blank" rel="noreferrer" aria-label="打开抖音主页">↗</a></article>
-          <article className="supporter-platform-card"><div><b>X</b><span>@Spacelooklook</span></div><a className="supporter-platform-link" href="https://x.com/Spacelooklook" target="_blank" rel="noreferrer" aria-label="打开 X 主页">↗</a></article>
+          <article className="supporter-platform-card"><div><b>小红书</b><span>Change设计师</span><small>350939939</small></div><a className="supporter-platform-link" href="https://xhslink.cn/o/7iGbWDEkuMO" onClick={(event) => { event.preventDefault(); void openExternalUrl(event.currentTarget.href); }} aria-label="打开小红书主页"><ArrowUpRight aria-hidden="true" size={13} weight="bold" /></a></article>
+          <article className="supporter-platform-card"><div><b>抖音</b><span>Change | UI设计师</span><small>1872422843</small></div><a className="supporter-platform-link" href="https://v.douyin.com/Wsw9ZoB87uI/" onClick={(event) => { event.preventDefault(); void openExternalUrl(event.currentTarget.href); }} aria-label="打开抖音主页"><ArrowUpRight aria-hidden="true" size={13} weight="bold" /></a></article>
+          <article className="supporter-platform-card"><div><b>X</b><span>@Spacelooklook</span></div><a className="supporter-platform-link" href="https://x.com/Spacelooklook" onClick={(event) => { event.preventDefault(); void openExternalUrl(event.currentTarget.href); }} aria-label="打开 X 主页"><ArrowUpRight aria-hidden="true" size={13} weight="bold" /></a></article>
         </div>
       </section>
-      <section className="supporter-step"><span>{t.purchaseMethod}</span><a className="supporter-purchase" href="https://ko-fi.com/change42/shop" target="_blank" rel="noreferrer">{t.buy}</a></section>
+      <section className="supporter-step"><span>{t.purchaseMethod}</span><a className="supporter-purchase" href="https://ko-fi.com/change42/shop" onClick={(event) => { event.preventDefault(); void openExternalUrl(event.currentTarget.href); }}>{t.buy}</a></section>
       <label className="supporter-step"><span>{t.license}</span><textarea value={license} onChange={(event) => setLicense(event.target.value)} placeholder={t.placeholder} rows={4} /></label>
     </section>
     <button type="button" className="supporter-primary" disabled={busy || !license.trim()} onClick={activate}>{busy ? t.working : t.activate}</button>

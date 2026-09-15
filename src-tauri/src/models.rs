@@ -67,6 +67,8 @@ pub struct WidgetPreferences {
     pub language: String,
     #[serde(default = "default_appearance")]
     pub appearance: String,
+    #[serde(default = "default_macos_menu_bar_metric")]
+    pub show_macos_menu_bar_metric: bool,
     #[serde(default)]
     pub license: Option<String>,
     #[serde(default)]
@@ -129,6 +131,9 @@ fn default_appearance() -> String {
 fn default_skin() -> String {
     "default".into()
 }
+fn default_macos_menu_bar_metric() -> bool {
+    true
+}
 
 impl Default for WidgetPreferences {
     fn default() -> Self {
@@ -140,6 +145,7 @@ impl Default for WidgetPreferences {
             auto_rotate_seconds: 12,
             language: default_language(),
             appearance: default_appearance(),
+            show_macos_menu_bar_metric: default_macos_menu_bar_metric(),
             license: None,
             licenses: Vec::new(),
             unlocked_skin: None,

@@ -157,28 +157,41 @@ async fn fetch_snapshots_uncached(state: &State<'_, AppState>) -> Vec<ProviderSn
 #[cfg(target_os = "macos")]
 fn sync_macos_menu_bar_metric(app: &AppHandle, state: &AppState, snapshots: &[ProviderSnapshot]) {
     let preferences = preferences_lock(state).clone();
+    if !preferences.show_macos_menu_bar_metric {
+        if let Some(tray) = app.tray_by_id("main") {
+            let _ = tray.set_title(None::<String>);
+        }
+        return;
+    }
     let pinned = preferences.pinned_provider;
     let current = pinned
         .as_deref()
         .and_then(|provider| snapshots.iter().find(|item| item.provider == provider))
         .or_else(|| snapshots.first());
-    let title = current.and_then(|snapshot| {
+    let title = current.map(|snapshot| {
         if snapshot.status != "ok" {
-            return None;
+            return match (preferences.language.as_str(), snapshot.status.as_str()) {
+                ("en", "signed_out") => "Sign in required".into(),
+                ("en", "stale") => "Data expired".into(),
+                ("en", _) => "Unavailable".into(),
+                (_, "signed_out") => "需要登录".into(),
+                (_, "stale") => "数据过期".into(),
+                _ => "无法读取".into(),
+            };
         }
         if let Some(cost) = &snapshot.day_cost {
-            let label = if preferences.language == "en" { "API today" } else { "今日API" };
-            return Some(format!("{} {:.2}", label, cost.amount));
+            let label = if preferences.language == "en" { "API" } else { "今日API" };
+            return format!("{} {}", label, format_tray_api_amount(cost.amount));
         }
         if let Some(window) = &snapshot.short_window {
             let label = if preferences.language == "en" { "5h" } else { "5小时剩余" };
-            return Some(format!("{} {:.0}%", label, window.remaining_percent));
+            return format!("{} {:.0}%", label, window.remaining_percent);
         }
         if let Some(window) = &snapshot.weekly_window {
             let label = if preferences.language == "en" { "Week" } else { "周剩余" };
-            return Some(format!("{} {:.0}%", label, window.remaining_percent));
+            return format!("{} {:.0}%", label, window.remaining_percent);
         }
-        None
+        if preferences.language == "en" { "Unavailable".into() } else { "无法读取".into() }
     });
     if let Some(tray) = app.tray_by_id("main") {
         let _ = tray.set_title(title);
@@ -187,6 +200,99 @@ fn sync_macos_menu_bar_metric(app: &AppHandle, state: &AppState, snapshots: &[Pr
 
 #[cfg(not(target_os = "macos"))]
 fn sync_macos_menu_bar_metric(_app: &AppHandle, _state: &AppState, _snapshots: &[ProviderSnapshot]) {}
+
+fn format_tray_api_amount(amount: f64) -> String {
+    let amount = amount.max(0.0);
+    if amount >= 999.5 {
+        return "999+".into();
+    }
+    for decimals in [2, 1, 0] {
+        let text = format!("{amount:.decimals$}");
+        if text.chars().filter(|character| character.is_ascii_digit()).count() <= 4 {
+            return text;
+        }
+    }
+    "999+".into()
+}
+
+#[cfg(target_os = "windows")]
+fn windows_tray_text(snapshot: Option<&ProviderSnapshot>) -> String {
+    let Some(snapshot) = snapshot else { return "--".into() };
+    if snapshot.status != "ok" {
+        return "--".into();
+    }
+    if let Some(cost) = &snapshot.day_cost {
+        return format_tray_api_amount(cost.amount);
+    }
+    snapshot
+        .short_window
+        .as_ref()
+        .or(snapshot.weekly_window.as_ref())
+        .map(|window| format!("{:.0}", window.remaining_percent.clamp(0.0, 100.0)))
+        .unwrap_or_else(|| "--".into())
+}
+
+#[cfg(target_os = "windows")]
+fn windows_tray_image(text: &str) -> tauri::image::Image<'static> {
+    const SIZE: usize = 32;
+    const GLYPHS: [(&str, [&str; 5]); 13] = [
+        ("0", ["111", "101", "101", "101", "111"]), ("1", ["010", "110", "010", "010", "111"]),
+        ("2", ["111", "001", "111", "100", "111"]), ("3", ["111", "001", "111", "001", "111"]),
+        ("4", ["101", "101", "111", "001", "001"]), ("5", ["111", "100", "111", "001", "111"]),
+        ("6", ["111", "100", "111", "101", "111"]), ("7", ["111", "001", "010", "010", "010"]),
+        ("8", ["111", "101", "111", "101", "111"]), ("9", ["111", "101", "111", "001", "111"]),
+        ("-", ["000", "000", "111", "000", "000"]), (".", ["000", "000", "000", "000", "010"]),
+        ("+", ["000", "010", "111", "010", "000"]),
+    ];
+    let scale = if text.len() <= 2 { 4 } else if text.len() <= 4 { 2 } else { 1 };
+    let advance = 4 * scale;
+    let start_x = (SIZE.saturating_sub(text.len() * advance - scale)) / 2;
+    let start_y = (SIZE - 5 * scale) / 2;
+    let mut rgba = vec![0_u8; SIZE * SIZE * 4];
+    for y in 1..(SIZE - 1) {
+        for x in 1..(SIZE - 1) {
+            let index = (y * SIZE + x) * 4;
+            rgba[index..index + 4].copy_from_slice(&[12, 90, 122, 255]);
+        }
+    }
+    for (offset, character) in text.chars().enumerate() {
+        let Some((_, rows)) = GLYPHS.iter().find(|(symbol, _)| *symbol == character.to_string()) else { continue };
+        for (row, pattern) in rows.iter().enumerate() {
+            for (column, pixel) in pattern.chars().enumerate() {
+                if pixel == '1' {
+                    for dy in 0..scale { for dx in 0..scale {
+                        let x = start_x + offset * advance + column * scale + dx;
+                        let y = start_y + row * scale + dy;
+                        if x < SIZE && y < SIZE {
+                            let index = (y * SIZE + x) * 4;
+                            rgba[index..index + 4].copy_from_slice(&[255, 255, 255, 255]);
+                        }
+                    }}
+                }
+            }
+        }
+    }
+    tauri::image::Image::new_owned(rgba, SIZE as u32, SIZE as u32)
+}
+
+#[cfg(target_os = "windows")]
+fn sync_windows_tray_metric(app: &AppHandle, state: &AppState, snapshots: &[ProviderSnapshot]) {
+    let preferences = preferences_lock(state).clone();
+    let current = preferences.pinned_provider.as_deref().and_then(|provider| snapshots.iter().find(|item| item.provider == provider)).or_else(|| snapshots.first());
+    let text = windows_tray_text(current);
+    if let Some(tray) = app.tray_by_id("main") {
+        let _ = tray.set_icon(Some(windows_tray_image(&text)));
+        let _ = tray.set_tooltip(Some(format!("Quota Float · {text}")));
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn sync_windows_tray_metric(_app: &AppHandle, _state: &AppState, _snapshots: &[ProviderSnapshot]) {}
+
+fn sync_tray_metric(app: &AppHandle, state: &AppState, snapshots: &[ProviderSnapshot]) {
+    sync_macos_menu_bar_metric(app, state, snapshots);
+    sync_windows_tray_metric(app, state, snapshots);
+}
 
 fn load_preferences(path: &PathBuf) -> WidgetPreferences {
     let parse = |candidate: &PathBuf| {
@@ -266,7 +372,7 @@ async fn get_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec
         if let Some((time, values)) = &*cache {
             if time.elapsed() < CACHE_TTL {
                 let values = apply_short_window_test_override(&state, values.clone());
-                sync_macos_menu_bar_metric(&app, state.inner(), &values);
+                sync_tray_metric(&app, state.inner(), &values);
                 return Ok(values);
             }
         }
@@ -277,7 +383,7 @@ async fn get_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec
             if let Ok(cache) = state.snapshot_cache.lock() {
                 if let Some((_, values)) = &*cache {
                     let values = apply_short_window_test_override(&state, values.clone());
-                    sync_macos_menu_bar_metric(&app, state.inner(), &values);
+                    sync_tray_metric(&app, state.inner(), &values);
                     return Ok(values);
                 }
             }
@@ -285,7 +391,7 @@ async fn get_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec
                 "unavailable",
                 "Quota refresh is already running.",
             )];
-            sync_macos_menu_bar_metric(&app, state.inner(), &values);
+            sync_tray_metric(&app, state.inner(), &values);
             return Ok(values);
         }
     };
@@ -293,7 +399,7 @@ async fn get_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec
         if let Some((time, values)) = &*cache {
             if time.elapsed() < CACHE_TTL {
                 let values = apply_short_window_test_override(&state, values.clone());
-                sync_macos_menu_bar_metric(&app, state.inner(), &values);
+                sync_tray_metric(&app, state.inner(), &values);
                 return Ok(values);
             }
         }
@@ -303,14 +409,14 @@ async fn get_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec
         *cache = Some((Instant::now(), values.clone()));
     }
     let values = apply_short_window_test_override(&state, values);
-    sync_macos_menu_bar_metric(&app, state.inner(), &values);
+    sync_tray_metric(&app, state.inner(), &values);
     Ok(values)
 }
 
 #[tauri::command]
 async fn refresh_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec<ProviderSnapshot>, String> {
     let values = fetch_snapshots_uncached(&state).await;
-    sync_macos_menu_bar_metric(&app, state.inner(), &values);
+    sync_tray_metric(&app, state.inner(), &values);
     Ok(values)
 }
 
@@ -981,6 +1087,34 @@ fn renderer_preferences(current: &WidgetPreferences, requested: WidgetPreference
 mod supporter_preference_tests {
     use super::*;
 
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn windows_tray_uses_numeric_metric_or_error_marker() {
+        let snapshot = ProviderSnapshot {
+            status: "ok".into(),
+            short_window: Some(UsageWindow { remaining_percent: 74.4, resets_at: None, window_seconds: 18_000 }),
+            ..ProviderSnapshot::failure("unavailable", "not used")
+        };
+        assert_eq!(windows_tray_text(Some(&snapshot)), "74");
+        assert_eq!(windows_tray_text(None), "--");
+        assert_eq!(windows_tray_text(Some(&ProviderSnapshot::failure("signed_out", "sign in"))), "--");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn windows_tray_keeps_four_numeric_digits_for_api_amounts() {
+        let snapshot = ProviderSnapshot {
+            status: "ok".into(),
+            day_cost: Some(models::Money { amount: 100.3, currency: "USD".into() }),
+            ..ProviderSnapshot::failure("unavailable", "not used")
+        };
+        assert_eq!(windows_tray_text(Some(&snapshot)), "100.3");
+        assert_eq!(format_tray_api_amount(99.99), "99.99");
+        assert_eq!(format_tray_api_amount(0.83), "0.83");
+        assert_eq!(format_tray_api_amount(999.49), "999.5");
+        assert_eq!(format_tray_api_amount(1_000.0), "999+");
+    }
+
     #[test]
     fn renderer_preferences_cannot_unlock_or_select_a_supporter_skin() {
         let current = WidgetPreferences::default();
@@ -1353,6 +1487,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         autostart_enabled,
         None::<&str>,
     )?;
+    #[cfg(target_os = "macos")]
+    let menu_bar_metric = CheckMenuItem::with_id(app, "menu-bar-metric", "Show quota in menu bar", true, true, None::<&str>)?;
     #[cfg(debug_assertions)]
     let test_short_window = CheckMenuItem::with_id(
         app,
@@ -1363,6 +1499,14 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    #[cfg(target_os = "macos")]
+    let settings = Submenu::with_items(
+        app,
+        "Settings / 设置",
+        true,
+        &[&unlock, &pin, &language, &autostart, &menu_bar_metric],
+    )?;
+    #[cfg(not(target_os = "macos"))]
     let settings = Submenu::with_items(
         app,
         "Settings / 设置",
@@ -1387,6 +1531,11 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .try_state::<AppState>()
         .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.appearance.clone()))
         .unwrap_or_else(|| "system".into());
+    #[cfg(target_os = "macos")]
+    let initial_menu_bar_metric = app
+        .try_state::<AppState>()
+        .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.show_macos_menu_bar_metric))
+        .unwrap_or(true);
     let _ = supporter_blur.set_checked(initial_selected_skin == BLUR_SKIN_ID);
     let _ = supporter_computer.set_checked(initial_selected_skin == COMPUTER_SKIN_ID);
     let _ = supporter_glass.set_checked(initial_selected_skin == GLASS_SKIN_ID);
@@ -1394,6 +1543,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let _ = theme_system.set_checked(initial_appearance == "system");
     let _ = theme_dark.set_checked(initial_appearance == "dark");
     let _ = theme_light.set_checked(initial_appearance == "light");
+    #[cfg(target_os = "macos")]
+    let _ = menu_bar_metric.set_checked(initial_menu_bar_metric);
     let enabled_skins = app
         .try_state::<AppState>()
         .and_then(|state| {
@@ -1422,6 +1573,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         let _ = supporter_skins.set_text("支持者皮肤");
         let _ = supporter_skins_top.set_text("赞赏开发者（皮肤）");
         let _ = autostart.set_text("开机启动");
+        #[cfg(target_os = "macos")]
+        let _ = menu_bar_metric.set_text("在状态栏显示额度");
         let _ = quit.set_text("退出");
     }
     if initial_language == "en" {
@@ -1459,6 +1612,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         builder = builder.icon(icon.clone());
     }
     let autostart_menu = autostart.clone();
+    #[cfg(target_os = "macos")]
+    let menu_bar_metric_menu = menu_bar_metric.clone();
     let show_menu = show.clone();
     let refresh_menu = refresh.clone();
     let update_menu = update.clone();
@@ -1657,6 +1812,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         } else {
                             "开机启动"
                         });
+                        #[cfg(target_os = "macos")]
+                        let _ = menu_bar_metric_menu.set_text(if english { "Show quota in menu bar" } else { "在状态栏显示额度" });
                         let _ = quit_menu.set_text(if english { "Quit" } else { "退出" });
                         let _ = app.emit_to("widget", "preferences-changed", normalized.clone());
                         let _ = app.emit_to("supporter", "preferences-changed", normalized);
@@ -1666,6 +1823,27 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                             } else {
                                 "Quota Float · 支持者皮肤"
                             });
+                        }
+                    }
+                }
+            }
+            "menu-bar-metric" => {
+                #[cfg(target_os = "macos")]
+                if let Some(state) = app.try_state::<AppState>() {
+                    if let Ok(mut preferences) = state.preferences.lock() {
+                        preferences.show_macos_menu_bar_metric = !preferences.show_macos_menu_bar_metric;
+                        let saved = preferences.clone().normalized();
+                        *preferences = saved.clone();
+                        if persist_preferences(&state.preferences_path, &saved).is_ok() {
+                            let _ = menu_bar_metric_menu.set_checked(saved.show_macos_menu_bar_metric);
+                            let snapshots = state
+                                .snapshot_cache
+                                .lock()
+                                .ok()
+                                .and_then(|cache| cache.as_ref().map(|(_, snapshots)| snapshots.clone()))
+                                .unwrap_or_default();
+                            drop(preferences);
+                            sync_tray_metric(app, state.inner(), &snapshots);
                         }
                     }
                 }

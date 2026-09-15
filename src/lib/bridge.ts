@@ -1,7 +1,7 @@
 import type { ProviderSnapshot, SupporterStatus, WidgetPreferences, WidgetSkin } from "../types";
 import { systemLanguage } from "./i18n";
 
-const defaultPreferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: systemLanguage(), appearance: "light", license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
+const defaultPreferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: systemLanguage(), appearance: "light", showMacosMenuBarMetric: true, license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
 
 const mockSnapshot: ProviderSnapshot = {
   provider: "codex",
@@ -25,6 +25,15 @@ function enqueueWidgetTransition(operation: () => Promise<void>): Promise<void> 
 }
 
 export const isTauri = () => "__TAURI_INTERNALS__" in window;
+
+export async function openExternalUrl(url: string): Promise<void> {
+  if (!isTauri()) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+  const { openUrl } = await import("@tauri-apps/plugin-opener");
+  await openUrl(url);
+}
 
 export async function fetchSnapshots(force = false): Promise<ProviderSnapshot[]> {
   if (!isTauri()) return [mockSnapshot];

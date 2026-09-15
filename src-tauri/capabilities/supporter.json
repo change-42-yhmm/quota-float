@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "supporter",
+  "description": "Supporter window events and designer links",
+  "windows": ["supporter"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://xhslink.cn/o/7iGbWDEkuMO" },
+        { "url": "https://v.douyin.com/Wsw9ZoB87uI/" },
+        { "url": "https://x.com/Spacelooklook" },
+        { "url": "https://ko-fi.com/change42/shop" }
+      ]
+    }
+  ]
+}

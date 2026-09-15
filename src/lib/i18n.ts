@@ -120,7 +120,7 @@ export const copy = {
 } as const;
 
 export function normalizeLanguage(value: unknown): Language {
-  return value === "en" ? "en" : DEFAULT_LANGUAGE;
+  return value === "en" || value === "zh-CN" ? value : DEFAULT_LANGUAGE;
 }
 
 export function nextLanguage(language: Language): Language {

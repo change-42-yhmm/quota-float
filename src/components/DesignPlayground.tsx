@@ -17,6 +17,10 @@ type GlassProgressState = "healthy" | "caution" | "critical";
 type GlassProgressMaterial = { blur: number; transparency: number; baseStart: string; baseEnd: string; shadowX: number; shadowY: number; shadowBlur: number; shadowColor: string; shadowTransparency: number; highlight: number; glowSize: number; glowColor: string; glowTransparency: number };
 type GlassNumberGradient = { start: string; end: string; angle: number };
 type Controls = { radius: number; numberSize: number; progressHeight: number; brightness: number; motion: number; glassProgressState: GlassProgressState; glassProgress: Record<GlassProgressState, GlassProgressMaterial>; glassNumberGradient: Record<GlassProgressState, GlassNumberGradient> };
+type NativeMaterial = "hud" | "popover" | "menu" | "sidebar" | "under-window" | "window";
+type NativeAppearance = "system" | "light" | "dark";
+type NativeBlending = "behind" | "within";
+type NativeState = "follows" | "active" | "inactive";
 
 const base: ProviderSnapshot = {
   provider: "codex", displayName: "CODEX", plan: "PRO",
@@ -32,21 +36,23 @@ const modes: Array<[Mode, string]> = [[74, "healthy"], [35, "caution"], [8, "cri
 const fields = ["--cool", "--glow", "--warm", "--progress-start", "--progress-end"] as const;
 const workbenchCopy = {
   "zh-CN": {
-    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", supporter: "支持者皮肤",
+    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", nativeMaterial: "macOS 材质", supporter: "支持者皮肤",
     previewState: "预览状态", previewTheme: "预览主题", previewBackground: "预览背景", transparent: "透明", backgroundOne: "背景 1", backgroundLiquid: "液态玻璃", backgroundCity: "星际霓虹", backgroundMechanical: "机械", language: "内容语言", light: "浅色", dark: "深色", presentation: "展示模式", edit: "编辑模式",
     previewProvider: "预览来源", codex: "Codex", claude: "Claude",
     geometryPreview: "几何预览", description: "配色为只读，始终来自桌面组件。以下几何调整仅用于此预览，并会在刷新后恢复默认。",
     source: "桌面来源：", cornerRadius: "圆角", mainNumber: "主数字", progressHeight: "进度条高度", brightness: "亮度", motion: "动效", reset: "重置几何设置", numberGradient: "主数字 · 渐变", gradientStart: "渐变起点", gradientEnd: "渐变终点", gradientAngle: "渐变角度", progressMaterial: "动态条 · 玻璃材质", progressBlur: "Blur", progressTransparency: "Transparency", progressBaseColor: "Base Color", progressShadowX: "Shadow X", progressShadowY: "Shadow Y", progressShadowBlur: "Shadow Blur", progressShadowColor: "Shadow Color", progressShadowTransparency: "Shadow Transparency", progressHighlight: "Highlight", progressGlowSize: "Glow Size", progressGlowColor: "Glow Color", progressGlowTransparency: "Glow Transparency",
     sourceValues: "桌面源数值", paletteMatrix: "配色矩阵", paletteDescription: "这些数值为只读。选择一个状态即可检查其生产环境外观；如需修改桌面配色，请编辑", preview: "预览", verification: "预览验证成功",
+    nativeTitle: "macOS 原生材质预览", nativeDescription: "此页只模拟 macOS 原生材质的综合色、透明度和层次，不会修改安装包或 Windows 效果。选定后再把这一组参数应用到 macOS 原生层。", nativeMaterialLabel: "材质", nativeAppearanceLabel: "外观", nativeBlendingLabel: "混合方式", nativeStateLabel: "状态", hud: "HUD 窗口", popover: "弹出面板", menu: "菜单", sidebar: "侧栏", underWindow: "窗口背景下层", windowBackground: "窗口背景", system: "跟随系统", aquaLight: "浅色 Aqua", aquaDark: "深色 Aqua", behind: "窗口背后", within: "窗口内部", follows: "跟随窗口", active: "始终活跃", inactive: "始终非活跃",
     healthy: "健康", caution: "注意", critical: "紧急", apiCost: "API 成本", apiCostOrb: "API 成本圆形", weekly: "每周", unavailable: "不可用", stale: "数据过期", signedOut: "未登录", healthyOrb: "健康圆形", cautionOrb: "注意圆形", criticalOrb: "紧急圆形", weeklyOrb: "每周圆形", unavailableOrb: "不可用圆形", staleOrb: "数据过期圆形", signedOutOrb: "未登录圆形",
   },
   en: {
-    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", supporter: "Supporter skins",
+    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", nativeMaterial: "macOS material", supporter: "Supporter skins",
     previewState: "Preview state", previewTheme: "Preview theme", previewBackground: "Preview background", transparent: "Transparent", backgroundOne: "Background 1", backgroundLiquid: "Liquid glass", backgroundCity: "Interstellar neon", backgroundMechanical: "Mechanical", language: "Content language", light: "Light", dark: "Dark", presentation: "Present", edit: "Edit",
     previewProvider: "Preview source", codex: "Codex", claude: "Claude",
     geometryPreview: "Geometry preview", description: "The palette is read-only and always comes from the desktop widget. Geometry changes below exist only in this preview and reset on refresh.",
     source: "Desktop source:", cornerRadius: "Corner radius", mainNumber: "Main number", progressHeight: "Progress height", brightness: "Brightness", motion: "Motion", reset: "Reset geometry", numberGradient: "Main number · Gradient", gradientStart: "Gradient start", gradientEnd: "Gradient end", gradientAngle: "Gradient angle", progressMaterial: "Dynamic bar · Glass material", progressBlur: "Blur", progressTransparency: "Transparency", progressBaseColor: "Base Color", progressShadowX: "Shadow X", progressShadowY: "Shadow Y", progressShadowBlur: "Shadow Blur", progressShadowColor: "Shadow Color", progressShadowTransparency: "Shadow Transparency", progressHighlight: "Highlight", progressGlowSize: "Glow Size", progressGlowColor: "Glow Color", progressGlowTransparency: "Glow Transparency",
     sourceValues: "Desktop source values", paletteMatrix: "Palette matrix", paletteDescription: "These values are read-only. Select a state to inspect its production appearance; edit", preview: "Preview", verification: "Preview verification success",
+    nativeTitle: "macOS native material preview", nativeDescription: "This page simulates the color, transparency, and layering of macOS native materials. It does not change the installer or Windows. The confirmed selection will later be applied to the macOS native layer.", nativeMaterialLabel: "Material", nativeAppearanceLabel: "Appearance", nativeBlendingLabel: "Blending", nativeStateLabel: "State", hud: "HUD window", popover: "Popover", menu: "Menu", sidebar: "Sidebar", underWindow: "Under window background", windowBackground: "Window background", system: "Follow system", aquaLight: "Light Aqua", aquaDark: "Dark Aqua", behind: "Behind window", within: "Within window", follows: "Follows window", active: "Always active", inactive: "Always inactive",
     healthy: "Healthy", caution: "Caution", critical: "Critical", apiCost: "API cost", apiCostOrb: "API cost orb", weekly: "Weekly", unavailable: "Unavailable", stale: "Stale", signedOut: "Signed out", healthyOrb: "Healthy orb", cautionOrb: "Caution orb", criticalOrb: "Critical orb", weeklyOrb: "Weekly orb", unavailableOrb: "Unavailable orb", staleOrb: "Stale orb", signedOutOrb: "Signed out orb",
   },
 } as const;
@@ -102,7 +108,11 @@ export function DesignPlayground() {
   const [mode, setMode] = useState<Mode>(() => (query.get("mode") as Mode) || 74);
   const [controls, setControls] = useState<Controls>(defaults);
   const [language, setLanguage] = useState<Language>(() => query.get("language") === "en" ? "en" : "zh-CN");
-  const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "supporter">("widget");
+  const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "native-material" | "supporter">("widget");
+  const [nativeMaterial, setNativeMaterial] = useState<NativeMaterial>("hud");
+  const [nativeAppearance, setNativeAppearance] = useState<NativeAppearance>("system");
+  const [nativeBlending, setNativeBlending] = useState<NativeBlending>("behind");
+  const [nativeState, setNativeState] = useState<NativeState>("active");
   const [previewProvider, setPreviewProvider] = useState<PreviewProvider>("codex");
   const [previewBackground, setPreviewBackground] = useState<PreviewBackground>("transparent");
   const [celebrationKey, setCelebrationKey] = useState(0);
@@ -136,16 +146,16 @@ export function DesignPlayground() {
     const nextGlassProgressState = glassProgressStateForMode(nextMode);
     if (nextGlassProgressState) setControls((previous) => ({ ...previous, glassProgressState: nextGlassProgressState }));
   };
-  const skin: WidgetSkin = previewTab === "blur" ? "blur" : previewTab === "computer" ? "computer" : "default";
+  const skin: WidgetSkin = previewTab === "blur" ? "blur" : previewTab === "computer" ? "computer" : previewTab === "glass" || previewTab === "native-material" ? "glass" : "default";
   const renderCard = (item: ProviderSnapshot) => <QuotaCard snapshot={item} preferences={{ ...preferences, ...(previewTab === "nexus" ? nexusButtons : {}), language }} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLock={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, alwaysOnTop: !previous.alwaysOnTop })); }} onToggleStayExpanded={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, stayExpanded: !previous.stayExpanded })); }} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} nexusPreview={previewTab === "nexus"} providerMarkVariant={previewTab === "glass" || previewTab === "nexus" ? "glass" : "default"} style={style(item)} />;
   const renderOrb = (item: ProviderSnapshot) => <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />;
 
   return <main className={`design-workbench design-workbench--${theme}`}>
-    <section className={`design-stage design-stage--${previewTab} design-stage--background-${previewBackground}${presentationMode ? " design-stage--presentation" : ""}`} aria-label={t.widget}>
+    <section className={`design-stage design-stage--${previewTab} design-stage--background-${previewBackground} native-material--${nativeMaterial} native-appearance--${nativeAppearance} native-blending--${nativeBlending} native-state--${nativeState}${presentationMode ? " design-stage--presentation" : ""}`} aria-label={t.widget}>
 <SkinEffects />
       <button className="design-presentation-toggle" type="button" aria-pressed={presentationMode} onClick={() => setPresentationMode((value) => !value)}>{presentationMode ? t.edit : t.presentation}</button>
       <div className="design-selection-controls">
-      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "nexus"} className={previewTab === "nexus" ? "is-active" : ""} onClick={() => setPreviewTab("nexus")}>{t.nexus}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
+      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "nexus"} className={previewTab === "nexus" ? "is-active" : ""} onClick={() => setPreviewTab("nexus")}>{t.nexus}</button><button role="tab" aria-selected={previewTab === "native-material"} className={previewTab === "native-material" ? "is-active" : ""} onClick={() => setPreviewTab("native-material")}>{t.nativeMaterial}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
       </div>
       {previewTab !== "supporter" ? <><div className="design-selection-controls"><div className="design-preview-switch" role="group" aria-label={t.previewState}>
         {modes.map(([value, label]) => <button key={label} className={mode === value ? "is-active" : ""} onClick={() => selectMode(value)}>{t[label as keyof typeof t]}</button>)}
@@ -166,6 +176,7 @@ export function DesignPlayground() {
     <aside className="design-controls">
       <header><p className="design-kicker">QUOTA FLOAT · PREVIEW</p><h1>{t.geometryPreview}</h1><p className="design-description">{t.description}</p></header>
       <div className="design-language-switch" role="group" aria-label={t.language}><span>{t.language}</span>{(["zh-CN", "en"] as const).map((value) => <button key={value} className={language === value ? "is-active" : ""} onClick={() => setLanguage(value)}>{value === "zh-CN" ? "中文" : "English"}</button>)}</div>
+      {previewTab === "native-material" ? <section className="native-material-controls"><header><p className="design-kicker">MACOS · PREVIEW ONLY</p><h1>{t.nativeTitle}</h1><p className="design-description">{t.nativeDescription}</p></header><Select label={t.nativeMaterialLabel} value={nativeMaterial} onChange={(value) => setNativeMaterial(value as NativeMaterial)} options={[["hud", t.hud], ["popover", t.popover], ["menu", t.menu], ["sidebar", t.sidebar], ["under-window", t.underWindow], ["window", t.windowBackground]]} /><Select label={t.nativeAppearanceLabel} value={nativeAppearance} onChange={(value) => setNativeAppearance(value as NativeAppearance)} options={[["system", t.system], ["light", t.aquaLight], ["dark", t.aquaDark]]} /><Select label={t.nativeBlendingLabel} value={nativeBlending} onChange={(value) => setNativeBlending(value as NativeBlending)} options={[["behind", t.behind], ["within", t.within]]} /><Select label={t.nativeStateLabel} value={nativeState} onChange={(value) => setNativeState(value as NativeState)} options={[["follows", t.follows], ["active", t.active], ["inactive", t.inactive]]} /></section> : null}
       <p className="design-source-note">{t.source} <code>DESKTOP_PALETTES.{theme}.{active}</code></p>
       <Range label={t.cornerRadius} value={controls.radius} min={18} max={64} unit="px" onChange={(value) => update("radius", value)} />
       <Range label={t.mainNumber} value={controls.numberSize} min={48} max={88} unit="px" onChange={(value) => update("numberSize", value)} />
@@ -209,6 +220,10 @@ function Range({ label, value, min, max, unit, onChange }: { label: string; valu
 
 function Color({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return <label className="color-control color-control--glass"><span>{label}</span><input type="color" value={value} onChange={(event) => onChange(event.target.value)} /><code>{value}</code></label>;
+}
+
+function Select({ label, value, options, onChange }: { label: string; value: string; options: Array<[string, string]>; onChange: (value: string) => void }) {
+  return <label className="select-control"><span>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([option, text]) => <option key={option} value={option}>{text}</option>)}</select></label>;
 }
 
 function PaletteCard({ theme, name, label, previewLabel, selected, onSelect }: { theme: WidgetTheme; name: DesktopPaletteName; label: string; previewLabel: string; selected: boolean; onSelect: () => void }) {

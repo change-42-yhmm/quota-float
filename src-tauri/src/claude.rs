@@ -55,5 +55,29 @@ pub async fn fetch_snapshot(client: &Client) -> ProviderSnapshot {
             status: "ok".into(), message: None, month_cost: None, day_cost: None,
         })
     }.await;
-    result.unwrap_or_else(|message| ProviderSnapshot { provider: "claude".into(), display_name: "CLAUDE".into(), ..ProviderSnapshot::failure(if message.contains("sign-in") { "signed_out" } else { "unavailable" }, &message) })
+    result.unwrap_or_else(|message| ProviderSnapshot {
+        provider: "claude".into(),
+        display_name: "CLAUDE".into(),
+        ..ProviderSnapshot::failure(
+            if is_sign_in_issue(&message) { "signed_out" } else { "unavailable" },
+            &message,
+        )
+    })
+}
+
+fn is_sign_in_issue(message: &str) -> bool {
+    let value = message.to_ascii_lowercase();
+    value.contains("sign-in") || value.contains("credentials") || value.contains("login")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_sign_in_issue;
+
+    #[test]
+    fn classifies_missing_or_expired_claude_credentials_as_sign_in_required() {
+        assert!(is_sign_in_issue("Claude Code credentials were not found"));
+        assert!(is_sign_in_issue("Claude Code sign-in is required"));
+        assert!(!is_sign_in_issue("Claude quota response format changed"));
+    }
 }

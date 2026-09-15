@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "@phosphor-icons/react";
-import { activateSupporterLicense, getPreferences, getSupporterStatus, listenDesktopEvents, openExternalUrl } from "../lib/bridge";
+import { activateSupporterLicense, connectApiCostSource, connectClaudeSubscription, disconnectSource, getPreferences, getSourceStatuses, getSupporterStatus, listenDesktopEvents, openExternalUrl } from "../lib/bridge";
 import { normalizeLanguage } from "../lib/i18n";
-import type { Language, SupporterStatus, WidgetSkin } from "../types";
+import type { Language, SourceStatus, SupporterStatus, WidgetSkin } from "../types";
 import logoUrl from "../../assets/quota-float-logo.svg";
 import blurThumbnailUrl from "../../assets/skin-blur.png";
 import computerThumbnailUrl from "../../assets/skin-computer.png";
@@ -22,6 +22,32 @@ const choices: Array<{ id: PreviewSkin; name: Record<Language, string>; price: R
 ];
 const previewStatus: SupporterStatus = { requestCode: "QF1-DEMO-DEVICE-CODE", active: true, message: "Supporter licenses are active.", unlockedSkin: "blur", unlockedSkins: ["blur", "computer"], selectedSkin: "blur", availableSkins: ["default", "blur", "computer"] };
 
+const sourceCopy = {
+  "zh-CN": { title: "额度数据源", claude: "Claude 订阅", openai: "GPT / OpenAI API 成本", claudeApi: "Claude API 成本", connect: "连接", disconnect: "断开", detected: "已检测到 Claude Code 登录", apiHint: "粘贴只读组织级 API 凭证；密钥仅保存在系统凭据库。", connected: "已连接", unavailable: "未连接", save: "验证并连接" },
+  en: { title: "Quota sources", claude: "Claude subscription", openai: "GPT / OpenAI API costs", claudeApi: "Claude API costs", connect: "Connect", disconnect: "Disconnect", detected: "Claude Code sign-in detected", apiHint: "Paste a read-only organization credential; it is stored only in the system credential vault.", connected: "Connected", unavailable: "Not connected", save: "Verify and connect" },
+} as const;
+
+function SourceManager({ language, preview }: { language: Language; preview: boolean }) {
+  const [sources, setSources] = useState<SourceStatus[]>([]);
+  const [credential, setCredential] = useState("");
+  const [target, setTarget] = useState<"openai_api" | "claude_api">("openai_api");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const t = sourceCopy[language];
+  useEffect(() => { if (!preview) void getSourceStatuses().then(setSources).catch(() => setMessage(language === "en" ? "Sources are unavailable." : "数据源暂不可用。")); }, [preview, language]);
+  const find = (id: SourceStatus["id"]) => sources.find((item) => item.id === id);
+  const connectClaude = () => { setBusy(true); setMessage(""); void connectClaudeSubscription().then(setSources).catch((error: unknown) => setMessage(error instanceof Error ? error.message : String(error))).finally(() => setBusy(false)); };
+  const connectApi = () => { if (!credential.trim()) return; setBusy(true); setMessage(""); void connectApiCostSource(target, credential).then((value) => { setSources(value); setCredential(""); }).catch((error: unknown) => setMessage(error instanceof Error ? error.message : String(error))).finally(() => setBusy(false)); };
+  const disconnect = (id: "claude" | "openai_api" | "claude_api") => { setBusy(true); setMessage(""); void disconnectSource(id).then(setSources).catch((error: unknown) => setMessage(error instanceof Error ? error.message : String(error))).finally(() => setBusy(false)); };
+  const claude = find("claude");
+  return <section className="supporter-workflow" aria-label={t.title}><h2>{t.title}</h2>
+    <div className="supporter-step"><span>{t.claude}</span><p>{claude?.connected ? t.connected : claude?.detected ? t.detected : t.unavailable}</p>{claude?.connected ? <button type="button" disabled={busy} onClick={() => disconnect("claude")}>{t.disconnect}</button> : <button type="button" disabled={busy || !claude?.detected} onClick={connectClaude}>{t.connect}</button>}</div>
+    {([ ["openai_api", t.openai], ["claude_api", t.claudeApi] ] as const).map(([id, name]) => { const source = find(id); return <div className="supporter-step" key={id}><span>{name}</span><p>{source?.connected ? t.connected : t.unavailable}</p>{source?.connected ? <button type="button" disabled={busy} onClick={() => disconnect(id)}>{t.disconnect}</button> : <button type="button" disabled={busy} onClick={() => setTarget(id)}>{target === id ? t.save : t.connect}</button>}</div>; })}
+    {!find(target)?.connected ? <label className="supporter-step"><span>{target === "openai_api" ? t.openai : t.claudeApi}</span><small>{t.apiHint}</small><input type="password" autoComplete="off" value={credential} onChange={(event) => setCredential(event.target.value)} /><button type="button" disabled={busy || !credential.trim()} onClick={connectApi}>{t.save}</button></label> : null}
+    {message ? <p className="supporter-status" role="status">{message}</p> : null}
+  </section>;
+}
+
 export function SupporterPanel({ onStatus, preview = false, previewLanguage, celebrationKey = 0 }: { onStatus: (status: SupporterStatus) => void; preview?: boolean; previewLanguage?: Language; celebrationKey?: number }) {
   const [status, setStatus] = useState<SupporterStatus | null>(null); const [requestedSkin, setRequestedSkin] = useState<PreviewSkin>("blur"); const [license, setLicense] = useState(""); const [busy, setBusy] = useState(false); const [copied, setCopied] = useState(false); const [language, setLanguage] = useState<Language>("zh-CN"); const [message, setMessage] = useState(""); const [statusError, setStatusError] = useState(false); const [showLike, setShowLike] = useState(false); const t = labels[language];
   useEffect(() => { if (preview) { setStatus(previewStatus); return; } void getSupporterStatus().then((value) => { setStatus(value); setStatusError(false); onStatus(value); }).catch(() => setStatusError(true)); }, [preview]);
@@ -39,6 +65,7 @@ export function SupporterPanel({ onStatus, preview = false, previewLanguage, cel
     <header className="supporter-brand"><div className="supporter-logo"><img src={logoUrl} alt="Quota Float" /><span>Quota-float</span></div></header>
     <h1>{t.title}</h1>
     <p className="supporter-description">{t.description}</p>
+    <SourceManager language={language} preview={preview} />
     <section className="supporter-workflow">
       <h2>{t.supporterSkins}</h2>
       <div className="supporter-step"><span>{t.choose}</span><div className="supporter-skins">{choices.map((skin) => { const owned = status?.availableSkins.some((id) => id === skin.id) ?? false; return <button key={skin.id} type="button" disabled={busy} className={`${requestedSkin === skin.id ? "is-selected" : ""}${owned ? " is-owned" : ""}`} aria-pressed={requestedSkin === skin.id} aria-haspopup="dialog" onClick={() => { setRequestedSkin(skin.id); previewDialog.current?.showModal(); }}><img src={skin.thumbnail} alt={skin.name[language]} /><span className="skin-choice-price" aria-label={`${skin.name[language]} ${skin.price[language]}`}><b>{skin.name[language]}</b><strong>{skin.price[language]}</strong></span>{owned ? <em className="skin-owned-badge">{t.owned}</em> : null}</button>; })}</div></div>

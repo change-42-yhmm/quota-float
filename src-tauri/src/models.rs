@@ -70,6 +70,12 @@ pub struct WidgetPreferences {
     #[serde(default)]
     pub show_tray_metric: bool,
     #[serde(default)]
+    pub claude_subscription_connected_at: Option<String>,
+    #[serde(default)]
+    pub openai_api_connected_at: Option<String>,
+    #[serde(default)]
+    pub claude_api_connected_at: Option<String>,
+    #[serde(default)]
     pub license: Option<String>,
     #[serde(default)]
     pub licenses: Vec<String>,
@@ -169,6 +175,9 @@ impl Default for WidgetPreferences {
             language: default_language(),
             appearance: default_appearance(),
             show_tray_metric: false,
+            claude_subscription_connected_at: None,
+            openai_api_connected_at: None,
+            claude_api_connected_at: None,
             license: None,
             licenses: Vec::new(),
             unlocked_skin: None,
@@ -186,7 +195,7 @@ impl Default for WidgetPreferences {
 impl WidgetPreferences {
     pub fn normalized(mut self) -> Self {
         self.auto_rotate_seconds = self.auto_rotate_seconds.clamp(5, 300);
-        if !matches!(self.pinned_provider.as_deref(), Some("codex" | "claude")) {
+        if !matches!(self.pinned_provider.as_deref(), Some("codex" | "claude" | "openai_api" | "claude_api")) {
             self.pinned_provider = None;
         }
         if self.language != "en" && self.language != "zh-CN" {

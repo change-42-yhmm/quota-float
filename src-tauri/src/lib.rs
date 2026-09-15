@@ -1,4 +1,7 @@
+mod api_costs;
+mod claude;
 mod codex;
+mod credentials;
 mod license;
 mod models;
 mod native_material;
@@ -15,7 +18,7 @@ use license::{device_request_code, parse_and_verify, SupporterStatus, BLUR_SKIN_
 use models::{ProviderSnapshot, WidgetPreferences};
 #[cfg(debug_assertions)]
 use models::UsageWindow;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem, Submenu},
@@ -111,6 +114,15 @@ struct AppState {
     update_available: Mutex<bool>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SourceStatus {
+    id: String,
+    connected: bool,
+    detected: bool,
+    connected_at: Option<String>,
+}
+
 fn update_menu_label(language: &str, update_available: bool) -> &'static str {
     match (language == "en", update_available) {
         (true, true) => "🟢 Check for updates",
@@ -145,9 +157,32 @@ fn apply_short_window_test_override(
     snapshots
 }
 
+async fn fetch_connected_snapshots(state: &AppState) -> Vec<ProviderSnapshot> {
+    let preferences = preferences_lock(state).clone();
+    let mut values = vec![codex::fetch_snapshot(&state.client).await];
+    if preferences.claude_subscription_connected_at.is_some() {
+        values.push(claude::fetch_snapshot(&state.client).await);
+    }
+    if preferences.openai_api_connected_at.is_some() {
+        let snapshot = match credentials::load("openai_api") {
+            Ok(key) => api_costs::fetch_openai(&state.client, &key).await,
+            Err(message) => Err(message),
+        }.unwrap_or_else(|message| ProviderSnapshot { provider: "openai_api".into(), display_name: "OPENAI API".into(), ..ProviderSnapshot::failure("unavailable", &message) });
+        values.push(snapshot);
+    }
+    if preferences.claude_api_connected_at.is_some() {
+        let snapshot = match credentials::load("claude_api") {
+            Ok(key) => api_costs::fetch_claude(&state.client, &key).await,
+            Err(message) => Err(message),
+        }.unwrap_or_else(|message| ProviderSnapshot { provider: "claude_api".into(), display_name: "CLAUDE API".into(), ..ProviderSnapshot::failure("unavailable", &message) });
+        values.push(snapshot);
+    }
+    values
+}
+
 async fn fetch_snapshots_uncached(state: &State<'_, AppState>) -> Vec<ProviderSnapshot> {
     let _guard = state.fetch_lock.lock().await;
-    let values = vec![codex::fetch_snapshot(&state.client).await];
+    let values = fetch_connected_snapshots(state.inner()).await;
     if let Ok(mut cache) = state.snapshot_cache.lock() {
         *cache = Some((Instant::now(), values.clone()));
     }
@@ -418,7 +453,7 @@ async fn get_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result<Vec
             }
         }
     }
-    let values = vec![codex::fetch_snapshot(&state.client).await];
+    let values = fetch_connected_snapshots(state.inner()).await;
     if let Ok(mut cache) = state.snapshot_cache.lock() {
         *cache = Some((Instant::now(), values.clone()));
     }
@@ -432,6 +467,73 @@ async fn refresh_snapshots(app: AppHandle, state: State<'_, AppState>) -> Result
     let values = fetch_snapshots_uncached(&state).await;
     sync_tray_metric(&app, state.inner(), &values);
     Ok(values)
+}
+
+fn source_statuses(preferences: &WidgetPreferences) -> Vec<SourceStatus> {
+    vec![
+        SourceStatus { id: "codex".into(), connected: true, detected: true, connected_at: None },
+        SourceStatus { id: "claude".into(), connected: preferences.claude_subscription_connected_at.is_some(), detected: claude::is_detected(), connected_at: preferences.claude_subscription_connected_at.clone() },
+        SourceStatus { id: "openai_api".into(), connected: preferences.openai_api_connected_at.is_some(), detected: false, connected_at: preferences.openai_api_connected_at.clone() },
+        SourceStatus { id: "claude_api".into(), connected: preferences.claude_api_connected_at.is_some(), detected: false, connected_at: preferences.claude_api_connected_at.clone() },
+    ]
+}
+
+#[tauri::command]
+fn get_source_statuses(state: State<'_, AppState>) -> Vec<SourceStatus> {
+    source_statuses(&preferences_lock(state.inner()))
+}
+
+#[tauri::command]
+async fn connect_claude_subscription(app: AppHandle, state: State<'_, AppState>) -> Result<Vec<SourceStatus>, String> {
+    if !claude::is_detected() { return Err("Claude Code credentials were not found".into()); }
+    let validation = claude::fetch_snapshot(&state.client).await;
+    if validation.status != "ok" { return Err(validation.message.unwrap_or_else(|| "Claude subscription could not be connected".into())); }
+    let mut preferences = preferences_lock(state.inner());
+    if preferences.claude_subscription_connected_at.is_none() { preferences.claude_subscription_connected_at = Some(Utc::now().to_rfc3339()); }
+    let saved = preferences.clone().normalized();
+    *preferences = saved.clone();
+    persist_preferences(&state.preferences_path, &saved)?;
+    drop(preferences);
+    let _ = app.emit_to("widget", "refresh-requested", ());
+    Ok(source_statuses(&saved))
+}
+
+#[tauri::command]
+async fn connect_api_cost_source(app: AppHandle, state: State<'_, AppState>, source: String, credential: String) -> Result<Vec<SourceStatus>, String> {
+    let source = source.trim();
+    let validation = match source {
+        "openai_api" => api_costs::fetch_openai(&state.client, credential.trim()).await,
+        "claude_api" => api_costs::fetch_claude(&state.client, credential.trim()).await,
+        _ => return Err("unknown API cost source".into()),
+    }?;
+    if validation.status != "ok" { return Err("API cost source could not be connected".into()); }
+    credentials::save(source, credential.trim())?;
+    let mut preferences = preferences_lock(state.inner());
+    let connected_at = Some(Utc::now().to_rfc3339());
+    match source { "openai_api" => preferences.openai_api_connected_at = connected_at, "claude_api" => preferences.claude_api_connected_at = connected_at, _ => unreachable!() }
+    let saved = preferences.clone().normalized();
+    *preferences = saved.clone();
+    persist_preferences(&state.preferences_path, &saved)?;
+    drop(preferences);
+    let _ = app.emit_to("widget", "refresh-requested", ());
+    Ok(source_statuses(&saved))
+}
+
+#[tauri::command]
+fn disconnect_source(app: AppHandle, state: State<'_, AppState>, source: String) -> Result<Vec<SourceStatus>, String> {
+    let source = source.trim();
+    if !matches!(source, "claude" | "openai_api" | "claude_api") { return Err("unknown source".into()); }
+    if source != "claude" { credentials::delete(source)?; }
+    let mut preferences = preferences_lock(state.inner());
+    match source { "claude" => preferences.claude_subscription_connected_at = None, "openai_api" => preferences.openai_api_connected_at = None, "claude_api" => preferences.claude_api_connected_at = None, _ => unreachable!() }
+    if preferences.pinned_provider.as_deref() == Some(source) { preferences.pinned_provider = None; }
+    let saved = preferences.clone().normalized();
+    *preferences = saved.clone();
+    persist_preferences(&state.preferences_path, &saved)?;
+    drop(preferences);
+    if let Ok(mut cache) = state.snapshot_cache.lock() { *cache = None; }
+    let _ = app.emit_to("widget", "refresh-requested", ());
+    Ok(source_statuses(&saved))
 }
 
 fn clamp_position_to_monitor(
@@ -2014,6 +2116,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_snapshots,
             refresh_snapshots,
+            get_source_statuses,
+            connect_claude_subscription,
+            connect_api_cost_source,
+            disconnect_source,
             expand_widget,
             collapse_widget,
             begin_widget_drag,

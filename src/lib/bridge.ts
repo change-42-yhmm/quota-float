@@ -1,4 +1,4 @@
-import type { ProviderSnapshot, SupporterStatus, WidgetPreferences, WidgetSkin } from "../types";
+import type { ProviderSnapshot, SourceStatus, SupporterStatus, WidgetPreferences, WidgetSkin } from "../types";
 import { systemLanguage } from "./i18n";
 
 const defaultPreferences: WidgetPreferences = { locked: false, alwaysOnTop: true, stayExpanded: false, pinnedProvider: null, autoRotateSeconds: 12, language: systemLanguage(), appearance: "light", showTrayMetric: false, license: null, licenses: [], unlockedSkin: null, unlockedSkins: [], selectedSkin: "default" };
@@ -39,6 +39,35 @@ export async function fetchSnapshots(force = false): Promise<ProviderSnapshot[]>
   if (!isTauri()) return [mockSnapshot];
   const { invoke } = await import("@tauri-apps/api/core");
   return invoke<ProviderSnapshot[]>(force ? "refresh_snapshots" : "get_snapshots");
+}
+
+export async function getSourceStatuses(): Promise<SourceStatus[]> {
+  if (!isTauri()) return [
+    { id: "codex", connected: true, detected: true, connectedAt: null },
+    { id: "claude", connected: false, detected: false, connectedAt: null },
+    { id: "openai_api", connected: false, detected: false, connectedAt: null },
+    { id: "claude_api", connected: false, detected: false, connectedAt: null },
+  ];
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<SourceStatus[]>("get_source_statuses");
+}
+
+export async function connectClaudeSubscription(): Promise<SourceStatus[]> {
+  if (!isTauri()) throw new Error("Claude connection is available in the desktop app.");
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<SourceStatus[]>("connect_claude_subscription");
+}
+
+export async function connectApiCostSource(source: "openai_api" | "claude_api", credential: string): Promise<SourceStatus[]> {
+  if (!isTauri()) throw new Error("API cost connections are available in the desktop app.");
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<SourceStatus[]>("connect_api_cost_source", { source, credential });
+}
+
+export async function disconnectSource(source: "claude" | "openai_api" | "claude_api"): Promise<SourceStatus[]> {
+  if (!isTauri()) return getSourceStatuses();
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke<SourceStatus[]>("disconnect_source", { source });
 }
 
 export async function getPreferences(): Promise<WidgetPreferences> {

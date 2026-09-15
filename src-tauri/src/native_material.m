@@ -23,9 +23,9 @@ void quota_update_material(void *handle, double x, double y, double width,
         }
         if (!material) {
             material = [[QuotaMaterialView alloc] initWithFrame:NSZeroRect];
-            material.material = NSVisualEffectMaterialHUDWindow;
+            material.material = NSVisualEffectMaterialUnderWindowBackground;
             material.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-            material.state = NSVisualEffectStateActive;
+            material.state = NSVisualEffectStateFollowsWindowActiveState;
             [content addSubview:material positioned:NSWindowBelow relativeTo:nil];
             objc_setAssociatedObject(window, &materialKey, material, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }

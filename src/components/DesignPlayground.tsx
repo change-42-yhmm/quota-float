@@ -109,10 +109,10 @@ export function DesignPlayground() {
   const [controls, setControls] = useState<Controls>(defaults);
   const [language, setLanguage] = useState<Language>(() => query.get("language") === "en" ? "en" : "zh-CN");
   const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "native-material" | "supporter">("widget");
-  const [nativeMaterial, setNativeMaterial] = useState<NativeMaterial>("hud");
+  const [nativeMaterial, setNativeMaterial] = useState<NativeMaterial>("under-window");
   const [nativeAppearance, setNativeAppearance] = useState<NativeAppearance>("system");
   const [nativeBlending, setNativeBlending] = useState<NativeBlending>("behind");
-  const [nativeState, setNativeState] = useState<NativeState>("active");
+  const [nativeState, setNativeState] = useState<NativeState>("follows");
   const [previewProvider, setPreviewProvider] = useState<PreviewProvider>("codex");
   const [previewBackground, setPreviewBackground] = useState<PreviewBackground>("transparent");
   const [celebrationKey, setCelebrationKey] = useState(0);

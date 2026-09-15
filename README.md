@@ -7,6 +7,7 @@ A lightweight Windows/macOS desktop widget that keeps your Codex quota visible f
 ## Highlights
 
 - Shows your Codex plan, 5-hour quota, weekly quota, and next reset time in a compact always-on-top widget.
+- Surfaces a compact live metric in the native status area: a Windows tray-icon value, or an optional macOS menu-bar readout.
 - Uses clear quota states for healthy, caution, and critical remaining usage.
 - Collapses into a small floating orb when idle, then expands on hover.
 - Indicates whether quota is currently being consumed.
@@ -56,11 +57,18 @@ Browser preview uses mock data. Real quota reading requires the Tauri desktop ap
 
 ## Download
 
-For normal users, download the latest installer from GitHub Releases:
+The current public release is **v0.2.10**. Download the installer for your platform from [GitHub Releases](https://github.com/change-42-yhmm/quota-float/releases/latest):
 
-- Latest release: https://github.com/change-42-yhmm/quota-float/releases/latest
-- Windows: use the `.exe` or `.msi` installer.
-- macOS Universal: use the `.dmg` bundle.
+- Windows (recommended): [Quota.Float_0.2.10_x64-setup.exe](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_x64-setup.exe)
+- Windows (MSI): [Quota.Float_0.2.10_x64_en-US.msi](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_x64_en-US.msi)
+- macOS Universal (Apple Silicon and Intel): [Quota.Float_0.2.10_universal.dmg](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_universal.dmg)
+
+### What's new in v0.2.10
+
+- Displays the selected provider's current metric in the Windows tray icon; when API spend is available it is shown there, otherwise the icon shows the remaining 5-hour quota.
+- Adds an optional macOS menu-bar readout with the same selected-provider metric.
+- Opens the supporter panel on the first two launches after an upgrade, while preserving existing local licenses and preferences.
+- Keeps the widget local-first, with clearer unavailable and stale states instead of estimated quota values.
 
 Updater artifacts are signed with the project's Tauri update key. Windows Authenticode signing and macOS notarization are separate platform-signing steps; builds without those certificates may still trigger SmartScreen or Gatekeeper warnings.
 

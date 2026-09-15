@@ -157,9 +157,12 @@ async fn fetch_snapshots_uncached(state: &State<'_, AppState>) -> Vec<ProviderSn
 #[cfg(target_os = "macos")]
 fn sync_macos_menu_bar_metric(app: &AppHandle, state: &AppState, snapshots: &[ProviderSnapshot]) {
     let preferences = preferences_lock(state).clone();
-    if !preferences.show_macos_menu_bar_metric {
+    if !preferences.show_tray_metric {
         if let Some(tray) = app.tray_by_id("main") {
             let _ = tray.set_title(None::<String>);
+            if let Some(icon) = app.default_window_icon() {
+                let _ = tray.set_icon(Some(icon.clone()));
+            }
         }
         return;
     }
@@ -194,6 +197,7 @@ fn sync_macos_menu_bar_metric(app: &AppHandle, state: &AppState, snapshots: &[Pr
         if preferences.language == "en" { "Unavailable".into() } else { "无法读取".into() }
     });
     if let Some(tray) = app.tray_by_id("main") {
+        let _ = tray.set_icon(None);
         let _ = tray.set_title(title);
     }
 }
@@ -252,7 +256,7 @@ fn windows_tray_image(text: &str) -> tauri::image::Image<'static> {
     for y in 1..(SIZE - 1) {
         for x in 1..(SIZE - 1) {
             let index = (y * SIZE + x) * 4;
-            rgba[index..index + 4].copy_from_slice(&[12, 90, 122, 255]);
+            rgba[index..index + 4].copy_from_slice(&[0, 152, 198, 255]);
         }
     }
     for (offset, character) in text.chars().enumerate() {
@@ -278,6 +282,15 @@ fn windows_tray_image(text: &str) -> tauri::image::Image<'static> {
 #[cfg(target_os = "windows")]
 fn sync_windows_tray_metric(app: &AppHandle, state: &AppState, snapshots: &[ProviderSnapshot]) {
     let preferences = preferences_lock(state).clone();
+    if !preferences.show_tray_metric {
+        if let Some(tray) = app.tray_by_id("main") {
+            if let Some(icon) = app.default_window_icon() {
+                let _ = tray.set_icon(Some(icon.clone()));
+            }
+            let _ = tray.set_tooltip(Some("Quota Float"));
+        }
+        return;
+    }
     let current = preferences.pinned_provider.as_deref().and_then(|provider| snapshots.iter().find(|item| item.provider == provider)).or_else(|| snapshots.first());
     let text = windows_tray_text(current);
     if let Some(tray) = app.tray_by_id("main") {
@@ -1454,8 +1467,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let show = MenuItem::with_id(app, "show", "Show / Hide", true, None::<&str>)?;
     let refresh = MenuItem::with_id(app, "refresh", "Refresh now", true, None::<&str>)?;
     let update = MenuItem::with_id(app, "update", "Check for updates", true, None::<&str>)?;
-    let unlock = MenuItem::with_id(app, "unlock", "Unlock widget", true, None::<&str>)?;
-    let pin = MenuItem::with_id(app, "pin", "Pin / Unpin Codex", true, None::<&str>)?;
     let language = MenuItem::with_id(
         app,
         "language",
@@ -1487,8 +1498,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         autostart_enabled,
         None::<&str>,
     )?;
-    #[cfg(target_os = "macos")]
-    let menu_bar_metric = CheckMenuItem::with_id(app, "menu-bar-metric", "Show quota in menu bar", true, true, None::<&str>)?;
+    let tray_metric = CheckMenuItem::with_id(app, "tray-metric", "Show quota in tray icon", true, false, None::<&str>)?;
     #[cfg(debug_assertions)]
     let test_short_window = CheckMenuItem::with_id(
         app,
@@ -1499,19 +1509,11 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    #[cfg(target_os = "macos")]
     let settings = Submenu::with_items(
         app,
         "Settings / 设置",
         true,
-        &[&unlock, &pin, &language, &autostart, &menu_bar_metric],
-    )?;
-    #[cfg(not(target_os = "macos"))]
-    let settings = Submenu::with_items(
-        app,
-        "Settings / 设置",
-        true,
-        &[&unlock, &pin, &language, &autostart],
+        &[&language, &autostart, &tray_metric],
     )?;
     let initial_language = app
         .try_state::<AppState>()
@@ -1531,11 +1533,10 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .try_state::<AppState>()
         .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.appearance.clone()))
         .unwrap_or_else(|| "system".into());
-    #[cfg(target_os = "macos")]
-    let initial_menu_bar_metric = app
+    let initial_tray_metric = app
         .try_state::<AppState>()
-        .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.show_macos_menu_bar_metric))
-        .unwrap_or(true);
+        .and_then(|state| state.preferences.lock().ok().map(|prefs| prefs.show_tray_metric))
+        .unwrap_or(false);
     let _ = supporter_blur.set_checked(initial_selected_skin == BLUR_SKIN_ID);
     let _ = supporter_computer.set_checked(initial_selected_skin == COMPUTER_SKIN_ID);
     let _ = supporter_glass.set_checked(initial_selected_skin == GLASS_SKIN_ID);
@@ -1543,8 +1544,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let _ = theme_system.set_checked(initial_appearance == "system");
     let _ = theme_dark.set_checked(initial_appearance == "dark");
     let _ = theme_light.set_checked(initial_appearance == "light");
-    #[cfg(target_os = "macos")]
-    let _ = menu_bar_metric.set_checked(initial_menu_bar_metric);
+    let _ = tray_metric.set_checked(initial_tray_metric);
     let enabled_skins = app
         .try_state::<AppState>()
         .and_then(|state| {
@@ -1559,11 +1559,10 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let _ = supporter_glass.set_enabled(enabled_skins.iter().any(|skin| skin == GLASS_SKIN_ID));
     let _ = supporter_nexus.set_enabled(enabled_skins.iter().any(|skin| skin == NEXUS_SKIN_ID));
     if initial_language != "en" {
+        let _ = settings.set_text("设置");
         let _ = show.set_text("显示 / 隐藏");
         let _ = refresh.set_text("立即刷新");
         let _ = update.set_text(update_menu_label(&initial_language, false));
-        let _ = unlock.set_text("解锁悬浮窗");
-        let _ = pin.set_text("固定 / 取消固定 Codex");
         let _ = language.set_text("Switch to English");
         let _ = theme.set_text("主题");
         let _ = default_skin.set_text("默认皮肤");
@@ -1573,11 +1572,11 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         let _ = supporter_skins.set_text("支持者皮肤");
         let _ = supporter_skins_top.set_text("赞赏开发者（皮肤）");
         let _ = autostart.set_text("开机启动");
-        #[cfg(target_os = "macos")]
-        let _ = menu_bar_metric.set_text("在状态栏显示额度");
+        let _ = tray_metric.set_text("小图标显示额度");
         let _ = quit.set_text("退出");
     }
     if initial_language == "en" {
+        let _ = settings.set_text("Settings");
         let _ = theme.set_text("Theme");
         let _ = default_skin.set_text("Default skin");
         let _ = theme_system.set_text("Follow system");
@@ -1585,6 +1584,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         let _ = theme_light.set_text("Light");
         let _ = supporter_skins.set_text("Supporter skins");
         let _ = supporter_skins_top.set_text("Support developer (skins)");
+        let _ = tray_metric.set_text("Show quota in tray icon");
     }
     #[cfg(debug_assertions)]
     let menu = Menu::with_items(
@@ -1612,15 +1612,13 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         builder = builder.icon(icon.clone());
     }
     let autostart_menu = autostart.clone();
-    #[cfg(target_os = "macos")]
-    let menu_bar_metric_menu = menu_bar_metric.clone();
+    let tray_metric_menu = tray_metric.clone();
     let show_menu = show.clone();
     let refresh_menu = refresh.clone();
     let update_menu = update.clone();
     let update_indicator = update.clone();
-    let unlock_menu = unlock.clone();
-    let pin_menu = pin.clone();
     let language_menu = language.clone();
+    let settings_menu = settings.clone();
     let theme_menu = theme.clone();
     let default_skin_menu = default_skin.clone();
     let theme_system_menu = theme_system.clone();
@@ -1769,6 +1767,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         *prefs = normalized.clone();
                         let _ = persist_preferences(&state.preferences_path, &normalized);
                         let english = normalized.language == "en";
+                        let _ = settings_menu.set_text(if english { "Settings" } else { "设置" });
                         let _ = show_menu.set_text(if english {
                             "Show / Hide"
                         } else {
@@ -1785,16 +1784,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                             .map(|value| *value)
                             .unwrap_or(false);
                         let _ = update_menu.set_text(update_menu_label(&normalized.language, update_available));
-                        let _ = unlock_menu.set_text(if english {
-                            "Unlock widget"
-                        } else {
-                            "解锁悬浮窗"
-                        });
-                        let _ = pin_menu.set_text(if english {
-                            "Pin / Unpin Codex"
-                        } else {
-                            "固定 / 取消固定 Codex"
-                        });
                         let _ = language_menu.set_text(if english {
                             "切换到中文"
                         } else {
@@ -1812,8 +1801,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         } else {
                             "开机启动"
                         });
-                        #[cfg(target_os = "macos")]
-                        let _ = menu_bar_metric_menu.set_text(if english { "Show quota in menu bar" } else { "在状态栏显示额度" });
+                        let _ = tray_metric_menu.set_text(if english { "Show quota in tray icon" } else { "小图标显示额度" });
                         let _ = quit_menu.set_text(if english { "Quit" } else { "退出" });
                         let _ = app.emit_to("widget", "preferences-changed", normalized.clone());
                         let _ = app.emit_to("supporter", "preferences-changed", normalized);
@@ -1827,15 +1815,14 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                     }
                 }
             }
-            "menu-bar-metric" => {
-                #[cfg(target_os = "macos")]
+            "tray-metric" => {
                 if let Some(state) = app.try_state::<AppState>() {
                     if let Ok(mut preferences) = state.preferences.lock() {
-                        preferences.show_macos_menu_bar_metric = !preferences.show_macos_menu_bar_metric;
+                        preferences.show_tray_metric = !preferences.show_tray_metric;
                         let saved = preferences.clone().normalized();
                         *preferences = saved.clone();
                         if persist_preferences(&state.preferences_path, &saved).is_ok() {
-                            let _ = menu_bar_metric_menu.set_checked(saved.show_macos_menu_bar_metric);
+                            let _ = tray_metric_menu.set_checked(saved.show_tray_metric);
                             let snapshots = state
                                 .snapshot_cache
                                 .lock()
@@ -1843,6 +1830,8 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                                 .and_then(|cache| cache.as_ref().map(|(_, snapshots)| snapshots.clone()))
                                 .unwrap_or_default();
                             drop(preferences);
+                            let _ = app.emit_to("widget", "preferences-changed", saved.clone());
+                            let _ = app.emit_to("supporter", "preferences-changed", saved);
                             sync_tray_metric(app, state.inner(), &snapshots);
                         }
                     }

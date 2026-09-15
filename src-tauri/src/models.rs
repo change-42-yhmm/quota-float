@@ -67,8 +67,8 @@ pub struct WidgetPreferences {
     pub language: String,
     #[serde(default = "default_appearance")]
     pub appearance: String,
-    #[serde(default = "default_macos_menu_bar_metric")]
-    pub show_macos_menu_bar_metric: bool,
+    #[serde(default)]
+    pub show_tray_metric: bool,
     #[serde(default)]
     pub license: Option<String>,
     #[serde(default)]
@@ -111,6 +111,14 @@ fn platform_default_language() -> &'static str {
     use winreg::{enums::HKEY_CURRENT_USER, RegKey};
 
     let user = RegKey::predef(HKEY_CURRENT_USER);
+    if let Some(locale) = user
+        .open_subkey(r"Control Panel\Desktop")
+        .ok()
+        .and_then(|key| key.get_value::<Vec<String>, _>("PreferredUILanguages").ok())
+        .and_then(|languages| languages.into_iter().next())
+    {
+        return language_from_locale(&locale);
+    }
     user.open_subkey(r"Control Panel\International")
         .ok()
         .and_then(|key| key.get_value::<String, _>("LocaleName").ok())
@@ -118,7 +126,25 @@ fn platform_default_language() -> &'static str {
         .unwrap_or("en")
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+fn platform_default_language() -> &'static str {
+    std::process::Command::new("/usr/bin/defaults")
+        .args(["read", "-g", "AppleLanguages"])
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .and_then(|output| {
+            output
+                .lines()
+                .map(|line| line.trim().trim_matches(|c| matches!(c, '"' | ',' | ' ')))
+                .find(|line| !line.is_empty() && *line != "(" && *line != ")")
+                .map(|locale| language_from_locale(locale))
+        })
+        .unwrap_or("en")
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn platform_default_language() -> &'static str {
     std::env::var("LANG")
         .ok()
@@ -131,9 +157,6 @@ fn default_appearance() -> String {
 fn default_skin() -> String {
     "default".into()
 }
-fn default_macos_menu_bar_metric() -> bool {
-    true
-}
 
 impl Default for WidgetPreferences {
     fn default() -> Self {
@@ -145,7 +168,7 @@ impl Default for WidgetPreferences {
             auto_rotate_seconds: 12,
             language: default_language(),
             appearance: default_appearance(),
-            show_macos_menu_bar_metric: default_macos_menu_bar_metric(),
+            show_tray_metric: false,
             license: None,
             licenses: Vec::new(),
             unlocked_skin: None,
@@ -185,13 +208,22 @@ impl WidgetPreferences {
                 self.unlocked_skins.push(legacy);
             }
         }
-        self.unlocked_skins.retain(|skin| matches!(skin.as_str(), "blur" | "computer" | "glass" | "nexus"));
+        self.unlocked_skins
+            .retain(|skin| matches!(skin.as_str(), "blur" | "computer" | "glass" | "nexus"));
         self.unlocked_skins.sort();
         self.unlocked_skins.dedup();
-        if !matches!(self.selected_skin.as_str(), "default" | "blur" | "computer" | "glass" | "nexus") {
+        if !matches!(
+            self.selected_skin.as_str(),
+            "default" | "blur" | "computer" | "glass" | "nexus"
+        ) {
             self.selected_skin = default_skin();
         }
-        if self.selected_skin != "default" && !self.unlocked_skins.iter().any(|skin| skin == &self.selected_skin) {
+        if self.selected_skin != "default"
+            && !self
+                .unlocked_skins
+                .iter()
+                .any(|skin| skin == &self.selected_skin)
+        {
             self.selected_skin = default_skin();
         }
         // Keep the legacy fields populated for pre-migration renderer payloads.
@@ -204,6 +236,24 @@ impl WidgetPreferences {
 #[cfg(test)]
 mod tests {
     use super::{language_from_locale, WidgetPreferences};
+
+    #[test]
+    fn tray_metric_is_opt_in_and_round_trips() {
+        let mut preferences = WidgetPreferences::default();
+        assert!(!preferences.show_tray_metric);
+        let mut legacy = serde_json::to_value(&preferences).unwrap();
+        legacy.as_object_mut().unwrap().remove("showTrayMetric");
+        legacy["showMacosMenuBarMetric"] = true.into();
+        assert!(
+            !serde_json::from_value::<WidgetPreferences>(legacy)
+                .unwrap()
+                .show_tray_metric
+        );
+        preferences.show_tray_metric = true;
+        let restored: WidgetPreferences =
+            serde_json::from_str(&serde_json::to_string(&preferences).unwrap()).unwrap();
+        assert!(restored.show_tray_metric);
+    }
 
     #[test]
     fn defaults_to_chinese_only_for_chinese_system_locales() {

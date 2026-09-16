@@ -247,12 +247,6 @@ export default function App() {
       snapshot={current}
       preferences={preferences}
       providerCount={snapshots.length}
-      onPrevious={() => {
-        const nextIndex = (activeIndex - 1 + snapshots.length) % snapshots.length;
-        setActiveIndex(nextIndex);
-        const next = snapshots[nextIndex];
-        if (next) savePreferences({ ...preferences, pinnedProvider: next.provider });
-      }}
       onNext={() => {
         const nextIndex = (activeIndex + 1) % snapshots.length;
         setActiveIndex(nextIndex);

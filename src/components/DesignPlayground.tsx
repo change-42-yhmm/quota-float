@@ -6,7 +6,7 @@ import { DESKTOP_PALETTES, type DesktopPaletteName } from "../lib/desktopPalette
 import { quotaTier } from "../lib/format";
 import type { Language, ProviderSnapshot, WidgetPreferences, WidgetSkin, WidgetTheme } from "../types";
 import { QuotaCard, QuotaOrb } from "./QuotaCard";
-import { SupporterPanel } from "./SupporterPanel";
+import { QuotaSourcesPanel, SupporterPanel } from "./SupporterPanel";
 
 type ErrorMode = "unavailable" | "stale" | "signed_out";
 type PreviewProvider = "codex" | "claude";
@@ -21,6 +21,7 @@ type NativeMaterial = "hud" | "popover" | "menu" | "sidebar" | "under-window" | 
 type NativeAppearance = "system" | "light" | "dark";
 type NativeBlending = "behind" | "within";
 type NativeState = "follows" | "active" | "inactive";
+type NativePreview = "widget" | "menu-bar";
 
 const base: ProviderSnapshot = {
   provider: "codex", displayName: "CODEX", plan: "PRO",
@@ -36,7 +37,7 @@ const modes: Array<[Mode, string]> = [[74, "healthy"], [35, "caution"], [8, "cri
 const fields = ["--cool", "--glow", "--warm", "--progress-start", "--progress-end"] as const;
 const workbenchCopy = {
   "zh-CN": {
-    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", nativeMaterial: "macOS 材质", supporter: "支持者皮肤", multiSource: "多数据源预览", singleSource: "单一数据源", multipleSources: "多个数据源",
+    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", nativeMaterial: "macOS 材质", supporter: "支持者皮肤", sources: "额度数据源", multiSource: "多数据源预览", singleSource: "单一数据源", multipleSources: "多个数据源", widgetPreview: "组件预览", menuBarPreview: "状态栏预览", menuBarHint: "仅展示 Quota Float 在 macOS 状态栏中显示名称与当前额度的效果。",
     previewState: "预览状态", previewTheme: "预览主题", previewBackground: "预览背景", transparent: "透明", backgroundOne: "背景 1", backgroundLiquid: "液态玻璃", backgroundCity: "星际霓虹", backgroundMechanical: "机械", language: "内容语言", light: "浅色", dark: "深色", presentation: "展示模式", edit: "编辑模式",
     previewProvider: "预览来源", codex: "Codex", claude: "Claude",
     geometryPreview: "几何预览", description: "配色为只读，始终来自桌面组件。以下几何调整仅用于此预览，并会在刷新后恢复默认。",
@@ -46,7 +47,7 @@ const workbenchCopy = {
     healthy: "健康", caution: "注意", critical: "紧急", apiCost: "API 成本", apiCostOrb: "API 成本圆形", weekly: "每周", unavailable: "不可用", stale: "数据过期", signedOut: "未登录", healthyOrb: "健康圆形", cautionOrb: "注意圆形", criticalOrb: "紧急圆形", weeklyOrb: "每周圆形", unavailableOrb: "不可用圆形", staleOrb: "数据过期圆形", signedOutOrb: "未登录圆形",
   },
   en: {
-    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", nativeMaterial: "macOS material", supporter: "Supporter skins", multiSource: "Multi-source preview", singleSource: "Single source", multipleSources: "Multiple sources",
+    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", nativeMaterial: "macOS material", supporter: "Supporter skins", sources: "Quota sources", multiSource: "Multi-source preview", singleSource: "Single source", multipleSources: "Multiple sources", widgetPreview: "Widget preview", menuBarPreview: "Menu bar preview", menuBarHint: "A visual-only preview of Quota Float showing its name and current quota in the macOS menu bar.",
     previewState: "Preview state", previewTheme: "Preview theme", previewBackground: "Preview background", transparent: "Transparent", backgroundOne: "Background 1", backgroundLiquid: "Liquid glass", backgroundCity: "Interstellar neon", backgroundMechanical: "Mechanical", language: "Content language", light: "Light", dark: "Dark", presentation: "Present", edit: "Edit",
     previewProvider: "Preview source", codex: "Codex", claude: "Claude",
     geometryPreview: "Geometry preview", description: "The palette is read-only and always comes from the desktop widget. Geometry changes below exist only in this preview and reset on refresh.",
@@ -102,17 +103,29 @@ function hexToRgb(value: string): string {
   return `${parseInt(hex.slice(0, 2), 16)} ${parseInt(hex.slice(2, 4), 16)} ${parseInt(hex.slice(4, 6), 16)}`;
 }
 
+function MacMenuBarPreview({ language, provider }: { language: Language; provider: PreviewProvider }) {
+  const chinese = language === "zh-CN";
+  const providerName = provider === "claude" ? "Claude" : "Codex";
+  return <section className="mac-menu-preview" aria-label={chinese ? "macOS 状态栏预览" : "macOS menu bar preview"}>
+    <div className="mac-menu-preview__screen">
+      <div className="mac-menu-preview__bar"><div><span className="mac-menu-preview__apple">●</span><b>Finder</b><span>{chinese ? "文件" : "File"}</span><span>{chinese ? "编辑" : "Edit"}</span></div><div><span>⌁</span><span>◒</span><span>◌</span><b className="mac-menu-preview__quota">{providerName} · {chinese ? "5小时" : "5h"} 74%</b><span>{chinese ? "周二 18:34" : "Tue 18:34"}</span></div></div>
+      <div className="mac-menu-preview__popover"><header><strong>{providerName}</strong><span className="mac-menu-preview__online">●</span></header><p>{chinese ? "5 小时剩余" : "5-hour remaining"}</p><b>74%</b><div><span>{chinese ? "每周剩余 42%" : "Weekly remaining 42%"}</span><span>{chinese ? "已同步" : "Synced"}</span></div></div>
+    </div>
+  </section>;
+}
+
 export function DesignPlayground() {
   const query = new URLSearchParams(window.location.search);
   const [theme, setTheme] = useState<WidgetTheme>(() => query.get("theme") === "dark" ? "dark" : "light");
   const [mode, setMode] = useState<Mode>(() => (query.get("mode") as Mode) || 74);
   const [controls, setControls] = useState<Controls>(defaults);
   const [language, setLanguage] = useState<Language>(() => query.get("language") === "en" ? "en" : "zh-CN");
-  const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "native-material" | "supporter">("widget");
+  const [previewTab, setPreviewTab] = useState<"widget" | "blur" | "computer" | "glass" | "nexus" | "native-material" | "supporter" | "sources">("widget");
   const [nativeMaterial, setNativeMaterial] = useState<NativeMaterial>("hud");
   const [nativeAppearance, setNativeAppearance] = useState<NativeAppearance>("system");
   const [nativeBlending, setNativeBlending] = useState<NativeBlending>("behind");
   const [nativeState, setNativeState] = useState<NativeState>("active");
+  const [nativePreview, setNativePreview] = useState<NativePreview>("widget");
   const [previewProvider, setPreviewProvider] = useState<PreviewProvider>("codex");
   const [multiSourcePreview, setMultiSourcePreview] = useState(false);
   const [previewBackground, setPreviewBackground] = useState<PreviewBackground>("transparent");
@@ -149,7 +162,7 @@ export function DesignPlayground() {
   };
   const skin: WidgetSkin = previewTab === "blur" ? "blur" : previewTab === "computer" ? "computer" : previewTab === "glass" || previewTab === "native-material" ? "glass" : "default";
   const togglePreviewProvider = () => setPreviewProvider((current) => current === "codex" ? "claude" : "codex");
-  const renderCard = (item: ProviderSnapshot) => <QuotaCard snapshot={item} preferences={{ ...preferences, ...(previewTab === "nexus" ? nexusButtons : {}), language }} providerCount={multiSourcePreview ? 2 : 1} onPrevious={togglePreviewProvider} onNext={togglePreviewProvider} onTogglePin={() => {}} onLock={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, alwaysOnTop: !previous.alwaysOnTop })); }} onToggleStayExpanded={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, stayExpanded: !previous.stayExpanded })); }} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} nexusPreview={previewTab === "nexus"} providerMarkVariant={previewTab === "glass" || previewTab === "nexus" ? "glass" : "default"} style={style(item)} />;
+  const renderCard = (item: ProviderSnapshot) => <QuotaCard snapshot={item} preferences={{ ...preferences, ...(previewTab === "nexus" ? nexusButtons : {}), language }} providerCount={multiSourcePreview ? 2 : 1} onNext={togglePreviewProvider} onTogglePin={() => {}} onLock={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, alwaysOnTop: !previous.alwaysOnTop })); }} onToggleStayExpanded={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, stayExpanded: !previous.stayExpanded })); }} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} nexusPreview={previewTab === "nexus"} providerMarkVariant={previewTab === "glass" || previewTab === "nexus" ? "glass" : "default"} style={style(item)} />;
   const renderOrb = (item: ProviderSnapshot) => <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />;
 
   return <main className={`design-workbench design-workbench--${theme}`}>
@@ -157,9 +170,10 @@ export function DesignPlayground() {
 <SkinEffects />
       <button className="design-presentation-toggle" type="button" aria-pressed={presentationMode} onClick={() => setPresentationMode((value) => !value)}>{presentationMode ? t.edit : t.presentation}</button>
       <div className="design-selection-controls">
-      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "nexus"} className={previewTab === "nexus" ? "is-active" : ""} onClick={() => setPreviewTab("nexus")}>{t.nexus}</button><button role="tab" aria-selected={previewTab === "native-material"} className={previewTab === "native-material" ? "is-active" : ""} onClick={() => setPreviewTab("native-material")}>{t.nativeMaterial}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
+      <div className="design-page-tabs" role="tablist" aria-label={t.widget}><button role="tab" aria-selected={previewTab === "widget"} className={previewTab === "widget" ? "is-active" : ""} onClick={() => setPreviewTab("widget")}>{t.widget}</button><button role="tab" aria-selected={previewTab === "blur"} className={previewTab === "blur" ? "is-active" : ""} onClick={() => setPreviewTab("blur")}>{t.blur}</button><button role="tab" aria-selected={previewTab === "computer"} className={previewTab === "computer" ? "is-active" : ""} onClick={() => setPreviewTab("computer")}>{t.computer}</button><button role="tab" aria-selected={previewTab === "glass"} className={previewTab === "glass" ? "is-active" : ""} onClick={() => setPreviewTab("glass")}>{t.glass}</button><button role="tab" aria-selected={previewTab === "nexus"} className={previewTab === "nexus" ? "is-active" : ""} onClick={() => setPreviewTab("nexus")}>{t.nexus}</button><button role="tab" aria-selected={previewTab === "native-material"} className={previewTab === "native-material" ? "is-active" : ""} onClick={() => setPreviewTab("native-material")}>{t.nativeMaterial}</button><button role="tab" aria-selected={previewTab === "sources"} className={previewTab === "sources" ? "is-active" : ""} onClick={() => setPreviewTab("sources")}>{t.sources}</button><button role="tab" aria-selected={previewTab === "supporter"} className={previewTab === "supporter" ? "is-active" : ""} onClick={() => setPreviewTab("supporter")}>{t.supporter}</button></div>
       </div>
-      {previewTab !== "supporter" ? <><div className="design-selection-controls"><div className="design-preview-switch" role="group" aria-label={t.previewState}>
+      {previewTab === "native-material" ? <div className="design-native-preview-tabs" role="tablist" aria-label={t.nativeMaterial}><button role="tab" aria-selected={nativePreview === "widget"} className={nativePreview === "widget" ? "is-active" : ""} onClick={() => setNativePreview("widget")}>{t.widgetPreview}</button><button role="tab" aria-selected={nativePreview === "menu-bar"} className={nativePreview === "menu-bar" ? "is-active" : ""} onClick={() => setNativePreview("menu-bar")}>{t.menuBarPreview}</button></div> : null}
+      {previewTab !== "supporter" && previewTab !== "sources" ? <><div className="design-selection-controls"><div className="design-preview-switch" role="group" aria-label={t.previewState}>
         {modes.map(([value, label]) => <button key={label} className={mode === value ? "is-active" : ""} onClick={() => selectMode(value)}>{t[label as keyof typeof t]}</button>)}
       </div></div>
       <div className="design-preview-options">
@@ -177,7 +191,7 @@ export function DesignPlayground() {
           <button className={multiSourcePreview ? "is-active" : ""} onClick={() => setMultiSourcePreview(true)}>{t.multipleSources}</button>
         </div>
       </div>
-      <div className="design-preview-pair"><div className="design-orb-frame">{renderOrb(snapshot)}</div><div className="design-card-frame">{renderCard(snapshot)}</div></div></> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
+      {previewTab === "native-material" && nativePreview === "menu-bar" ? <><MacMenuBarPreview language={language} provider={previewProvider} /><p className="mac-menu-preview__hint">{t.menuBarHint}</p></> : <div className="design-preview-pair"><div className="design-orb-frame">{renderOrb(snapshot)}</div><div className="design-card-frame">{renderCard(snapshot)}</div></div>}</> : previewTab === "sources" ? <div className="design-supporter-frame"><QuotaSourcesPanel preview previewLanguage={language} /></div> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
     </section>
     <aside className="design-controls">
       <header><p className="design-kicker">QUOTA FLOAT · PREVIEW</p><h1>{t.geometryPreview}</h1><p className="design-description">{t.description}</p></header>

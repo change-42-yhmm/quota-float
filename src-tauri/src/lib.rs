@@ -1588,6 +1588,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let supporter_nexus = CheckMenuItem::with_id(app, "supporter-skin-nexus", "Nexus", true, false, None::<&str>)?;
     let supporter_skins = Submenu::with_items(app, "Supporter skins / 支持者皮肤", true, &[&supporter_blur, &supporter_computer, &supporter_glass, &supporter_nexus])?;
     let supporter_skins_top = MenuItem::with_id(app, "supporter-skins-top", "Support developer (skins) / 赞赏开发者（皮肤）", true, None::<&str>)?;
+    let quota_sources_top = MenuItem::with_id(app, "quota-sources-top", "Quota sources / 额度数据源", true, None::<&str>)?;
     // The default skin has exactly three mutually exclusive appearance
     // choices. Selecting any one also restores the free default skin.
     let default_skin = Submenu::with_items(app, "Default skin / 默认皮肤", true, &[&theme_system, &theme_dark, &theme_light])?;
@@ -1674,6 +1675,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         let _ = theme_light.set_text("浅色");
         let _ = supporter_skins.set_text("支持者皮肤");
         let _ = supporter_skins_top.set_text("赞赏开发者（皮肤）");
+        let _ = quota_sources_top.set_text("额度数据源");
         let _ = autostart.set_text("开机启动");
         let _ = tray_metric.set_text("小图标显示额度");
         let _ = quit.set_text("退出");
@@ -1687,6 +1689,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         let _ = theme_light.set_text("Light");
         let _ = supporter_skins.set_text("Supporter skins");
         let _ = supporter_skins_top.set_text("Support developer (skins)");
+        let _ = quota_sources_top.set_text("Quota sources");
         let _ = tray_metric.set_text("Show quota in tray icon");
     }
     #[cfg(debug_assertions)]
@@ -1698,6 +1701,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
             &update,
             &settings,
             &theme,
+            &quota_sources_top,
             &supporter_skins_top,
             &test_short_window,
             &quit,
@@ -1706,7 +1710,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     #[cfg(not(debug_assertions))]
     let menu = Menu::with_items(
         app,
-        &[&show, &refresh, &update, &settings, &theme, &supporter_skins_top, &quit],
+        &[&show, &refresh, &update, &settings, &theme, &quota_sources_top, &supporter_skins_top, &quit],
     )?;
     let mut builder = TrayIconBuilder::with_id("main")
         .menu(&menu)
@@ -1744,6 +1748,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let supporter_glass_access = supporter_glass.clone();
     let supporter_nexus_access = supporter_nexus.clone();
     let supporter_skins_top_menu = supporter_skins_top.clone();
+    let quota_sources_top_menu = quota_sources_top.clone();
     let quit_menu = quit.clone();
     #[cfg(debug_assertions)]
     let test_short_window_menu = test_short_window.clone();
@@ -1792,6 +1797,23 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                                 "Quota Float · 支持者皮肤"
                             });
                             let _ = app.emit_to("supporter", "preferences-changed", preferences.clone());
+                        }
+                    }
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+            "quota-sources-top" => {
+                if let Some(window) = app.get_webview_window("sources") {
+                    if let Some(state) = app.try_state::<AppState>() {
+                        if let Ok(preferences) = state.preferences.lock() {
+                            let english = preferences.language == "en";
+                            let _ = window.set_title(if english {
+                                "Quota Float · Quota sources"
+                            } else {
+                                "Quota Float · 额度数据源"
+                            });
+                            let _ = app.emit_to("sources", "preferences-changed", preferences.clone());
                         }
                     }
                     let _ = window.show();
@@ -1899,6 +1921,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         let _ = theme_light_menu.set_text(if english { "Light" } else { "浅色" });
                         let _ = supporter_skins_menu.set_text(if english { "Supporter skins" } else { "支持者皮肤" });
                         let _ = supporter_skins_top_menu.set_text(if english { "Support developer (skins)" } else { "赞赏开发者（皮肤）" });
+                        let _ = quota_sources_top_menu.set_text(if english { "Quota sources" } else { "额度数据源" });
                         let _ = autostart_menu.set_text(if english {
                             "Start at login"
                         } else {
@@ -1907,12 +1930,20 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
                         let _ = tray_metric_menu.set_text(if english { "Show quota in tray icon" } else { "小图标显示额度" });
                         let _ = quit_menu.set_text(if english { "Quit" } else { "退出" });
                         let _ = app.emit_to("widget", "preferences-changed", normalized.clone());
-                        let _ = app.emit_to("supporter", "preferences-changed", normalized);
+                        let _ = app.emit_to("supporter", "preferences-changed", normalized.clone());
+                        let _ = app.emit_to("sources", "preferences-changed", normalized);
                         if let Some(window) = app.get_webview_window("supporter") {
                             let _ = window.set_title(if english {
                                 "Quota Float · Supporter skins"
                             } else {
                                 "Quota Float · 支持者皮肤"
+                            });
+                        }
+                        if let Some(window) = app.get_webview_window("sources") {
+                            let _ = window.set_title(if english {
+                                "Quota Float · Quota sources"
+                            } else {
+                                "Quota Float · 额度数据源"
                             });
                         }
                     }

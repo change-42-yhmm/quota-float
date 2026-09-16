@@ -1,4 +1,4 @@
-import { ArrowClockwise, ArrowDown, ArrowUp, ArrowsInSimple, ArrowsOutSimple, ClockCounterClockwise, CloudSlash, Info, PushPin, PushPinSlash, SignIn, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowDown, ArrowsInSimple, ArrowsOutSimple, ClockCounterClockwise, CloudSlash, Info, PushPin, PushPinSlash, SignIn, WarningCircle } from "@phosphor-icons/react";
 import { memo, type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { clampPercent, formatDateTime, formatResetDate, formatResetTime, quotaTier } from "../lib/format";
 import { blurProgressSegments } from "../lib/blurSkin";
@@ -24,7 +24,6 @@ interface Props {
   snapshot: ProviderSnapshot;
   preferences: WidgetPreferences;
   providerCount: number;
-  onPrevious: () => void;
   onNext: () => void;
   onTogglePin: () => void;
   onLock: () => void;
@@ -138,7 +137,6 @@ export const QuotaCard = memo(function QuotaCard({
   snapshot,
   preferences,
   providerCount,
-  onPrevious,
   onNext,
   onTogglePin: _onTogglePin,
   onLock,
@@ -180,7 +178,7 @@ export const QuotaCard = memo(function QuotaCard({
           ? t.notSignedIn
           : t.unavailableStatus;
   const message = localizedBackendMessage(snapshot.message, language, provider);
-  const headerTitle = isCostCard ? snapshot.displayName.replace(/\s+/g, "·") : skin === "computer" ? "codex·plus" : `${snapshot.displayName} · ${snapshot.plan ?? t.accountFallback}`;
+  const headerTitle = isCostCard ? snapshot.displayName.replace(/\s+/g, "·") : skin === "computer" ? `${snapshot.displayName.toLowerCase()}·${(snapshot.plan ?? "plus").toLowerCase()}` : `${snapshot.displayName} · ${snapshot.plan ?? t.accountFallback}`;
   const headerSubtitle = isCostCard ? t.todayApiCostLabel : displayingWeeklyAsPrimary ? t.weeklyShortRemaining : t.shortRemaining;
   const creditExpirations = useMemo(() => (snapshot.resetCreditExpiresAt ?? []).map((value, index) => {
     return t.creditItem(index, formatDateTime(value, language));
@@ -208,7 +206,6 @@ export const QuotaCard = memo(function QuotaCard({
         </div>
         {!preferences.locked ? (
           <nav className="card-actions" aria-label={t.controls} onMouseDown={(event) => event.stopPropagation()}>
-            {providerCount > 1 ? <button onClick={onPrevious} aria-label={t.servicePrevious}><ArrowUp /></button> : null}
             {providerCount > 1 ? <button onClick={onNext} aria-label={t.serviceNext}><ArrowDown /></button> : null}
             <span className={`usage-indicator usage-indicator--${indicatorState}`} role="status" aria-label={indicatorLabel} title={indicatorLabel}><i /></span>
             <button className={preferences.stayExpanded ? "expand-button expand-button--active" : "expand-button"} onClick={onToggleStayExpanded} aria-pressed={preferences.stayExpanded} aria-label={preferences.stayExpanded ? t.keepExpandedOff : t.keepExpandedOn} title={preferences.stayExpanded ? t.keepExpandedOff : t.keepExpandedOn}>

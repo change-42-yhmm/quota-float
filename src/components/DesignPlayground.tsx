@@ -36,7 +36,7 @@ const modes: Array<[Mode, string]> = [[74, "healthy"], [35, "caution"], [8, "cri
 const fields = ["--cool", "--glow", "--warm", "--progress-start", "--progress-end"] as const;
 const workbenchCopy = {
   "zh-CN": {
-    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", nativeMaterial: "macOS 材质", supporter: "支持者皮肤",
+    widget: "组件", blur: "Blur 皮肤", computer: "Computer 皮肤", glass: "Glass 皮肤", nexus: "Nexus 皮肤", nativeMaterial: "macOS 材质", supporter: "支持者皮肤", multiSource: "多数据源预览", singleSource: "单一数据源", multipleSources: "多个数据源",
     previewState: "预览状态", previewTheme: "预览主题", previewBackground: "预览背景", transparent: "透明", backgroundOne: "背景 1", backgroundLiquid: "液态玻璃", backgroundCity: "星际霓虹", backgroundMechanical: "机械", language: "内容语言", light: "浅色", dark: "深色", presentation: "展示模式", edit: "编辑模式",
     previewProvider: "预览来源", codex: "Codex", claude: "Claude",
     geometryPreview: "几何预览", description: "配色为只读，始终来自桌面组件。以下几何调整仅用于此预览，并会在刷新后恢复默认。",
@@ -46,7 +46,7 @@ const workbenchCopy = {
     healthy: "健康", caution: "注意", critical: "紧急", apiCost: "API 成本", apiCostOrb: "API 成本圆形", weekly: "每周", unavailable: "不可用", stale: "数据过期", signedOut: "未登录", healthyOrb: "健康圆形", cautionOrb: "注意圆形", criticalOrb: "紧急圆形", weeklyOrb: "每周圆形", unavailableOrb: "不可用圆形", staleOrb: "数据过期圆形", signedOutOrb: "未登录圆形",
   },
   en: {
-    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", nativeMaterial: "macOS material", supporter: "Supporter skins",
+    widget: "Widget", blur: "Blur skin", computer: "Computer skin", glass: "Glass skin", nexus: "Nexus skin", nativeMaterial: "macOS material", supporter: "Supporter skins", multiSource: "Multi-source preview", singleSource: "Single source", multipleSources: "Multiple sources",
     previewState: "Preview state", previewTheme: "Preview theme", previewBackground: "Preview background", transparent: "Transparent", backgroundOne: "Background 1", backgroundLiquid: "Liquid glass", backgroundCity: "Interstellar neon", backgroundMechanical: "Mechanical", language: "Content language", light: "Light", dark: "Dark", presentation: "Present", edit: "Edit",
     previewProvider: "Preview source", codex: "Codex", claude: "Claude",
     geometryPreview: "Geometry preview", description: "The palette is read-only and always comes from the desktop widget. Geometry changes below exist only in this preview and reset on refresh.",
@@ -114,6 +114,7 @@ export function DesignPlayground() {
   const [nativeBlending, setNativeBlending] = useState<NativeBlending>("behind");
   const [nativeState, setNativeState] = useState<NativeState>("active");
   const [previewProvider, setPreviewProvider] = useState<PreviewProvider>("codex");
+  const [multiSourcePreview, setMultiSourcePreview] = useState(false);
   const [previewBackground, setPreviewBackground] = useState<PreviewBackground>("transparent");
   const [celebrationKey, setCelebrationKey] = useState(0);
   const [nexusButtons, setNexusButtons] = useState({ alwaysOnTop: preferences.alwaysOnTop, stayExpanded: preferences.stayExpanded });
@@ -147,7 +148,8 @@ export function DesignPlayground() {
     if (nextGlassProgressState) setControls((previous) => ({ ...previous, glassProgressState: nextGlassProgressState }));
   };
   const skin: WidgetSkin = previewTab === "blur" ? "blur" : previewTab === "computer" ? "computer" : previewTab === "glass" || previewTab === "native-material" ? "glass" : "default";
-  const renderCard = (item: ProviderSnapshot) => <QuotaCard snapshot={item} preferences={{ ...preferences, ...(previewTab === "nexus" ? nexusButtons : {}), language }} providerCount={1} onPrevious={() => {}} onNext={() => {}} onTogglePin={() => {}} onLock={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, alwaysOnTop: !previous.alwaysOnTop })); }} onToggleStayExpanded={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, stayExpanded: !previous.stayExpanded })); }} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} nexusPreview={previewTab === "nexus"} providerMarkVariant={previewTab === "glass" || previewTab === "nexus" ? "glass" : "default"} style={style(item)} />;
+  const togglePreviewProvider = () => setPreviewProvider((current) => current === "codex" ? "claude" : "codex");
+  const renderCard = (item: ProviderSnapshot) => <QuotaCard snapshot={item} preferences={{ ...preferences, ...(previewTab === "nexus" ? nexusButtons : {}), language }} providerCount={multiSourcePreview ? 2 : 1} onPrevious={togglePreviewProvider} onNext={togglePreviewProvider} onTogglePin={() => {}} onLock={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, alwaysOnTop: !previous.alwaysOnTop })); }} onToggleStayExpanded={() => { if (previewTab === "nexus") setNexusButtons((previous) => ({ ...previous, stayExpanded: !previous.stayExpanded })); }} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} nexusPreview={previewTab === "nexus"} providerMarkVariant={previewTab === "glass" || previewTab === "nexus" ? "glass" : "default"} style={style(item)} />;
   const renderOrb = (item: ProviderSnapshot) => <QuotaOrb snapshot={item} language={language} onDrag={() => {}} onHover={() => {}} theme={theme} skin={skin} style={style(item)} />;
 
   return <main className={`design-workbench design-workbench--${theme}`}>
@@ -170,6 +172,10 @@ export function DesignPlayground() {
         {previewTab === "blur" || previewTab === "computer" || previewTab === "glass" || previewTab === "nexus" ? <div className="design-theme-switch" role="group" aria-label={t.previewProvider}>
           {(["codex", "claude"] as const).map((value) => <button key={value} className={previewProvider === value ? "is-active" : ""} onClick={() => setPreviewProvider(value)}>{t[value]}</button>)}
         </div> : null}
+        <div className="design-theme-switch" role="group" aria-label={t.multiSource}>
+          <button className={!multiSourcePreview ? "is-active" : ""} onClick={() => setMultiSourcePreview(false)}>{t.singleSource}</button>
+          <button className={multiSourcePreview ? "is-active" : ""} onClick={() => setMultiSourcePreview(true)}>{t.multipleSources}</button>
+        </div>
       </div>
       <div className="design-preview-pair"><div className="design-orb-frame">{renderOrb(snapshot)}</div><div className="design-card-frame">{renderCard(snapshot)}</div></div></> : <><button className="design-success-preview" type="button" onClick={() => setCelebrationKey((value) => value + 1)}>{t.verification}</button><div className="design-supporter-frame"><SupporterPanel preview previewLanguage={language} celebrationKey={celebrationKey} onStatus={() => {}} /></div></>}
     </section>

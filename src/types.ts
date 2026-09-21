@@ -1,4 +1,5 @@
 export type ProviderId = "codex" | "claude" | "openai_api" | "claude_api";
+export type OptionalSourceId = Exclude<ProviderId, "codex">;
 export type SnapshotStatus = "ok" | "stale" | "loading" | "unavailable" | "signed_out";
 export type Language = "zh-CN" | "en";
 export type WidgetTheme = "light" | "dark";
@@ -40,6 +41,13 @@ export interface ProviderSnapshot {
 export interface Money {
   amount: number;
   currency: string;
+}
+
+export interface SourceStatus {
+  id: ProviderId;
+  connected: boolean;
+  detected: boolean;
+  connectedAt: string | null;
 }
 
 export interface WidgetPreferences {

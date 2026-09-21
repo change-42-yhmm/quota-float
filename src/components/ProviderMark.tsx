@@ -1,4 +1,5 @@
 import codexLogo from "../../codex.svg";
+import claudeColorLogo from "../../assets/claude-color1.svg";
 import glassClaudeLogo from "../../assets/glass-claude-icon.svg";
 import glassOpenAiLogo from "../../assets/glass-openai-icon.svg";
 import type { ProviderId } from "../types";
@@ -30,8 +31,8 @@ export function ProviderMark({ provider, variant = "default", nexusPercent }: { 
       <img className="nexus-provider-fill" src={fill} alt="" style={{ clipPath: `inset(${100 - percent}% 0 0)` }} />
     </div>;
   }
-  const src = variant === "glass" ? (isClaude ? glassClaudeLogo : glassOpenAiLogo) : codexLogo;
-  const label = variant === "glass" ? (isClaude ? "Claude" : "OpenAI") : "Codex";
+  const src = variant === "glass" ? (isClaude ? glassClaudeLogo : glassOpenAiLogo) : isClaude ? claudeColorLogo : codexLogo;
+  const label = variant === "glass" ? (isClaude ? "Claude" : "OpenAI") : isClaude ? "Claude" : "Codex";
 
   return (
     <div className={`provider-mark provider-mark--${variant}`} aria-label={label}>

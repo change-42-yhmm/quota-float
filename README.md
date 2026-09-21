@@ -1,13 +1,16 @@
 # Quota Float
 
-A lightweight Windows/macOS desktop widget that keeps your Codex quota visible from your local Codex Desktop session.
+A lightweight Windows/macOS desktop widget that keeps Codex, Claude, and API usage visible at a glance.
 
 ![Quota Float quota states](docs/images/quota-states.png)
 
 ## Highlights
 
-- Shows your Codex plan, 5-hour quota, weekly quota, and next reset time in a compact always-on-top widget.
-- Surfaces a compact live metric in the native status area: a Windows tray-icon value, or an optional macOS menu-bar readout.
+- Supports four local-first data sources: Codex/ChatGPT subscription quota, Claude subscription quota, OpenAI API costs, and Claude API costs.
+- Shows a subscription's 5-hour and weekly quota with its next reset time, or an API source's current spend as an amount and currency.
+- Switches the visible provider from the widget, and can rotate between connected sources automatically.
+- Uses provider-specific marks and presentation so Codex, Claude, OpenAI API, and Claude API data stay distinguishable.
+- Surfaces a compact live metric in the native status area: a small Windows tray-icon number, or an optional macOS menu-bar readout.
 - Uses clear quota states for healthy, caution, and critical remaining usage.
 - Collapses into a small floating orb when idle, then expands on hover.
 - Indicates whether quota is currently being consumed.
@@ -35,12 +38,20 @@ A lightweight Windows/macOS desktop widget that keeps your Codex quota visible f
 
 The preview uses mock quota data only; it does not contain account, device, or license information.
 
+### New Glass and Nexus skins
+
+The Glass skin uses a translucent, frosted treatment; Nexus uses a mechanical, futuristic frame. Both previews use mock data only.
+
+| Glass | Nexus |
+| --- | --- |
+| <img src="assets/skin-glass.png" alt="Glass frosted quota widget preview" width="420"> | <img src="assets/skin-nexus.png" alt="Nexus mechanical quota widget preview" width="420"> |
+
 ## Repository Metadata
 
 Suggested repository description:
 
 ```text
-A lightweight Windows/macOS desktop widget that keeps your Codex quota visible from your local Codex Desktop session.
+A lightweight Windows/macOS desktop widget for Codex, Claude, OpenAI API, and Claude API usage.
 ```
 
 Suggested topics:
@@ -57,11 +68,11 @@ Browser preview uses mock data. Real quota reading requires the Tauri desktop ap
 
 ## Download
 
-The current public release is **v0.2.10**. Download the installer for your platform from [GitHub Releases](https://github.com/change-42-yhmm/quota-float/releases/latest):
+The current public release is **v0.2.12**. Download the installer for your platform from [GitHub Releases](https://github.com/change-42-yhmm/quota-float/releases/latest):
 
-- Windows (recommended): [Quota.Float_0.2.10_x64-setup.exe](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_x64-setup.exe)
-- Windows (MSI): [Quota.Float_0.2.10_x64_en-US.msi](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_x64_en-US.msi)
-- macOS Universal (Apple Silicon and Intel): [Quota.Float_0.2.10_universal.dmg](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_universal.dmg)
+- Windows (recommended): [Quota.Float_0.2.12_x64-setup.exe](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.12/Quota.Float_0.2.12_x64-setup.exe)
+- Windows (MSI): [Quota.Float_0.2.12_x64_en-US.msi](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.12/Quota.Float_0.2.12_x64_en-US.msi)
+- macOS Universal (Apple Silicon and Intel): [Quota.Float_0.2.12_universal.dmg](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.12/Quota.Float_0.2.12_universal.dmg)
 
 ### What's new in v0.2.10
 
@@ -69,6 +80,13 @@ The current public release is **v0.2.10**. Download the installer for your platf
 - Adds an optional macOS menu-bar readout with the same selected-provider metric.
 - Opens the supporter panel on the first two launches after an upgrade, while preserving existing local licenses and preferences.
 - Keeps the widget local-first, with clearer unavailable and stale states instead of estimated quota values.
+
+### What's new in v0.2.12
+
+- Adds Claude subscription, OpenAI API-cost, and Claude API-cost sources alongside Codex/ChatGPT subscription quota.
+- Displays API spend as an amount with its currency, lets you switch the displayed provider, and supports automatic multi-source rotation.
+- Adds provider-specific visual treatment, plus the Glass frosted and Nexus mechanical skins.
+- Extends native status-area support with compact Windows tray numbers and an optional macOS menu-bar readout.
 
 Updater artifacts are signed with the project's Tauri update key. Windows Authenticode signing and macOS notarization are separate platform-signing steps; builds without those certificates may still trigger SmartScreen or Gatekeeper warnings.
 

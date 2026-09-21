@@ -68,11 +68,11 @@ Browser preview uses mock data. Real quota reading requires the Tauri desktop ap
 
 ## Download
 
-The current public release is **v0.2.10**. Download the installer for your platform from [GitHub Releases](https://github.com/change-42-yhmm/quota-float/releases/latest):
+The current public release is **v0.2.12**. Download the installer for your platform from [GitHub Releases](https://github.com/change-42-yhmm/quota-float/releases/latest):
 
-- Windows (recommended): [Quota.Float_0.2.10_x64-setup.exe](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_x64-setup.exe)
-- Windows (MSI): [Quota.Float_0.2.10_x64_en-US.msi](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_x64_en-US.msi)
-- macOS Universal (Apple Silicon and Intel): [Quota.Float_0.2.10_universal.dmg](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.10/Quota.Float_0.2.10_universal.dmg)
+- Windows (recommended): [Quota.Float_0.2.12_x64-setup.exe](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.12/Quota.Float_0.2.12_x64-setup.exe)
+- Windows (MSI): [Quota.Float_0.2.12_x64_en-US.msi](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.12/Quota.Float_0.2.12_x64_en-US.msi)
+- macOS Universal (Apple Silicon and Intel): [Quota.Float_0.2.12_universal.dmg](https://github.com/change-42-yhmm/quota-float/releases/download/v0.2.12/Quota.Float_0.2.12_universal.dmg)
 
 ### What's new in v0.2.10
 

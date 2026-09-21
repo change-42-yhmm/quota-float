@@ -72,20 +72,17 @@ jobs:
           releaseBody: |
             ## What's new
 
-            - Refreshes Blur state artwork and corrects its control-button fill states.
-            - Adds an offline maintainer issuance ledger with order details and clearly labeled local cancellation records.
-            - Removes outer card shadows while retaining the transparent-window safety inset.
-            - Adds a Chinese/English content switch to the design workbench, including widget preview copy.
-            - Keeps showing weekly quota when the 5-hour window is temporarily unavailable, with a clear `W` badge.
-            - Adds persistent expansion, clearer active controls, exact reset time, and localized tray actions.
-            - Adds automatic update checks and a safe GitHub Releases fallback link.
-            - Improves edge docking and transparent rounded-window rendering on Windows and macOS.
+            - Adds Claude subscription, OpenAI API-cost, and Claude API-cost sources alongside Codex/ChatGPT subscription quota.
+            - Displays API spend as an amount with its currency, supports provider switching, and can rotate between connected sources automatically.
+            - Distinguishes Codex, Claude, OpenAI API, and Claude API with provider-specific visual treatment.
+            - Adds the Glass frosted and Nexus mechanical widget skins.
+            - Shows a compact selected-provider metric in the Windows tray icon and an optional macOS menu-bar readout.
 
-            ![Quota Float weekly quota fallback](https://raw.githubusercontent.com/change-42-yhmm/quota-float/main/docs/images/quota-v0.1.4-weekly-fallback.png)
+            ![Quota Float Glass skin](https://raw.githubusercontent.com/change-42-yhmm/quota-float/main/assets/skin-glass.png)
 
             ## Privacy
 
             Quota Float remains local-first: it reads the existing Codex Desktop login state only for quota requests and does not upload prompts, chats, raw quota responses, or local credentials.
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

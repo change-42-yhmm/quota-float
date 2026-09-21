@@ -29,7 +29,7 @@ const sourceCopy = {
 
 const apiGuides = {
   openai_api: "https://platform.openai.com/settings/organization/admin-keys",
-  claude_api: "https://platform.claude.com/docs/en/manage-claude/admin-api-keys",
+  claude_api: "https://platform.claude.com/settings/keys",
 } as const;
 
 const sourcePageCopy = {

@@ -1,0 +1,17 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "sources",
+  "description": "Quota-source window events and external API settings links",
+  "windows": ["sources"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://platform.openai.com/settings/organization/admin-keys" },
+        { "url": "https://platform.claude.com/settings/keys" }
+      ]
+    }
+  ]
+}
